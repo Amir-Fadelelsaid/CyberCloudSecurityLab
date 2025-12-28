@@ -19,7 +19,7 @@ const processCommand = async (command: string, labId: number, userId: string) =>
     output = "Available commands:\n  aws s3 ls                List buckets\n  aws s3 fix <bucket>      Apply secure policy\n  aws ec2 ls               List instances\n  scan                     Run security scan";
   } else if (lowerCmd === "aws s3 ls") {
     const buckets = resources.filter(r => r.type === 's3');
-    output = buckets.map(b => `${b.createdAt} ${b.name} [${b.isVulnerable ? 'PUBLIC' : 'PRIVATE'}]`).join('\n');
+    output = buckets.map(b => `${b.name} [${b.isVulnerable ? 'PUBLIC' : 'PRIVATE'}]`).join('\n');
   } else if (lowerCmd.startsWith("aws s3 fix ")) {
     const bucketName = lowerCmd.replace("aws s3 fix ", "");
     const bucket = resources.find(r => r.type === 's3' && r.name === bucketName);
