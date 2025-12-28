@@ -11,11 +11,14 @@ export const labs = pgTable("labs", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  briefing: text("briefing"), // Mission alert/urgency text
+  scenario: text("scenario"), // Threat context/backstory
+  successMessage: text("success_message"), // Message shown on completion
   difficulty: text("difficulty").notNull(), // 'Beginner', 'Intermediate', 'Advanced'
   category: text("category").notNull(), // 'IAM', 'Storage', 'Network'
   estimatedTime: text("estimated_time"), // '5-10 minutes', '15-25 minutes', '30-45 minutes'
   initialState: jsonb("initial_state").notNull(), // Config for resources
-  steps: jsonb("steps").notNull().default(JSON.stringify([])), // Step-by-step instructions
+  steps: jsonb("steps").notNull().default(JSON.stringify([])), // Step-by-step instructions with intel
   createdAt: timestamp("created_at").defaultNow(),
 });
 
