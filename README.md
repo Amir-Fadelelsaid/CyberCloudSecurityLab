@@ -11,9 +11,9 @@ Built to demonstrate real-world cloud security, SOC analysis, and incident respo
 
 [![Public Repository](https://img.shields.io/badge/Repository-Public-blue)](https://github.com/Amir-Fadelelsaid/CyberSecurityLab)
 [![TypeScript](https://img.shields.io/badge/TypeScript-97.7%25-blue)](https://www.typescriptlang.org/)
-[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://cloudshieldlabbyamirfadel.com/)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://cloudshieldlab.com/)
 
-## [Try CloudShieldLab Live](https://cloudshieldlabbyamirfadel.com/) 
+## [Try CloudShieldLab Live](https://cloudshieldlab.com/) 
 
 A cutting-edge interactive cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations.
 
@@ -361,7 +361,7 @@ This project is open source and available under the MIT License - see the [LICEN
 
 - **Issues**: Report bugs via [GitHub Issues](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/issues)
 - **Discussions**: Join our [GitHub Discussions](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/discussions)
-- **Live Version**: Visit [cloudshieldlabbyamirfadel.com](https://cloudshieldlabbyamirfadel.com/)
+- **Live Version**: Visit [cloudshieldlab.com](https://cloudshieldlab.com/)
 
 ## Author
 
@@ -375,6 +375,6 @@ Built with expertise in SIEM operations, cloud security, and incident response. 
 
 **Master Cloud Security Defense**
 
-[Try Live Demo](https://cloudshieldlabbyamirfadel.com/) | [View on GitHub](https://github.com/Amir-Fadelelsaid/CyberSecurityLab) | [Report Issue](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/issues)
+[Try Live Demo](https://cloudshieldlab.com/) | [View on GitHub](https://github.com/Amir-Fadelelsaid/CyberSecurityLab) | [Report Issue](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/issues)
 
 </div>
