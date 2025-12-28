@@ -9,7 +9,7 @@ export interface LabDefinition {
   title: string;
   description: string;
   difficulty: "Beginner" | "Intermediate" | "Advanced" | "Challenge";
-  category: "Storage Security" | "Network Security" | "SOC Operations";
+  category: "Storage Security" | "Network Security" | "SOC Operations" | "SOC Engineer" | "Cloud Security Analyst";
   estimatedTime: string;
   initialState: Record<string, unknown>;
   steps: Array<{
@@ -752,9 +752,523 @@ export const challengeLabs: LabDefinition[] = [
   }
 ];
 
+// ============= SOC ENGINEER LABS (12) =============
+export const socEngineerLabs: LabDefinition[] = [
+  // BEGINNER LABS (4)
+  {
+    title: "SIEM Alert Configuration",
+    description: "Configure basic SIEM alerting rules for critical security events like failed logins and privilege escalations.",
+    difficulty: "Beginner",
+    category: "SOC Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { siem: ["siem-primary"] },
+    steps: [
+      { number: 1, title: "Access SIEM Console", description: "Connect to the SIEM dashboard.", hint: "Type 'siem connect'." },
+      { number: 2, title: "Review Alert Rules", description: "List current alerting rules.", hint: "Type 'siem list-rules'." },
+      { number: 3, title: "Create Failed Login Alert", description: "Add alerting for 5+ failed logins.", hint: "Type 'siem create-rule failed-logins'." }
+    ],
+    resources: [
+      { type: "siem", name: "siem-primary", config: { alertRules: 0 }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["siem create-rule failed-logins"]
+  },
+  {
+    title: "Log Source Integration",
+    description: "Integrate a new log source into the SIEM for centralized monitoring.",
+    difficulty: "Beginner",
+    category: "SOC Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { logSources: ["firewall-logs"] },
+    steps: [
+      { number: 1, title: "Check Log Sources", description: "List currently integrated log sources.", hint: "Type 'siem list-sources'." },
+      { number: 2, title: "Identify Missing Source", description: "Firewall logs are not integrated.", hint: "Type 'scan' to verify." },
+      { number: 3, title: "Add Log Source", description: "Integrate firewall logs into SIEM.", hint: "Type 'siem add-source firewall-logs'." }
+    ],
+    resources: [
+      { type: "log_source", name: "firewall-logs", config: { integrated: false }, isVulnerable: true, status: "disconnected" }
+    ],
+    fixCommands: ["siem add-source firewall-logs"]
+  },
+  {
+    title: "Dashboard Widget Setup",
+    description: "Create a security dashboard widget to monitor critical metrics.",
+    difficulty: "Beginner",
+    category: "SOC Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { dashboards: ["soc-dashboard"] },
+    steps: [
+      { number: 1, title: "Access Dashboard", description: "Open the SOC monitoring dashboard.", hint: "Type 'dashboard open soc-dashboard'." },
+      { number: 2, title: "Review Widgets", description: "Check existing dashboard widgets.", hint: "Type 'dashboard list-widgets'." },
+      { number: 3, title: "Add Threat Widget", description: "Add a real-time threat indicator widget.", hint: "Type 'dashboard add-widget threat-indicator'." }
+    ],
+    resources: [
+      { type: "dashboard", name: "soc-dashboard", config: { widgets: 2 }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["dashboard add-widget threat-indicator"]
+  },
+  {
+    title: "Alert Severity Classification",
+    description: "Configure proper severity levels for different types of security alerts.",
+    difficulty: "Beginner",
+    category: "SOC Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { alertConfig: ["severity-rules"] },
+    steps: [
+      { number: 1, title: "Review Severity Levels", description: "Check current alert severity configuration.", hint: "Type 'siem show-severity-config'." },
+      { number: 2, title: "Identify Misconfiguration", description: "Critical alerts are set to low priority.", hint: "This causes alert fatigue and missed incidents." },
+      { number: 3, title: "Fix Severity Mapping", description: "Correct the severity classification.", hint: "Type 'siem fix-severity critical-alerts'." }
+    ],
+    resources: [
+      { type: "alert_config", name: "severity-rules", config: { criticalSeverity: "low" }, isVulnerable: true, status: "misconfigured" }
+    ],
+    fixCommands: ["siem fix-severity critical-alerts"]
+  },
+
+  // INTERMEDIATE LABS (4)
+  {
+    title: "Correlation Rule Development",
+    description: "Build a multi-stage correlation rule to detect lateral movement patterns across the network.",
+    difficulty: "Intermediate",
+    category: "SOC Engineer",
+    estimatedTime: "15-25 minutes",
+    initialState: { correlationEngine: ["correlation-engine-1"] },
+    steps: [
+      { number: 1, title: "Analyze Attack Pattern", description: "Review the lateral movement pattern we want to detect.", hint: "Type 'siem analyze-pattern lateral-movement'." },
+      { number: 2, title: "Identify Required Events", description: "Determine which log events indicate lateral movement.", hint: "Authentication events followed by remote execution." },
+      { number: 3, title: "Create Base Rule", description: "Start with authentication event detection.", hint: "Type 'siem create-correlation auth-chain'." },
+      { number: 4, title: "Add Chained Events", description: "Link to subsequent remote execution events.", hint: "Type 'siem add-chain-event auth-chain remote-exec'." },
+      { number: 5, title: "Set Time Window", description: "Configure the correlation time window.", hint: "Type 'siem set-window auth-chain 300s'." },
+      { number: 6, title: "Test Rule", description: "Validate the correlation rule works.", hint: "Type 'siem test-rule auth-chain'." }
+    ],
+    resources: [
+      { type: "correlation_engine", name: "correlation-engine-1", config: { rules: 3 }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["siem create-correlation auth-chain", "siem add-chain-event auth-chain remote-exec", "siem set-window auth-chain 300s"]
+  },
+  {
+    title: "Threat Intel Feed Integration",
+    description: "Integrate external threat intelligence feeds to enhance detection capabilities.",
+    difficulty: "Intermediate",
+    category: "SOC Engineer",
+    estimatedTime: "15-25 minutes",
+    initialState: { threatFeeds: ["misp-feed"] },
+    steps: [
+      { number: 1, title: "Review Available Feeds", description: "Check which threat intel feeds are available.", hint: "Type 'threat-intel list-feeds'." },
+      { number: 2, title: "Evaluate Feed Quality", description: "Assess the MISP feed for relevance.", hint: "Type 'threat-intel analyze misp-feed'." },
+      { number: 3, title: "Configure Integration", description: "Set up the feed connection parameters.", hint: "Type 'threat-intel configure misp-feed'." },
+      { number: 4, title: "Enable IOC Matching", description: "Turn on automatic IOC correlation.", hint: "Type 'threat-intel enable-matching misp-feed'." },
+      { number: 5, title: "Verify Integration", description: "Confirm the feed is providing data.", hint: "Type 'threat-intel status misp-feed'." },
+      { number: 6, title: "Create Alert Rules", description: "Set up alerts for threat intel matches.", hint: "Type 'threat-intel create-alerts misp-feed'." }
+    ],
+    resources: [
+      { type: "threat_feed", name: "misp-feed", config: { status: "disconnected", iocCount: 50000 }, isVulnerable: true, status: "inactive" }
+    ],
+    fixCommands: ["threat-intel configure misp-feed", "threat-intel enable-matching misp-feed"]
+  },
+  {
+    title: "Automated Playbook Creation",
+    description: "Build a SOAR playbook to automate initial incident response for phishing attacks.",
+    difficulty: "Intermediate",
+    category: "SOC Engineer",
+    estimatedTime: "20-30 minutes",
+    initialState: { soar: ["soar-platform"] },
+    steps: [
+      { number: 1, title: "Access SOAR Platform", description: "Open the orchestration platform.", hint: "Type 'soar connect'." },
+      { number: 2, title: "Review Phishing Workflow", description: "Understand the manual phishing response process.", hint: "Type 'soar show-workflow phishing-manual'." },
+      { number: 3, title: "Create New Playbook", description: "Initialize an automated phishing playbook.", hint: "Type 'soar create-playbook phishing-auto'." },
+      { number: 4, title: "Add Email Analysis Step", description: "Automate header and attachment analysis.", hint: "Type 'soar add-step phishing-auto email-analysis'." },
+      { number: 5, title: "Add User Notification", description: "Auto-notify affected users.", hint: "Type 'soar add-step phishing-auto notify-user'." },
+      { number: 6, title: "Add Quarantine Action", description: "Automate email quarantine.", hint: "Type 'soar add-step phishing-auto quarantine'." },
+      { number: 7, title: "Activate Playbook", description: "Enable the automated playbook.", hint: "Type 'soar activate phishing-auto'." }
+    ],
+    resources: [
+      { type: "soar", name: "soar-platform", config: { playbooks: 5, automationLevel: "low" }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["soar create-playbook phishing-auto", "soar activate phishing-auto"]
+  },
+  {
+    title: "Log Retention Policy Configuration",
+    description: "Configure proper log retention policies to meet compliance requirements while managing storage costs.",
+    difficulty: "Intermediate",
+    category: "SOC Engineer",
+    estimatedTime: "15-25 minutes",
+    initialState: { logRetention: ["retention-policy"] },
+    steps: [
+      { number: 1, title: "Check Current Policy", description: "Review existing log retention settings.", hint: "Type 'logs show-retention'." },
+      { number: 2, title: "Identify Compliance Gap", description: "PCI-DSS requires 1 year retention; current is 30 days.", hint: "This is a compliance violation." },
+      { number: 3, title: "Review Storage Tiers", description: "Check available storage options.", hint: "Type 'logs show-storage-tiers'." },
+      { number: 4, title: "Configure Hot Storage", description: "Set 90 days for fast access.", hint: "Type 'logs set-retention hot 90d'." },
+      { number: 5, title: "Configure Cold Storage", description: "Set 1 year for compliance.", hint: "Type 'logs set-retention cold 365d'." },
+      { number: 6, title: "Verify Compliance", description: "Confirm retention meets requirements.", hint: "Type 'logs verify-compliance'." }
+    ],
+    resources: [
+      { type: "log_retention", name: "retention-policy", config: { currentRetention: "30d", required: "365d" }, isVulnerable: true, status: "non-compliant" }
+    ],
+    fixCommands: ["logs set-retention hot 90d", "logs set-retention cold 365d"]
+  },
+
+  // ADVANCED LABS (4)
+  {
+    title: "Detection Engineering Pipeline",
+    description: "Build a complete detection-as-code pipeline with version control, testing, and automated deployment of detection rules.",
+    difficulty: "Advanced",
+    category: "SOC Engineer",
+    estimatedTime: "35-50 minutes",
+    initialState: { pipeline: ["detection-pipeline"] },
+    steps: [
+      { number: 1, title: "Assess Current State", description: "Evaluate the existing detection deployment process.", hint: "Type 'scan' to identify gaps." },
+      { number: 2, title: "Initialize Repository", description: "Create a Git repository for detection rules.", hint: "Type 'git init detection-rules'." },
+      { number: 3, title: "Create Rule Template", description: "Build a standardized detection rule format.", hint: "Type 'detection create-template sigma-format'." },
+      { number: 4, title: "Implement Validation", description: "Add automated syntax and logic validation.", hint: "Type 'detection add-validation syntax-check'." },
+      { number: 5, title: "Configure Testing", description: "Set up automated testing with sample data.", hint: "Type 'detection configure-tests sample-data'." },
+      { number: 6, title: "Build CI/CD Pipeline", description: "Create automated deployment pipeline.", hint: "Type 'detection create-pipeline ci-cd'." },
+      { number: 7, title: "Add Approval Workflow", description: "Require review before production deployment.", hint: "Type 'detection add-approval-gate production'." },
+      { number: 8, title: "Deploy Sample Rule", description: "Test the pipeline with a sample detection.", hint: "Type 'detection deploy-rule sample-rule'." },
+      { number: 9, title: "Verify Pipeline", description: "Confirm end-to-end functionality.", hint: "Type 'detection verify-pipeline'." },
+      { number: 10, title: "Document Process", description: "Detection-as-code pipeline operational. Rules now versioned, tested, and auto-deployed.", hint: "Pipeline complete." }
+    ],
+    resources: [
+      { type: "detection_pipeline", name: "detection-pipeline", config: { versionControl: false, testing: false, cicd: false }, isVulnerable: true, status: "manual" }
+    ],
+    fixCommands: ["detection create-pipeline ci-cd", "detection verify-pipeline"]
+  },
+  {
+    title: "Purple Team Exercise Infrastructure",
+    description: "Set up automated adversary simulation infrastructure for continuous security validation.",
+    difficulty: "Advanced",
+    category: "SOC Engineer",
+    estimatedTime: "40-55 minutes",
+    initialState: { purpleTeam: ["caldera-server"] },
+    steps: [
+      { number: 1, title: "Deploy Simulation Server", description: "Initialize the adversary simulation platform.", hint: "Type 'purple-team deploy caldera-server'." },
+      { number: 2, title: "Configure Agent Deployment", description: "Set up agents on test endpoints.", hint: "Type 'purple-team deploy-agents test-endpoints'." },
+      { number: 3, title: "Select Attack Chains", description: "Choose MITRE ATT&CK techniques to simulate.", hint: "Type 'purple-team select-techniques T1059,T1055,T1078'." },
+      { number: 4, title: "Configure Reporting", description: "Set up detection gap reporting.", hint: "Type 'purple-team configure-reporting gaps'." },
+      { number: 5, title: "Run Initial Simulation", description: "Execute the first adversary simulation.", hint: "Type 'purple-team execute simulation-1'." },
+      { number: 6, title: "Collect Detection Results", description: "Gather results from SIEM and EDR.", hint: "Type 'purple-team collect-results simulation-1'." },
+      { number: 7, title: "Analyze Coverage Gaps", description: "Identify techniques that weren't detected.", hint: "Type 'purple-team analyze-gaps simulation-1'." },
+      { number: 8, title: "Create Remediation Plan", description: "Document needed detection improvements.", hint: "Type 'purple-team create-remediation simulation-1'." },
+      { number: 9, title: "Implement New Detections", description: "Add rules for missed techniques.", hint: "Type 'purple-team implement-detections simulation-1'." },
+      { number: 10, title: "Re-run Validation", description: "Verify new detections work.", hint: "Type 'purple-team execute simulation-2'." },
+      { number: 11, title: "Generate Report", description: "Create final coverage report.", hint: "Type 'purple-team generate-report'." }
+    ],
+    resources: [
+      { type: "adversary_sim", name: "caldera-server", config: { status: "not-deployed", techniques: [] }, isVulnerable: true, status: "inactive" }
+    ],
+    fixCommands: ["purple-team deploy caldera-server", "purple-team generate-report"]
+  },
+  {
+    title: "Multi-Tenant SIEM Architecture",
+    description: "Design and implement a multi-tenant SIEM architecture for managed security service provider operations.",
+    difficulty: "Advanced",
+    category: "SOC Engineer",
+    estimatedTime: "45-60 minutes",
+    initialState: { siemCluster: ["siem-cluster"] },
+    steps: [
+      { number: 1, title: "Assess Requirements", description: "Review multi-tenant isolation needs.", hint: "Type 'scan' to understand current architecture." },
+      { number: 2, title: "Design Tenant Schema", description: "Create logical tenant separation model.", hint: "Type 'siem design-tenant-schema'." },
+      { number: 3, title: "Implement Data Isolation", description: "Configure index-level tenant separation.", hint: "Type 'siem configure-isolation index-per-tenant'." },
+      { number: 4, title: "Set Up RBAC", description: "Create role-based access per tenant.", hint: "Type 'siem configure-rbac tenant-roles'." },
+      { number: 5, title: "Configure Dashboards", description: "Create tenant-specific dashboards.", hint: "Type 'siem create-tenant-dashboards'." },
+      { number: 6, title: "Set Up Alerting", description: "Configure per-tenant alert routing.", hint: "Type 'siem configure-alert-routing per-tenant'." },
+      { number: 7, title: "Implement Rate Limiting", description: "Prevent noisy neighbor issues.", hint: "Type 'siem configure-rate-limits'." },
+      { number: 8, title: "Create Tenant A", description: "Onboard first tenant.", hint: "Type 'siem onboard-tenant tenant-a'." },
+      { number: 9, title: "Validate Isolation", description: "Verify tenant data is isolated.", hint: "Type 'siem test-isolation tenant-a'." },
+      { number: 10, title: "Document Architecture", description: "Multi-tenant SIEM operational. Full data isolation, RBAC, and tenant dashboards configured.", hint: "Architecture complete." }
+    ],
+    resources: [
+      { type: "siem_cluster", name: "siem-cluster", config: { tenants: 0, isolation: false }, isVulnerable: true, status: "single-tenant" }
+    ],
+    fixCommands: ["siem configure-isolation index-per-tenant", "siem onboard-tenant tenant-a"]
+  },
+  {
+    title: "Threat Hunting Automation Framework",
+    description: "Build an automated threat hunting framework that runs scheduled hunts and generates findings reports.",
+    difficulty: "Advanced",
+    category: "SOC Engineer",
+    estimatedTime: "40-55 minutes",
+    initialState: { huntFramework: ["hunt-platform"] },
+    steps: [
+      { number: 1, title: "Initialize Framework", description: "Set up the threat hunting platform.", hint: "Type 'hunt-framework initialize'." },
+      { number: 2, title: "Create Hunt Library", description: "Build a library of reusable hunt queries.", hint: "Type 'hunt-framework create-library'." },
+      { number: 3, title: "Add Hypothesis Templates", description: "Create structured hunt hypotheses.", hint: "Type 'hunt-framework add-hypothesis-template'." },
+      { number: 4, title: "Configure Data Sources", description: "Connect required data sources.", hint: "Type 'hunt-framework connect-sources logs,edr,netflow'." },
+      { number: 5, title: "Build First Hunt", description: "Create a hunt for beaconing behavior.", hint: "Type 'hunt-framework create-hunt beaconing-detection'." },
+      { number: 6, title: "Add Analytics", description: "Implement statistical analysis.", hint: "Type 'hunt-framework add-analytics beaconing-detection'." },
+      { number: 7, title: "Schedule Automation", description: "Set up recurring hunt schedule.", hint: "Type 'hunt-framework schedule beaconing-detection daily'." },
+      { number: 8, title: "Configure Findings", description: "Set up findings management.", hint: "Type 'hunt-framework configure-findings'." },
+      { number: 9, title: "Run Test Hunt", description: "Execute the hunt manually.", hint: "Type 'hunt-framework execute beaconing-detection'." },
+      { number: 10, title: "Review Results", description: "Analyze hunt findings.", hint: "Type 'hunt-framework show-findings beaconing-detection'." },
+      { number: 11, title: "Generate Report", description: "Create formal hunt report.", hint: "Type 'hunt-framework generate-report'." }
+    ],
+    resources: [
+      { type: "hunt_platform", name: "hunt-platform", config: { hunts: 0, automated: false }, isVulnerable: true, status: "not-configured" }
+    ],
+    fixCommands: ["hunt-framework initialize", "hunt-framework schedule beaconing-detection daily"]
+  }
+];
+
+// ============= CLOUD SECURITY ANALYST LABS (12) =============
+export const cloudSecurityAnalystLabs: LabDefinition[] = [
+  // BEGINNER LABS (4)
+  {
+    title: "Cloud Asset Inventory",
+    description: "Perform a cloud asset discovery to identify all resources in your AWS environment.",
+    difficulty: "Beginner",
+    category: "Cloud Security Analyst",
+    estimatedTime: "5-10 minutes",
+    initialState: { assets: ["untracked-resources"] },
+    steps: [
+      { number: 1, title: "Run Discovery", description: "Initiate cloud asset discovery.", hint: "Type 'cloud-inventory discover'." },
+      { number: 2, title: "Review Assets", description: "List discovered cloud resources.", hint: "Type 'cloud-inventory list-all'." },
+      { number: 3, title: "Tag Untracked", description: "Apply proper tags to untracked resources.", hint: "Type 'cloud-inventory tag-untracked'." }
+    ],
+    resources: [
+      { type: "inventory", name: "untracked-resources", config: { untaggedCount: 15 }, isVulnerable: true, status: "incomplete" }
+    ],
+    fixCommands: ["cloud-inventory tag-untracked"]
+  },
+  {
+    title: "Security Baseline Assessment",
+    description: "Run a CIS benchmark assessment against your cloud environment.",
+    difficulty: "Beginner",
+    category: "Cloud Security Analyst",
+    estimatedTime: "5-10 minutes",
+    initialState: { assessments: ["cis-benchmark"] },
+    steps: [
+      { number: 1, title: "Start Assessment", description: "Run CIS benchmark scan.", hint: "Type 'cis-benchmark run aws-account'." },
+      { number: 2, title: "Review Findings", description: "Check the benchmark results.", hint: "Type 'cis-benchmark show-findings'." },
+      { number: 3, title: "Export Report", description: "Generate compliance report.", hint: "Type 'cis-benchmark export-report'." }
+    ],
+    resources: [
+      { type: "assessment", name: "cis-benchmark", config: { status: "not-run" }, isVulnerable: true, status: "pending" }
+    ],
+    fixCommands: ["cis-benchmark run aws-account"]
+  },
+  {
+    title: "IAM User Audit",
+    description: "Audit IAM users for inactive accounts and excessive permissions.",
+    difficulty: "Beginner",
+    category: "Cloud Security Analyst",
+    estimatedTime: "5-10 minutes",
+    initialState: { iamAudit: ["user-audit"] },
+    steps: [
+      { number: 1, title: "List Users", description: "Get all IAM users.", hint: "Type 'iam-audit list-users'." },
+      { number: 2, title: "Find Inactive", description: "Identify users inactive 90+ days.", hint: "Type 'iam-audit find-inactive'." },
+      { number: 3, title: "Disable Inactive", description: "Disable the inactive accounts.", hint: "Type 'iam-audit disable-inactive'." }
+    ],
+    resources: [
+      { type: "iam_audit", name: "user-audit", config: { inactiveUsers: 5 }, isVulnerable: true, status: "needs-review" }
+    ],
+    fixCommands: ["iam-audit disable-inactive"]
+  },
+  {
+    title: "Public Resource Detection",
+    description: "Identify publicly accessible resources in your cloud environment.",
+    difficulty: "Beginner",
+    category: "Cloud Security Analyst",
+    estimatedTime: "5-10 minutes",
+    initialState: { publicResources: ["public-scan"] },
+    steps: [
+      { number: 1, title: "Scan for Public", description: "Find publicly accessible resources.", hint: "Type 'cloud-scan public-resources'." },
+      { number: 2, title: "Review Findings", description: "Check which resources are exposed.", hint: "Type 'cloud-scan show-public'." },
+      { number: 3, title: "Remediate Critical", description: "Block public access on critical resources.", hint: "Type 'cloud-scan block-public critical'." }
+    ],
+    resources: [
+      { type: "public_scan", name: "public-scan", config: { publicCount: 3 }, isVulnerable: true, status: "exposed" }
+    ],
+    fixCommands: ["cloud-scan block-public critical"]
+  },
+
+  // INTERMEDIATE LABS (4)
+  {
+    title: "Cross-Account Access Review",
+    description: "Audit and secure cross-account IAM trust relationships to prevent unauthorized access.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Analyst",
+    estimatedTime: "15-25 minutes",
+    initialState: { crossAccount: ["trust-policies"] },
+    steps: [
+      { number: 1, title: "List Trust Relationships", description: "Identify all cross-account trusts.", hint: "Type 'iam-audit list-trust-policies'." },
+      { number: 2, title: "Analyze Risk", description: "Evaluate each trust for risk level.", hint: "Type 'iam-audit analyze-trusts'." },
+      { number: 3, title: "Identify Overly Permissive", description: "Find trusts with wildcard principals.", hint: "Type 'iam-audit find-wildcard-trusts'." },
+      { number: 4, title: "Review External Accounts", description: "Verify all external accounts are authorized.", hint: "Type 'iam-audit verify-external'." },
+      { number: 5, title: "Remove Unauthorized", description: "Revoke unauthorized trust relationships.", hint: "Type 'iam-audit revoke-trust unauthorized-role'." },
+      { number: 6, title: "Document Findings", description: "Generate trust relationship report.", hint: "Type 'iam-audit export-trust-report'." }
+    ],
+    resources: [
+      { type: "trust_policy", name: "trust-policies", config: { externalTrusts: 5, unauthorized: 2 }, isVulnerable: true, status: "needs-review" }
+    ],
+    fixCommands: ["iam-audit revoke-trust unauthorized-role"]
+  },
+  {
+    title: "Cloud Security Posture Assessment",
+    description: "Perform a comprehensive security posture assessment across multiple cloud services.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Analyst",
+    estimatedTime: "20-30 minutes",
+    initialState: { cspm: ["posture-assessment"] },
+    steps: [
+      { number: 1, title: "Initialize CSPM", description: "Connect to cloud security posture management.", hint: "Type 'cspm connect'." },
+      { number: 2, title: "Run Full Scan", description: "Perform comprehensive security scan.", hint: "Type 'cspm full-scan'." },
+      { number: 3, title: "Review Critical Findings", description: "Focus on critical severity issues.", hint: "Type 'cspm show-critical'." },
+      { number: 4, title: "Analyze Trends", description: "Check if issues are new or recurring.", hint: "Type 'cspm analyze-trends'." },
+      { number: 5, title: "Create Remediation Plan", description: "Build prioritized fix plan.", hint: "Type 'cspm create-remediation-plan'." },
+      { number: 6, title: "Apply Auto-Remediations", description: "Fix issues with safe auto-remediation.", hint: "Type 'cspm auto-remediate safe'." },
+      { number: 7, title: "Verify Improvements", description: "Re-scan to confirm fixes.", hint: "Type 'cspm verify-remediation'." }
+    ],
+    resources: [
+      { type: "cspm", name: "posture-assessment", config: { criticalFindings: 8, highFindings: 15 }, isVulnerable: true, status: "poor-posture" }
+    ],
+    fixCommands: ["cspm auto-remediate safe"]
+  },
+  {
+    title: "Secrets Management Audit",
+    description: "Audit cloud secrets management practices and identify exposed credentials.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Analyst",
+    estimatedTime: "15-25 minutes",
+    initialState: { secretsAudit: ["secrets-scan"] },
+    steps: [
+      { number: 1, title: "Scan for Secrets", description: "Search for exposed credentials.", hint: "Type 'secrets-scan detect'." },
+      { number: 2, title: "Review Findings", description: "Check detected secret exposures.", hint: "Type 'secrets-scan show-findings'." },
+      { number: 3, title: "Assess Impact", description: "Determine which secrets are active.", hint: "Type 'secrets-scan check-active'." },
+      { number: 4, title: "Rotate Exposed", description: "Rotate any active exposed credentials.", hint: "Type 'secrets-scan rotate-exposed'." },
+      { number: 5, title: "Enable Secret Manager", description: "Move secrets to proper storage.", hint: "Type 'secrets-scan enable-secrets-manager'." },
+      { number: 6, title: "Verify Remediation", description: "Confirm no more exposures.", hint: "Type 'secrets-scan verify'." }
+    ],
+    resources: [
+      { type: "secrets_audit", name: "secrets-scan", config: { exposedSecrets: 4, activeExposures: 2 }, isVulnerable: true, status: "exposed" }
+    ],
+    fixCommands: ["secrets-scan rotate-exposed", "secrets-scan enable-secrets-manager"]
+  },
+  {
+    title: "Network Flow Analysis",
+    description: "Analyze VPC flow logs to identify suspicious network patterns and potential data exfiltration.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Analyst",
+    estimatedTime: "20-30 minutes",
+    initialState: { flowLogs: ["vpc-flows"] },
+    steps: [
+      { number: 1, title: "Access Flow Logs", description: "Query VPC flow log data.", hint: "Type 'flow-analysis connect vpc-flows'." },
+      { number: 2, title: "Baseline Traffic", description: "Establish normal traffic patterns.", hint: "Type 'flow-analysis baseline'." },
+      { number: 3, title: "Detect Anomalies", description: "Find traffic deviating from baseline.", hint: "Type 'flow-analysis detect-anomalies'." },
+      { number: 4, title: "Investigate High Volume", description: "Check unusually high outbound traffic.", hint: "Type 'flow-analysis investigate high-outbound'." },
+      { number: 5, title: "Check Destinations", description: "Verify traffic destinations are legitimate.", hint: "Type 'flow-analysis check-destinations'." },
+      { number: 6, title: "Create Alert Rule", description: "Set up alerting for suspicious patterns.", hint: "Type 'flow-analysis create-alert exfil-pattern'." }
+    ],
+    resources: [
+      { type: "flow_logs", name: "vpc-flows", config: { anomalies: 3, suspiciousFlows: 12 }, isVulnerable: true, status: "unanalyzed" }
+    ],
+    fixCommands: ["flow-analysis create-alert exfil-pattern"]
+  },
+
+  // ADVANCED LABS (4)
+  {
+    title: "Multi-Cloud Security Assessment",
+    description: "Perform a unified security assessment across AWS, Azure, and GCP environments.",
+    difficulty: "Advanced",
+    category: "Cloud Security Analyst",
+    estimatedTime: "40-55 minutes",
+    initialState: { multiCloud: ["cloud-connectors"] },
+    steps: [
+      { number: 1, title: "Connect AWS", description: "Establish AWS security assessment connection.", hint: "Type 'multicloud connect aws'." },
+      { number: 2, title: "Connect Azure", description: "Link Azure subscription for assessment.", hint: "Type 'multicloud connect azure'." },
+      { number: 3, title: "Connect GCP", description: "Add GCP project for unified view.", hint: "Type 'multicloud connect gcp'." },
+      { number: 4, title: "Normalize Findings", description: "Map findings to common framework.", hint: "Type 'multicloud normalize-findings'." },
+      { number: 5, title: "Compare Postures", description: "Assess relative security of each cloud.", hint: "Type 'multicloud compare-postures'." },
+      { number: 6, title: "Identify Gaps", description: "Find security gaps unique to each cloud.", hint: "Type 'multicloud identify-gaps'." },
+      { number: 7, title: "Create Unified Policy", description: "Build cross-cloud security policy.", hint: "Type 'multicloud create-policy'." },
+      { number: 8, title: "Apply Remediations", description: "Fix critical issues across all clouds.", hint: "Type 'multicloud remediate-critical'." },
+      { number: 9, title: "Verify Compliance", description: "Check multi-cloud compliance status.", hint: "Type 'multicloud verify-compliance'." },
+      { number: 10, title: "Generate Report", description: "Create unified security posture report.", hint: "Type 'multicloud generate-report'." }
+    ],
+    resources: [
+      { type: "multicloud", name: "cloud-connectors", config: { clouds: 3, unifiedView: false }, isVulnerable: true, status: "disconnected" }
+    ],
+    fixCommands: ["multicloud remediate-critical", "multicloud generate-report"]
+  },
+  {
+    title: "Container Security Assessment",
+    description: "Assess container and Kubernetes security posture, including image vulnerabilities and runtime threats.",
+    difficulty: "Advanced",
+    category: "Cloud Security Analyst",
+    estimatedTime: "35-50 minutes",
+    initialState: { containerSec: ["eks-cluster"] },
+    steps: [
+      { number: 1, title: "Connect to Cluster", description: "Access the Kubernetes cluster.", hint: "Type 'container-sec connect eks-cluster'." },
+      { number: 2, title: "Scan Images", description: "Vulnerability scan all container images.", hint: "Type 'container-sec scan-images'." },
+      { number: 3, title: "Review Critical CVEs", description: "Focus on critical vulnerabilities.", hint: "Type 'container-sec show-critical-cves'." },
+      { number: 4, title: "Assess Runtime", description: "Check runtime security configuration.", hint: "Type 'container-sec assess-runtime'." },
+      { number: 5, title: "Review Pod Security", description: "Audit pod security policies.", hint: "Type 'container-sec audit-psp'." },
+      { number: 6, title: "Check Network Policies", description: "Verify network segmentation.", hint: "Type 'container-sec check-network-policies'." },
+      { number: 7, title: "Review RBAC", description: "Audit Kubernetes RBAC settings.", hint: "Type 'container-sec audit-rbac'." },
+      { number: 8, title: "Identify Privileged", description: "Find privileged containers.", hint: "Type 'container-sec find-privileged'." },
+      { number: 9, title: "Apply Hardening", description: "Implement security hardening.", hint: "Type 'container-sec apply-hardening'." },
+      { number: 10, title: "Verify Security", description: "Confirm improvements applied.", hint: "Type 'container-sec verify-posture'." }
+    ],
+    resources: [
+      { type: "container_cluster", name: "eks-cluster", config: { criticalCVEs: 12, privilegedPods: 5 }, isVulnerable: true, status: "insecure" }
+    ],
+    fixCommands: ["container-sec apply-hardening"]
+  },
+  {
+    title: "Cloud Compliance Gap Analysis",
+    description: "Perform comprehensive compliance gap analysis against SOC 2, PCI-DSS, and HIPAA requirements.",
+    difficulty: "Advanced",
+    category: "Cloud Security Analyst",
+    estimatedTime: "45-60 minutes",
+    initialState: { compliance: ["compliance-assessment"] },
+    steps: [
+      { number: 1, title: "Select Frameworks", description: "Choose compliance frameworks to assess.", hint: "Type 'compliance select-frameworks soc2,pci,hipaa'." },
+      { number: 2, title: "Map Controls", description: "Map cloud resources to control requirements.", hint: "Type 'compliance map-controls'." },
+      { number: 3, title: "Run Assessment", description: "Execute compliance assessment.", hint: "Type 'compliance run-assessment'." },
+      { number: 4, title: "Review SOC 2 Gaps", description: "Check SOC 2 specific findings.", hint: "Type 'compliance show-gaps soc2'." },
+      { number: 5, title: "Review PCI Gaps", description: "Check PCI-DSS specific findings.", hint: "Type 'compliance show-gaps pci'." },
+      { number: 6, title: "Review HIPAA Gaps", description: "Check HIPAA specific findings.", hint: "Type 'compliance show-gaps hipaa'." },
+      { number: 7, title: "Prioritize Remediation", description: "Rank gaps by risk and overlap.", hint: "Type 'compliance prioritize-gaps'." },
+      { number: 8, title: "Generate Evidence", description: "Collect compliance evidence.", hint: "Type 'compliance collect-evidence'." },
+      { number: 9, title: "Create Remediation Plan", description: "Build compliance roadmap.", hint: "Type 'compliance create-roadmap'." },
+      { number: 10, title: "Apply Quick Wins", description: "Fix low-effort high-impact gaps.", hint: "Type 'compliance fix-quick-wins'." },
+      { number: 11, title: "Generate Reports", description: "Create compliance reports.", hint: "Type 'compliance generate-reports'." }
+    ],
+    resources: [
+      { type: "compliance", name: "compliance-assessment", config: { frameworks: 3, gaps: 45 }, isVulnerable: true, status: "non-compliant" }
+    ],
+    fixCommands: ["compliance fix-quick-wins", "compliance generate-reports"]
+  },
+  {
+    title: "Cloud Attack Surface Management",
+    description: "Map and reduce the external attack surface of your cloud infrastructure including shadow IT discovery.",
+    difficulty: "Advanced",
+    category: "Cloud Security Analyst",
+    estimatedTime: "40-55 minutes",
+    initialState: { attackSurface: ["external-assets"] },
+    steps: [
+      { number: 1, title: "Initialize Discovery", description: "Start external asset discovery.", hint: "Type 'attack-surface discover-external'." },
+      { number: 2, title: "Enumerate Domains", description: "Find all related domains and subdomains.", hint: "Type 'attack-surface enum-domains'." },
+      { number: 3, title: "Scan Open Ports", description: "Identify exposed services.", hint: "Type 'attack-surface scan-ports'." },
+      { number: 4, title: "Detect Shadow IT", description: "Find unauthorized cloud resources.", hint: "Type 'attack-surface find-shadow-it'." },
+      { number: 5, title: "Assess Vulnerabilities", description: "Scan exposed services for vulns.", hint: "Type 'attack-surface scan-vulns'." },
+      { number: 6, title: "Check SSL/TLS", description: "Audit certificate configurations.", hint: "Type 'attack-surface check-certs'." },
+      { number: 7, title: "Review Exposed APIs", description: "Find publicly accessible APIs.", hint: "Type 'attack-surface find-apis'." },
+      { number: 8, title: "Reduce Surface", description: "Remove or secure unnecessary exposure.", hint: "Type 'attack-surface remediate'." },
+      { number: 9, title: "Configure Monitoring", description: "Set up continuous attack surface monitoring.", hint: "Type 'attack-surface enable-monitoring'." },
+      { number: 10, title: "Verify Reduction", description: "Confirm attack surface reduced.", hint: "Type 'attack-surface verify'." },
+      { number: 11, title: "Generate Report", description: "Create attack surface report.", hint: "Type 'attack-surface generate-report'." }
+    ],
+    resources: [
+      { type: "attack_surface", name: "external-assets", config: { exposedAssets: 25, shadowIT: 8 }, isVulnerable: true, status: "exposed" }
+    ],
+    fixCommands: ["attack-surface remediate", "attack-surface enable-monitoring"]
+  }
+];
+
 export const allLabs = [
   ...storageSecurityLabs,
   ...networkSecurityLabs,
   ...socOperationsLabs,
+  ...socEngineerLabs,
+  ...cloudSecurityAnalystLabs,
   ...challengeLabs
 ];

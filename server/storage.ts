@@ -1,7 +1,7 @@
 import { db } from "./db";
 import {
-  labs, resources, userProgress, terminalLogs,
-  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource
+  labs, resources, userProgress, terminalLogs, badges, userBadges,
+  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource, type Badge, type UserBadge
 } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -25,6 +25,14 @@ export interface IStorage {
   
   // Logs
   logCommand(userId: string, labId: number, command: string, output: string, isCorrect: boolean): Promise<void>;
+  
+  // Badges
+  getBadges(): Promise<Badge[]>;
+  getBadge(id: number): Promise<Badge | undefined>;
+  createBadge(badge: Omit<Badge, 'id'>): Promise<Badge>;
+  getUserBadges(userId: string): Promise<(UserBadge & { badge: Badge })[]>;
+  awardBadge(userId: string, badgeId: number): Promise<UserBadge>;
+  hasBadge(userId: string, badgeId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -124,6 +132,47 @@ export class DatabaseStorage implements IStorage {
       output,
       isCorrect
     });
+  }
+
+  async getBadges(): Promise<Badge[]> {
+    return await db.select().from(badges);
+  }
+
+  async getBadge(id: number): Promise<Badge | undefined> {
+    const [badge] = await db.select().from(badges).where(eq(badges.id, id));
+    return badge;
+  }
+
+  async createBadge(badge: Omit<Badge, 'id'>): Promise<Badge> {
+    const [newBadge] = await db.insert(badges).values(badge).returning();
+    return newBadge;
+  }
+
+  async getUserBadges(userId: string): Promise<(UserBadge & { badge: Badge })[]> {
+    const result = await db.select()
+      .from(userBadges)
+      .innerJoin(badges, eq(userBadges.badgeId, badges.id))
+      .where(eq(userBadges.userId, userId));
+    
+    return result.map(row => ({
+      ...row.user_badges,
+      badge: row.badges
+    }));
+  }
+
+  async awardBadge(userId: string, badgeId: number): Promise<UserBadge> {
+    const [awarded] = await db.insert(userBadges)
+      .values({ userId, badgeId })
+      .returning();
+    return awarded;
+  }
+
+  async hasBadge(userId: string, badgeId: number): Promise<boolean> {
+    const existing = await db.select()
+      .from(userBadges)
+      .where(and(eq(userBadges.userId, userId), eq(userBadges.badgeId, badgeId)))
+      .limit(1);
+    return existing.length > 0;
   }
 }
 

@@ -1,7 +1,16 @@
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Terminal, Shield, BarChart3, LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { Terminal, Shield, BarChart3, LogOut, LayoutDashboard, Award } from "lucide-react";
 import { clsx } from "clsx";
+
+type LevelInfo = {
+  level: number;
+  title: string;
+  nextLevel: number | null;
+  progress: number;
+  completedLabs: number;
+};
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,10 +19,16 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  
+  const { data: levelInfo } = useQuery<LevelInfo>({
+    queryKey: ["/api/user/level"],
+    enabled: !!user
+  });
 
   const navItems = [
     { icon: LayoutDashboard, label: "Mission Control", href: "/" },
     { icon: Shield, label: "Active Labs", href: "/labs" },
+    { icon: Award, label: "Badges", href: "/badges" },
     { icon: BarChart3, label: "My Progress", href: "/progress" },
   ];
 
@@ -62,15 +77,17 @@ export function Layout({ children }: LayoutProps) {
         </nav>
 
         <div className="p-4 border-t border-border/50 space-y-2">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-black/20 border border-white/5">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold font-mono border border-primary/30">
-              {user.firstName?.[0] || "U"}
+          <Link href="/badges">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-black/20 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold font-mono border border-primary/30 group-hover:bg-primary/30 transition-colors">
+                {levelInfo?.level || 0}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-white truncate">{user.firstName || "User"}</p>
+                <p className="text-[10px] text-muted-foreground truncate font-mono">Level {levelInfo?.level || 0} {levelInfo?.title || "Recruit"}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate">{user.firstName || "User"}</p>
-              <p className="text-[10px] text-muted-foreground truncate font-mono">Level 1 Operator</p>
-            </div>
-          </div>
+          </Link>
           <button
             onClick={() => logout()}
             className="w-full flex items-center gap-3 px-4 py-2 text-xs font-mono text-destructive hover:bg-destructive/10 rounded-lg transition-colors border border-transparent hover:border-destructive/20"

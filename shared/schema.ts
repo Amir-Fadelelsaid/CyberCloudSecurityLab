@@ -52,6 +52,25 @@ export const terminalLogs = pgTable("terminal_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// === BADGES ===
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  icon: text("icon").notNull(), // Lucide icon name
+  category: text("category").notNull(), // Level, Category, Achievement
+  requirement: text("requirement").notNull(), // JSON string describing how to earn
+  level: integer("level"), // For level-based badges (1-5)
+});
+
+// === USER BADGES ===
+export const userBadges = pgTable("user_badges", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  badgeId: integer("badge_id").notNull().references(() => badges.id),
+  earnedAt: timestamp("earned_at").defaultNow(),
+});
+
 // === RELATIONS ===
 export const labsRelations = relations(labs, ({ many }) => ({
   resources: many(resources),
@@ -76,17 +95,37 @@ export const userProgressRelations = relations(userProgress, ({ one }) => ({
   }),
 }));
 
+// === BADGE RELATIONS ===
+export const badgesRelations = relations(badges, ({ many }) => ({
+  userBadges: many(userBadges),
+}));
+
+export const userBadgesRelations = relations(userBadges, ({ one }) => ({
+  user: one(users, {
+    fields: [userBadges.userId],
+    references: [users.id],
+  }),
+  badge: one(badges, {
+    fields: [userBadges.badgeId],
+    references: [badges.id],
+  }),
+}));
+
 // === SCHEMAS ===
 export const insertLabSchema = createInsertSchema(labs);
 export const insertResourceSchema = createInsertSchema(resources);
 export const insertProgressSchema = createInsertSchema(userProgress);
 export const insertLogSchema = createInsertSchema(terminalLogs);
+export const insertBadgeSchema = createInsertSchema(badges);
+export const insertUserBadgeSchema = createInsertSchema(userBadges);
 
 // === TYPES ===
 export type Lab = typeof labs.$inferSelect;
 export type Resource = typeof resources.$inferSelect;
 export type UserProgress = typeof userProgress.$inferSelect;
 export type TerminalLog = typeof terminalLogs.$inferSelect;
+export type Badge = typeof badges.$inferSelect;
+export type UserBadge = typeof userBadges.$inferSelect;
 
 export type InsertLab = z.infer<typeof insertLabSchema>;
 export type InsertResource = z.infer<typeof insertResourceSchema>;
