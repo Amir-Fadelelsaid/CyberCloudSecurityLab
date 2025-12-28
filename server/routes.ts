@@ -220,6 +220,63 @@ export async function registerRoutes(
 
 async function seedDatabase() {
   const labs = await storage.getLabs();
+  
+  // Check if CloudTrail lab exists, add if missing
+  const hasCloudTrailLab = labs.some(lab => lab.category === 'SOC Operations');
+  if (labs.length > 0 && !hasCloudTrailLab) {
+    // Add CloudTrail lab to existing database
+    const lab3 = await storage.createLab({
+      title: "CloudTrail Log Analysis - Credential Compromise",
+      description: "Your SOC team detected unusual API activity. An attacker may have compromised IAM credentials. Analyze CloudTrail logs to identify the threat actor's actions and respond to the incident.",
+      difficulty: "Advanced",
+      category: "SOC Operations",
+      initialState: {
+        logs: ["cloudtrail-events"],
+        compromisedUser: "dev-jenkins-sa"
+      },
+      steps: [
+        { number: 1, title: "Understand the Alert", description: "GuardDuty flagged suspicious API activity from an IAM user. Your mission is to investigate the CloudTrail logs and identify what the attacker did.", hint: "MITRE ATT&CK T1078: Adversaries may use valid accounts to maintain access." },
+        { number: 2, title: "Query CloudTrail Logs", description: "Start by examining recent API calls to understand the scope of the compromise.", hint: "Type 'aws cloudtrail lookup-events' to see recent API activity." },
+        { number: 3, title: "Identify Suspicious Activity", description: "Look for unusual patterns: API calls from new IP addresses, privilege escalation attempts, or data exfiltration.", hint: "Focus on iam:CreateAccessKey, sts:AssumeRole, and s3:GetObject calls from unfamiliar IPs." },
+        { number: 4, title: "Determine Compromised Credentials", description: "Identify which IAM user or role was compromised based on the unusual activity patterns.", hint: "Type 'aws iam list-compromised' to see which credentials show suspicious behavior." },
+        { number: 5, title: "Revoke Compromised Credentials", description: "Immediately revoke the compromised access keys to stop the attacker.", hint: "Type 'aws iam revoke-keys dev-jenkins-sa' to deactivate the compromised credentials." },
+        { number: 6, title: "Document the Incident", description: "Create an incident report summarizing the attack timeline, affected resources, and remediation steps.", hint: "Type 'report incident' to generate an incident summary for your SOC team." },
+        { number: 7, title: "Implement Detection Rules", description: "Create detection rules to catch similar attacks in the future.", hint: "Type 'scan' to verify all threats are contained and detection rules are in place." }
+      ]
+    });
+
+    await storage.createResource({
+      labId: lab3.id,
+      type: "cloudtrail",
+      name: "suspicious-api-activity",
+      config: { 
+        events: [
+          { eventName: "CreateAccessKey", userIdentity: "dev-jenkins-sa", sourceIP: "185.220.101.42", timestamp: "2025-01-15T08:23:15Z" },
+          { eventName: "AssumeRole", userIdentity: "dev-jenkins-sa", sourceIP: "185.220.101.42", targetRole: "AdminRole", timestamp: "2025-01-15T08:24:02Z" },
+          { eventName: "ListBuckets", userIdentity: "AdminRole", sourceIP: "185.220.101.42", timestamp: "2025-01-15T08:25:30Z" },
+          { eventName: "GetObject", userIdentity: "AdminRole", sourceIP: "185.220.101.42", bucket: "customer-pii-data", timestamp: "2025-01-15T08:26:45Z" }
+        ]
+      },
+      isVulnerable: true,
+      status: "active"
+    });
+
+    await storage.createResource({
+      labId: lab3.id,
+      type: "iam_user",
+      name: "dev-jenkins-sa",
+      config: { 
+        accessKeyAge: "180 days",
+        lastRotation: "2024-07-15",
+        permissions: ["s3:*", "iam:CreateAccessKey", "sts:AssumeRole"]
+      },
+      isVulnerable: true,
+      status: "compromised"
+    });
+    
+    console.log("Added CloudTrail SOC lab to existing database");
+  }
+  
   if (labs.length === 0) {
     const lab1 = await storage.createLab({
       title: "Public S3 Bucket Exposure",
