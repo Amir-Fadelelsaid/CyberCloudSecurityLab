@@ -5,11 +5,12 @@ import { motion } from "framer-motion";
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden font-sans relative">
-      {/* Background Effects */}
+      {/* Background Effects - Much more vibrant */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] opacity-30 animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] opacity-20" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-primary/40 rounded-full blur-[150px] opacity-60 animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-[900px] h-[900px] bg-blue-500/30 rounded-full blur-[200px] opacity-50 animate-pulse" style={{animationDelay: '1s'}} />
+        <div className="absolute top-1/2 right-0 w-[700px] h-[700px] bg-accent/30 rounded-full blur-[180px] opacity-40 animate-pulse" style={{animationDelay: '2s'}} />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
       </div>
 
       {/* Nav */}
@@ -59,14 +60,26 @@ export default function Landing() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
           >
             <a href="/api/login">
-              <button className="px-8 py-4 rounded-xl bg-primary hover:bg-primary/90 text-background font-bold font-mono flex items-center gap-2 transition-all hover:scale-105 shadow-[0_0_20px_rgba(0,255,128,0.4)]">
+              <motion.button 
+                className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary to-emerald-500 hover:from-primary hover:to-primary text-background font-bold font-mono flex items-center gap-2 transition-all shadow-[0_0_30px_rgba(0,255,128,0.7)] hover:shadow-[0_0_50px_rgba(0,255,128,1)]"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ 
+                  boxShadow: ["0 0 20px rgba(0,255,128,0.5)", "0 0 40px rgba(0,255,128,0.8)", "0 0 20px rgba(0,255,128,0.5)"]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
                 <Terminal className="w-5 h-5" />
                 INITIATE_TRAINING
-              </button>
+              </motion.button>
             </a>
-            <button className="px-8 py-4 rounded-xl bg-card hover:bg-card/80 border border-border text-foreground font-mono font-medium flex items-center gap-2 transition-all">
+            <motion.button 
+              className="px-8 py-4 rounded-xl bg-gradient-to-r from-accent/30 to-purple-600/30 border-2 border-accent text-accent font-mono font-bold flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(160,0,255,0.5)]"
+              whileHover={{ scale: 1.1, boxShadow: "0 0 40px rgba(160,0,255,0.8)" }}
+              whileTap={{ scale: 0.95 }}
+            >
               VIEW_DOCS <ChevronRight className="w-4 h-4" />
-            </button>
+            </motion.button>
           </motion.div>
         </div>
 
@@ -82,56 +95,72 @@ export default function Landing() {
               icon: Shield, 
               title: "Real-time Simulation", 
               desc: "Interact with mock S3 buckets, EC2 instances, and IAM roles that react to your commands.",
-              color: "from-cyan-500/20 to-blue-500/20",
-              borderColor: "border-cyan-500/40",
-              shadowColor: "shadow-cyan-500/20"
+              gradColor: "from-cyan-400 via-blue-500 to-cyan-400",
+              glowColor: "rgba(0, 220, 255, 0.8)"
             },
             { 
               icon: Terminal, 
               title: "CLI-Based Defense", 
               desc: "Use a realistic terminal interface to identify threats and execute remediation scripts.",
-              color: "from-primary/20 to-emerald-500/20",
-              borderColor: "border-primary/40",
-              shadowColor: "shadow-primary/20"
+              gradColor: "from-green-400 via-emerald-500 to-green-400",
+              glowColor: "rgba(0, 255, 128, 0.8)"
             },
             { 
               icon: Lock, 
               title: "Progress Tracking", 
               desc: "Earn certifications and track your skill growth across IAM, Network, and Storage domains.",
-              color: "from-purple-500/20 to-pink-500/20",
-              borderColor: "border-purple-500/40",
-              shadowColor: "shadow-purple-500/20"
+              gradColor: "from-purple-400 via-pink-500 to-purple-400",
+              glowColor: "rgba(255, 0, 255, 0.8)"
             }
           ].map((feature, i) => (
             <motion.div 
               key={i} 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + i * 0.1 }}
-              whileHover={{ y: -8 }}
-              className={`relative overflow-hidden bg-gradient-to-br ${feature.color} backdrop-blur-xl border ${feature.borderColor} p-8 rounded-2xl group cursor-pointer shadow-lg hover:shadow-2xl ${feature.shadowColor} transition-all duration-300`}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.5 + i * 0.15, duration: 0.6 }}
+              whileHover={{ y: -15, scale: 1.05 }}
+              className="relative overflow-hidden rounded-3xl group cursor-pointer"
             >
-              {/* Animated background gradient */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {/* Outer glow container */}
+              <motion.div 
+                className="absolute -inset-2 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl"
+                style={{ background: `linear-gradient(135deg, ${feature.glowColor}, rgba(0,0,0,0))` }}
+                animate={{ 
+                  boxShadow: `0 0 40px ${feature.glowColor}, 0 0 80px ${feature.glowColor}`
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
               
-              {/* Glow effect */}
-              <div className="absolute -inset-1 bg-gradient-to-br opacity-0 group-hover:opacity-30 blur-xl transition-all duration-300 rounded-2xl" style={{ background: `linear-gradient(to right, ${i === 0 ? '#00d9ff' : i === 1 ? '#00ff80' : '#ff00ff'}, transparent)` }} />
-              
-              <div className="relative z-10">
-                <motion.div 
-                  className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} border ${feature.borderColor} flex items-center justify-center mb-6 group-hover:scale-125 transition-transform duration-300 shadow-lg`}
-                  animate={{ 
-                    boxShadow: i === 0 ? ["0 0 20px rgba(0, 217, 255, 0.3)", "0 0 40px rgba(0, 217, 255, 0.6)"] :
-                               i === 1 ? ["0 0 20px rgba(0, 255, 128, 0.3)", "0 0 40px rgba(0, 255, 128, 0.6)"] :
-                               ["0 0 20px rgba(255, 0, 255, 0.3)", "0 0 40px rgba(255, 0, 255, 0.6)"]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <feature.icon className="w-7 h-7 text-white" />
-                </motion.div>
-                <h3 className="text-xl font-bold font-display mb-3 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent transition-all duration-300">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed group-hover:text-muted-foreground/90 transition-colors">{feature.desc}</p>
+              {/* Main card */}
+              <div className={`relative z-10 bg-gradient-to-br ${feature.gradColor} opacity-10 group-hover:opacity-100 transition-opacity duration-300 p-8 rounded-3xl border-2 group-hover:border-4 transition-all`} style={{ borderColor: feature.glowColor }} >
+                <div className="absolute inset-0 bg-background/80 rounded-3xl" />
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradColor} opacity-0 group-hover:opacity-30 transition-opacity duration-500 rounded-3xl`} />
               </div>
+              
+              {/* Content */}
+              <div className="relative z-20 p-8">
+                <motion.div 
+                  className="w-16 h-16 rounded-2xl mb-6 flex items-center justify-center border-2 transition-all"
+                  style={{ borderColor: feature.glowColor, backgroundColor: `${feature.glowColor}20` }}
+                  whileHover={{ scale: 1.3, rotate: 360 }}
+                  animate={{ 
+                    boxShadow: `0 0 25px ${feature.glowColor}, inset 0 0 15px ${feature.glowColor}40`
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, rotate: { duration: 0.6 } }}
+                >
+                  <feature.icon className="w-8 h-8" style={{ color: feature.glowColor }} />
+                </motion.div>
+                <h3 className="text-2xl font-bold font-display mb-4 text-white group-hover:text-transparent group-hover:bg-clip-text transition-all duration-300" style={{ backgroundImage: `linear-gradient(135deg, ${feature.glowColor}, #ffffff)` }}>{feature.title}</h3>
+                <p className="text-muted-foreground/80 leading-relaxed group-hover:text-muted-foreground transition-colors text-base">{feature.desc}</p>
+              </div>
+              
+              {/* Top glow line */}
+              <motion.div 
+                className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: `linear-gradient(90deg, transparent, ${feature.glowColor}, transparent)` }}
+                animate={{ x: [-100, 300] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
             </motion.div>
           ))}
         </motion.div>
