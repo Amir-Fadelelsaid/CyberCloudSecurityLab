@@ -13,6 +13,7 @@ export const labs = pgTable("labs", {
   description: text("description").notNull(),
   difficulty: text("difficulty").notNull(), // 'Beginner', 'Intermediate', 'Advanced'
   category: text("category").notNull(), // 'IAM', 'Storage', 'Network'
+  estimatedTime: text("estimated_time"), // '5-10 minutes', '15-25 minutes', '30-45 minutes'
   initialState: jsonb("initial_state").notNull(), // Config for resources
   steps: jsonb("steps").notNull().default(JSON.stringify([])), // Step-by-step instructions
   createdAt: timestamp("created_at").defaultNow(),
