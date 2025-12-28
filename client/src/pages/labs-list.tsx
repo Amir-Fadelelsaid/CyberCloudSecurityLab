@@ -123,15 +123,15 @@ export default function LabsList() {
 
                   <div className="relative z-10 flex items-center gap-4 px-6 mb-4 text-xs text-muted-foreground/70">
                     {lab.estimatedTime && (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1" data-testid={`text-time-${lab.id}`}>
                         <Clock className="w-3 h-3" />
                         {String(lab.estimatedTime)}
                       </span>
                     )}
-                    {lab.steps && Array.isArray(lab.steps) && (
-                      <span className="flex items-center gap-1">
+                    {lab.steps && Array.isArray(lab.steps) && lab.steps.length > 0 && (
+                      <span className="flex items-center gap-1" data-testid={`text-steps-${lab.id}`}>
                         <ListChecks className="w-3 h-3" />
-                        {(lab.steps as any[]).length} steps
+                        {lab.steps.length} steps
                       </span>
                     )}
                   </div>

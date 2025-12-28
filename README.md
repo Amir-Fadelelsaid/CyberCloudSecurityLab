@@ -32,22 +32,33 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ## 🎯 Features
 
-### Interactive Labs
-- **Beginner Level**: Public S3 Bucket Exposure - Learn to identify and remediate exposed cloud storage
-- **Intermediate Level**: Insecure Security Group - Master network security configurations
-- **Advanced Level**: CloudTrail Log Analysis - Investigate suspicious API activity and credential compromise
+### 30+ Interactive Labs Across 3 Categories
+
+| Category | Beginner | Intermediate | Advanced |
+|----------|----------|--------------|----------|
+| **Storage Security** | 3 labs | 4 labs | 3 labs |
+| **Network Security** | 3 labs | 4 labs | 3 labs |
+| **SOC Operations** | 3 labs | 5 labs | 3 labs |
+
+### Difficulty-Based Learning Path
+
+| Level | Time | Steps | Focus |
+|-------|------|-------|-------|
+| **Beginner** | 5-10 min | 3 steps | Quick fixes, single resource |
+| **Intermediate** | 15-25 min | 6-7 steps | Multi-phase remediation with verification |
+| **Advanced** | 30-55 min | 10-12 steps | Complex investigations, multiple resources, forensics |
 
 ### Smart Learning System
 - **Step-by-Step Guidance**: Detailed instructions for each lab with numbered steps
 - **Progressive Difficulty**: Labs organized by difficulty level (Beginner, Intermediate, Advanced)
 - **Real-time Feedback**: Immediate validation of your security fixes
 - **Progress Tracking**: Monitor your learning journey across different security domains
+- **Mission Completion Artifacts**: 4-tab modal with Incident Summary, Security Framework mappings, Technical Details, and Recommendations
 
 ### Categories
-- 🛡️ **Storage Security** - S3 bucket policies and access controls
-- 🌐 **Network Security** - Security group rules and SSH access restrictions
-- 🔑 **IAM Security** - CloudTrail analysis and credential compromise response
-- 📊 **SOC Operations** - Log analysis, threat hunting, and incident response
+- 🛡️ **Storage Security** - S3 bucket policies, encryption, versioning, cross-account access
+- 🌐 **Network Security** - Security groups, VPC peering, WAF, Transit Gateway, NACLs
+- 📊 **SOC Operations** - CloudTrail analysis, GuardDuty alerts, credential compromise, persistence detection
 
 ### Realistic Simulation
 - Terminal-based interface mimicking real AWS CLI
@@ -206,23 +217,23 @@ CyberLab features a **cyber-themed dark interface** with:
 ## 🔄 Learning Path
 
 ```
-Beginner Labs
+Beginner Labs (5-10 min, 3 steps)
     ↓
-    └─ Storage Security (S3 Bucket Exposure)
-    └─ Basic Terminal Commands
-    └─ Cloud Resource Identification
+    └─ Storage: Public S3 Bucket, Unencrypted Bucket, Logging Disabled
+    └─ Network: SSH Exposed, RDP Open, Database Port Exposed
+    └─ SOC: CloudTrail Disabled, GuardDuty Crypto Mining, Suspicious SSM Session
 
-Intermediate Labs
+Intermediate Labs (15-25 min, 6-7 steps)
     ↓
-    └─ Network Security (Security Group Rules)
-    └─ Access Control Configuration
-    └─ Multi-step Remediation
+    └─ Storage: Overly Permissive Policies, Versioning Compliance, Cross-Account Access
+    └─ Network: VPC Flow Logs, NACL Misconfig, Unrestricted Egress, EIP Audit
+    └─ SOC: IAM Policy Changes, KMS Key Deletion, Root Activity, EventBridge Persistence
 
-Advanced Labs (Coming Soon)
+Advanced Labs (30-55 min, 10-12 steps)
     ↓
-    └─ IAM Policy Configuration
-    └─ Cross-service Security
-    └─ Real-world Attack Scenarios
+    └─ Storage: Data Breach Investigation, Supply Chain Attack, Multi-Bucket Hardening
+    └─ Network: WAF Deployment, VPC Peering Audit, Transit Gateway Route Leak
+    └─ SOC: Credential Compromise, Cross-Account Role Attack, DataSync Exfiltration
 ```
 
 ## 🔐 Security Considerations
@@ -275,13 +286,16 @@ We welcome contributions! Please:
 
 ## 📋 Roadmap
 
-- [ ] Advanced cloud security labs (IAM, encryption, compliance)
+- [x] 30+ labs across Storage, Network, and SOC Operations
+- [x] Advanced labs with 10-12 steps and multiple resources
+- [x] Mission completion artifacts with 4-tab modal
+- [x] Security framework mappings (MITRE ATT&CK, CIS Controls, AWS Well-Architected)
+- [x] Hiring Manager demonstration page
 - [ ] Certification system with progress badges
 - [ ] Leaderboards and team challenges
 - [ ] Video tutorials and walkthroughs
 - [ ] Community-contributed labs
 - [ ] Mobile app support
-- [ ] Multi-language support
 
 ## 📝 License
 
