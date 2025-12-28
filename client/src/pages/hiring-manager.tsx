@@ -33,7 +33,7 @@ export default function HiringManager() {
               Here's what a candidate practicing on this platform has demonstrated.
             </p>
             <div className="flex justify-center gap-4 pt-4">
-              <a href="https://cloudshieldlabbyamirfadel.com/" target="_blank" rel="noopener noreferrer">
+              <a href="https://cloudshieldlab.com/" target="_blank" rel="noopener noreferrer">
                 <Button className="gap-2" data-testid="link-live-demo">
                   <ExternalLink className="w-4 h-4" />
                   Live Demo
@@ -339,8 +339,8 @@ export default function HiringManager() {
               Built by Amir Fadelelsaid - SOC Analyst & Cloud Security Professional
             </p>
             <div className="flex justify-center gap-4">
-              <a href="https://cloudshieldlabbyamirfadel.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
-                cloudshieldlabbyamirfadel.com
+              <a href="https://cloudshieldlab.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
+                cloudshieldlab.com
               </a>
               <span className="text-muted-foreground">|</span>
               <a href="https://github.com/Amir-Fadelelsaid/CyberSecurityLab" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
