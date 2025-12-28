@@ -1,38 +1,105 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import {
+  labs, resources, userProgress, terminalLogs,
+  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource
+} from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Labs
+  getLabs(): Promise<Lab[]>;
+  getLab(id: number): Promise<Lab | undefined>;
+  createLab(lab: InsertLab): Promise<Lab>;
+  
+  // Resources
+  getResources(labId: number, userId?: string): Promise<Resource[]>;
+  updateResource(id: number, updates: Partial<Resource>): Promise<Resource>;
+  createResource(resource: InsertResource): Promise<Resource>;
+  resetLabResources(labId: number, userId: string): Promise<void>;
+  
+  // Progress
+  getUserProgress(userId: string): Promise<(UserProgress & { lab: Lab })[]>;
+  updateProgress(userId: string, labId: number, completed: boolean): Promise<UserProgress>;
+  
+  // Logs
+  logCommand(userId: string, labId: number, command: string, output: string, isCorrect: boolean): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getLabs(): Promise<Lab[]> {
+    return await db.select().from(labs);
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getLab(id: number): Promise<Lab | undefined> {
+    const [lab] = await db.select().from(labs).where(eq(labs.id, id));
+    return lab;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async createLab(lab: InsertLab): Promise<Lab> {
+    const [newLab] = await db.insert(labs).values(lab).returning();
+    return newLab;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async getResources(labId: number, userId?: string): Promise<Resource[]> {
+    // In a real multi-tenant app, we'd filter by userId too for instantiated labs
+    // For this simplified version, we'll just get resources for the lab
+    return await db.select().from(resources).where(eq(resources.labId, labId));
+  }
+
+  async updateResource(id: number, updates: Partial<Resource>): Promise<Resource> {
+    const [updated] = await db.update(resources)
+      .set(updates)
+      .where(eq(resources.id, id))
+      .returning();
+    return updated;
+  }
+
+  async createResource(resource: InsertResource): Promise<Resource> {
+    const [newRes] = await db.insert(resources).values(resource).returning();
+    return newRes;
+  }
+
+  async resetLabResources(labId: number, userId: string): Promise<void> {
+    // Reset logic: Delete current resources and re-instantiate from lab.initialState
+    // Simplified: Just mark all as vulnerable for now
+    await db.update(resources)
+      .set({ isVulnerable: true, status: 'active' })
+      .where(eq(resources.labId, labId));
+  }
+
+  async getUserProgress(userId: string): Promise<(UserProgress & { lab: Lab })[]> {
+    const result = await db.select()
+      .from(userProgress)
+      .innerJoin(labs, eq(userProgress.labId, labs.id))
+      .where(eq(userProgress.userId, userId));
+    
+    return result.map(row => ({
+      ...row.user_progress,
+      lab: row.labs
+    }));
+  }
+
+  async updateProgress(userId: string, labId: number, completed: boolean): Promise<UserProgress> {
+    const [progress] = await db
+      .insert(userProgress)
+      .values({ userId, labId, completed, completedAt: new Date() })
+      .onConflictDoUpdate({
+        target: [userProgress.userId, userProgress.labId],
+        set: { completed, completedAt: new Date() }
+      })
+      .returning();
+    return progress;
+  }
+
+  async logCommand(userId: string, labId: number, command: string, output: string, isCorrect: boolean): Promise<void> {
+    await db.insert(terminalLogs).values({
+      userId,
+      labId,
+      command,
+      output,
+      isCorrect
+    });
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
