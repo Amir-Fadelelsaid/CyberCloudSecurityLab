@@ -7,40 +7,40 @@
 :root {
   /* HSL Format: Hue Saturation Lightness */
   
-  /* Cyber Dark Theme Base */
-  --background: 220 15% 10%; /* Very dark slate/blue background */
-  --foreground: 150 100% 50%; /* Matrix Green Text */
+  /* Cyber Dark Theme Base - Softer palette */
+  --background: 220 20% 8%; /* Deep dark blue background */
+  --foreground: 210 20% 90%; /* Soft light gray text - easy on eyes */
 
-  --card: 220 15% 14%;
-  --card-foreground: 150 50% 90%;
+  --card: 220 18% 12%;
+  --card-foreground: 210 20% 90%;
 
-  --popover: 220 15% 12%;
-  --popover-foreground: 150 50% 90%;
+  --popover: 220 18% 10%;
+  --popover-foreground: 210 20% 90%;
 
-  /* Primary Action Color - Neon Green */
-  --primary: 150 100% 50%; 
-  --primary-foreground: 220 15% 10%;
+  /* Primary Action Color - Soft Teal/Emerald */
+  --primary: 160 60% 45%; 
+  --primary-foreground: 220 20% 8%;
 
   /* Secondary/Muted - Darker Slate */
-  --secondary: 217 19% 27%;
-  --secondary-foreground: 150 50% 90%;
+  --secondary: 217 19% 22%;
+  --secondary-foreground: 210 20% 85%;
 
-  --muted: 217 19% 27%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 217 19% 22%;
+  --muted-foreground: 215 15% 55%;
 
-  /* Accent - Cyber Blue/Purple for variety */
-  --accent: 260 100% 60%;
+  /* Accent - Soft Purple/Blue */
+  --accent: 250 50% 55%;
   --accent-foreground: 210 40% 98%;
 
-  /* Destructive/Vulnerable - Neon Red */
-  --destructive: 0 100% 60%;
+  /* Destructive/Vulnerable - Softer Red */
+  --destructive: 0 70% 55%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 217 19% 27%;
-  --input: 217 19% 27%;
-  --ring: 150 100% 50%;
+  --border: 217 19% 25%;
+  --input: 217 19% 20%;
+  --ring: 160 60% 45%;
 
-  --radius: 0.25rem;
+  --radius: 0.5rem;
 
   /* Custom Fonts */
   --font-sans: 'Inter', sans-serif;
@@ -58,8 +58,7 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    @apply tracking-wide uppercase text-primary/90;
-    text-shadow: 0 0 10px rgba(0, 255, 128, 0.3);
+    @apply tracking-wide uppercase text-foreground;
   }
 
   code, pre, kbd {
@@ -107,13 +106,13 @@
     50% { opacity: 0; }
   }
 
-  /* Neon glow effects */
+  /* Subtle glow effects */
   .neon-glow {
-    box-shadow: 0 0 10px rgba(0, 255, 128, 0.3), inset 0 0 10px rgba(0, 255, 128, 0.1);
+    box-shadow: 0 0 8px rgba(45, 180, 140, 0.2), inset 0 0 8px rgba(45, 180, 140, 0.05);
   }
 
   .neon-glow:hover {
-    box-shadow: 0 0 20px rgba(0, 255, 128, 0.6), inset 0 0 10px rgba(0, 255, 128, 0.2);
+    box-shadow: 0 0 15px rgba(45, 180, 140, 0.35), inset 0 0 8px rgba(45, 180, 140, 0.1);
   }
 
   /* Floating animation */
@@ -133,7 +132,7 @@
   }
 
   .gradient-text-animated {
-    background: linear-gradient(90deg, rgba(0, 255, 128, 1), rgba(0, 255, 200, 0.8), rgba(0, 255, 128, 1));
+    background: linear-gradient(90deg, rgba(45, 180, 140, 1), rgba(80, 200, 180, 0.9), rgba(45, 180, 140, 1));
     background-size: 200% 200%;
     animation: gradientShift 3s ease infinite;
     -webkit-background-clip: text;
@@ -141,10 +140,10 @@
     background-clip: text;
   }
 
-  /* Pulse glow animation */
+  /* Pulse glow animation - subtle */
   @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 128, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(0, 255, 128, 0.5); }
+    0%, 100% { box-shadow: 0 0 4px rgba(45, 180, 140, 0.15); }
+    50% { box-shadow: 0 0 12px rgba(45, 180, 140, 0.3); }
   }
 
   .pulse-glow {
