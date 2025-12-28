@@ -125,7 +125,39 @@ async function seedDatabase() {
       category: "Storage Security",
       initialState: {
         buckets: ["corp-payroll-data", "public-assets"],
-      }
+      },
+      steps: [
+        {
+          number: 1,
+          title: "Scan for Vulnerabilities",
+          description: "First, let's identify what's vulnerable in our infrastructure.",
+          hint: "Type 'scan' in the terminal to see all vulnerable resources."
+        },
+        {
+          number: 2,
+          title: "List S3 Buckets",
+          description: "Now let's examine our S3 buckets to understand what we're working with.",
+          hint: "Type 'aws s3 ls' to list all available S3 buckets and their security status."
+        },
+        {
+          number: 3,
+          title: "Identify the Vulnerable Bucket",
+          description: "Look at the bucket list. One of them is marked as PUBLIC, which means it's exposed to the internet.",
+          hint: "The vulnerable bucket name is 'corp-payroll-data'. Notice it shows [PUBLIC] status."
+        },
+        {
+          number: 4,
+          title: "Fix the Vulnerable Bucket",
+          description: "Apply a secure bucket policy to restrict public access and protect the payroll data.",
+          hint: "Type 'aws s3 fix corp-payroll-data' to apply the security fix."
+        },
+        {
+          number: 5,
+          title: "Verify the Fix",
+          description: "Run a final security scan to confirm all vulnerabilities have been remediated.",
+          hint: "Type 'scan' again to verify that the bucket is now secure and marked as [PRIVATE]."
+        }
+      ]
     });
 
     await storage.createResource({
@@ -142,7 +174,7 @@ async function seedDatabase() {
       type: "s3",
       name: "public-website-assets",
       config: { access: "public-read" },
-      isVulnerable: false, // This one is supposed to be public
+      isVulnerable: false,
       status: "active"
     });
 
@@ -153,9 +185,45 @@ async function seedDatabase() {
       category: "Network Security",
       initialState: {
         instances: ["db-prod-01"],
-      }
+      },
+      steps: [
+        {
+          number: 1,
+          title: "Understand the Threat",
+          description: "An EC2 instance with a database is exposed to SSH attacks from anywhere on the internet (0.0.0.0/0).",
+          hint: "SSH (port 22) should only be accessible from trusted IP addresses, never from the entire internet."
+        },
+        {
+          number: 2,
+          title: "Run a Security Scan",
+          description: "Scan the infrastructure to identify the misconfigured security group.",
+          hint: "Type 'scan' to see all vulnerabilities in the environment."
+        },
+        {
+          number: 3,
+          title: "Analyze the Vulnerability Details",
+          description: "The output will show that 'security_group' is misconfigured with overly permissive SSH rules.",
+          hint: "Overly permissive rules mean that anyone on the internet can attempt to connect via SSH."
+        },
+        {
+          number: 4,
+          title: "Restrict SSH Access",
+          description: "Update the security group to only allow SSH from specific IPs or internal networks.",
+          hint: "Type 'aws ec2 restrict-ssh db-prod-01' to apply stricter security rules."
+        },
+        {
+          number: 5,
+          title: "Verify Network Security",
+          description: "Confirm that the SSH rule now restricts access to only trusted sources.",
+          hint: "Type 'scan' to verify that the security group vulnerability has been fixed."
+        },
+        {
+          number: 6,
+          title: "Monitor for Compliance",
+          description: "Regular security scanning ensures your infrastructure maintains compliance and protection.",
+          hint: "Keep running security scans to catch any future misconfigurations."
+        }
+      ]
     });
-    
-    // Additional seeding for lab 2 can happen here if needed
   }
 }

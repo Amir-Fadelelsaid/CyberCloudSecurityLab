@@ -14,6 +14,7 @@ export const labs = pgTable("labs", {
   difficulty: text("difficulty").notNull(), // 'Beginner', 'Intermediate', 'Advanced'
   category: text("category").notNull(), // 'IAM', 'Storage', 'Network'
   initialState: jsonb("initial_state").notNull(), // Config for resources
+  steps: jsonb("steps").notNull().default(JSON.stringify([])), // Step-by-step instructions
   createdAt: timestamp("created_at").defaultNow(),
 });
 
