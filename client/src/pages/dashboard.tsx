@@ -88,7 +88,8 @@ export default function Dashboard() {
                               "px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold border",
                               lab.difficulty === 'Beginner' ? "bg-green-500/10 text-green-400 border-green-500/20" :
                               lab.difficulty === 'Intermediate' ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
-                              "bg-red-500/10 text-red-400 border-red-500/20"
+                              lab.difficulty === 'Advanced' ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                              "bg-purple-500/10 text-purple-400 border-purple-500/20"
                             )}>
                               {lab.difficulty}
                             </span>
