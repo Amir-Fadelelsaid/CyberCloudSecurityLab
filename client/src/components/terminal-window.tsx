@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 interface TerminalWindowProps {
   labId: number;
   className?: string;
+  onLabComplete?: () => void;
 }
 
 interface LogEntry {
@@ -13,7 +14,7 @@ interface LogEntry {
   content: string;
 }
 
-export function TerminalWindow({ labId, className }: TerminalWindowProps) {
+export function TerminalWindow({ labId, className, onLabComplete }: TerminalWindowProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<LogEntry[]>([
     { type: "system", content: "Connected to secure shell..." },
@@ -51,6 +52,7 @@ export function TerminalWindow({ labId, className }: TerminalWindowProps) {
             setHistory(prev => [...prev, { type: "success", content: data.output }]);
             if (data.labCompleted) {
               setHistory(prev => [...prev, { type: "system", content: ">>> MISSION ACCOMPLISHED: VULNERABILITY PATCHED <<<" }]);
+              setTimeout(() => onLabComplete?.(), 1500);
             }
           } else {
              setHistory(prev => [...prev, { type: "output", content: data.output }]);
