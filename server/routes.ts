@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integrations/auth";
 import { api } from "@shared/routes";
 import { allLabs } from "./lab-definitions";
+import { allBadgeDefinitions, calculateLevel } from "./badge-definitions";
 
 // Generic command handler for fixing resources
 const handleFixCommand = async (
@@ -996,6 +997,69 @@ export async function registerRoutes(
     res.json(progress);
   });
 
+  // Badges
+  app.get("/api/badges", isAuthenticated, async (req, res) => {
+    const badges = await storage.getBadges();
+    res.json(badges);
+  });
+
+  app.get("/api/user/badges", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).claims.sub;
+    const userBadges = await storage.getUserBadges(userId);
+    res.json(userBadges);
+  });
+
+  app.get("/api/user/level", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).claims.sub;
+    const progress = await storage.getUserProgress(userId);
+    const completedCount = progress.filter(p => p.completed).length;
+    const levelInfo = calculateLevel(completedCount);
+    res.json({ ...levelInfo, completedLabs: completedCount });
+  });
+
+  app.post("/api/badges/check", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).claims.sub;
+    const progress = await storage.getUserProgress(userId);
+    const completedLabs = progress.filter(p => p.completed);
+    const allBadges = await storage.getBadges();
+    const userBadges = await storage.getUserBadges(userId);
+    const earnedBadgeIds = new Set(userBadges.map(ub => ub.badgeId));
+    
+    const newBadges: any[] = [];
+    
+    for (const badge of allBadges) {
+      if (earnedBadgeIds.has(badge.id)) continue;
+      
+      try {
+        const req = JSON.parse(badge.requirement);
+        let earned = false;
+        
+        if (req.type === "total_labs") {
+          earned = completedLabs.length >= req.count;
+        } else if (req.type === "category_complete") {
+          const categoryLabs = await storage.getLabs();
+          const categoryLabIds = categoryLabs.filter(l => l.category === req.category).map(l => l.id);
+          const completedInCategory = completedLabs.filter(p => categoryLabIds.includes(p.labId)).length;
+          earned = completedInCategory >= categoryLabIds.length && categoryLabIds.length > 0;
+        } else if (req.type === "difficulty_count") {
+          const difficultyLabs = await storage.getLabs();
+          const diffLabIds = difficultyLabs.filter(l => l.difficulty === req.difficulty).map(l => l.id);
+          const completedDiff = completedLabs.filter(p => diffLabIds.includes(p.labId)).length;
+          earned = completedDiff >= req.count;
+        }
+        
+        if (earned) {
+          await storage.awardBadge(userId, badge.id);
+          newBadges.push(badge);
+        }
+      } catch (e) {
+        console.error(`Error parsing badge requirement for ${badge.name}:`, e);
+      }
+    }
+    
+    res.json({ newBadges });
+  });
+
   // Seed Data
   await seedDatabase();
 
@@ -1066,5 +1130,26 @@ async function seedDatabase() {
   }
   
   const finalCount = (await storage.getLabs()).length;
-  console.log(`Labs synced. Total: ${finalCount} labs (expected: 30)`);
+  console.log(`Labs synced. Total: ${finalCount} labs (expected: 57)`);
+  
+  // Seed badges
+  const existingBadges = await storage.getBadges();
+  const existingBadgeNames = new Set(existingBadges.map(b => b.name));
+  
+  for (const badgeDef of allBadgeDefinitions) {
+    if (!existingBadgeNames.has(badgeDef.name)) {
+      await storage.createBadge({
+        name: badgeDef.name,
+        description: badgeDef.description,
+        icon: badgeDef.icon,
+        category: badgeDef.category,
+        requirement: badgeDef.requirement,
+        level: badgeDef.level || null
+      });
+      console.log(`Created badge: ${badgeDef.name}`);
+    }
+  }
+  
+  const badgeCount = (await storage.getBadges()).length;
+  console.log(`Badges synced. Total: ${badgeCount} badges`);
 }

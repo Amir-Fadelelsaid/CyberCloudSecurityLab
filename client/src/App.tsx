@@ -13,6 +13,7 @@ import LabsList from "@/pages/labs-list";
 import LabWorkspace from "@/pages/lab-workspace";
 import Landing from "@/pages/landing";
 import HiringManager from "@/pages/hiring-manager";
+import Badges from "@/pages/badges";
 import NotFound from "@/pages/not-found";
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
@@ -68,6 +69,9 @@ function Router() {
       
       {/* Placeholder for progress page if needed later */}
       <Route path="/progress" component={() => <PrivateRoute component={Dashboard} />} />
+      
+      {/* Badges page */}
+      <Route path="/badges" component={() => <PrivateRoute component={Badges} />} />
       
       {/* Public hiring manager page */}
       <Route path="/hiring" component={HiringManager} />
