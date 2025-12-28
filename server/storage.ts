@@ -80,15 +80,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProgress(userId: string, labId: number, completed: boolean): Promise<UserProgress> {
-    const [progress] = await db
-      .insert(userProgress)
-      .values({ userId, labId, completed, completedAt: new Date() })
-      .onConflictDoUpdate({
-        target: [userProgress.userId, userProgress.labId],
-        set: { completed, completedAt: new Date() }
-      })
-      .returning();
-    return progress;
+    // Check if progress already exists
+    const existing = await db.select()
+      .from(userProgress)
+      .where(and(eq(userProgress.userId, userId), eq(userProgress.labId, labId)))
+      .limit(1);
+    
+    if (existing.length > 0) {
+      // Update existing record
+      const [updated] = await db
+        .update(userProgress)
+        .set({ completed, completedAt: new Date() })
+        .where(and(eq(userProgress.userId, userId), eq(userProgress.labId, labId)))
+        .returning();
+      return updated;
+    } else {
+      // Insert new record
+      const [progress] = await db
+        .insert(userProgress)
+        .values({ userId, labId, completed, completedAt: new Date() })
+        .returning();
+      return progress;
+    }
   }
 
   async logCommand(userId: string, labId: number, command: string, output: string, isCorrect: boolean): Promise<void> {
