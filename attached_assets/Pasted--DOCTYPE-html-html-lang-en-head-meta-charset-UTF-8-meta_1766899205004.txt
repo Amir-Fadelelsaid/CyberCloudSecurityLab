@@ -1,0 +1,209 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amir Fadelelsaid | Cybersecurity Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a2e;
+            color: #fff;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        header {
+            background: rgba(15, 52, 96, 0.9);
+            padding: 30px;
+            font-size: 1.5em;
+            position: relative;
+            z-index: 2;
+        }
+        .container {
+            width: 80%;
+            margin: 40px auto;
+            background: rgba(22, 33, 62, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 150, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+        h1, h2, h3 {
+            color: #00a8ff;
+        }
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            background: url('https://source.unsplash.com/1600x900/?technology,cybersecurity') no-repeat center center/cover;
+        }
+        .interactive-btn {
+            background: #00a8ff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        .interactive-btn:hover {
+            transform: scale(1.1);
+        }
+        .projects {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .project-card {
+            background: #0f3460;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px;
+            width: 300px;
+            box-shadow: 0px 5px 15px rgba(0, 150, 255, 0.3);
+            transition: transform 0.3s ease-in-out;
+        }
+        .project-card:hover {
+            transform: scale(1.05);
+        }
+        a {
+            color: #00a8ff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            padding: 20px;
+            background: #0f3460;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <header>
+        <h1>Amir Fadelelsaid</h1>
+        <h3>Cybersecurity Analyst | SOC Specialist | Cloud Security</h3>
+    </header>
+    
+    <div class="container">
+        <h2>About Me</h2>
+        <p>I'm a Cybersecurity Analyst with expertise in SIEM solutions (Splunk, Microsoft Sentinel), cloud security (AWS, Azure), and incident response. Passionate about proactive threat detection, security automation, and SOC operations, I specialize in log analysis, threat hunting, and vulnerability management to strengthen enterprise security.With hands-on experience in malware analysis, IAM security, and compliance frameworks (NIST CSF, ISO 27001), I excel at detecting, analyzing, and mitigating cyber threats in hybrid cloud environments. My mission is to enhance security operations through efficient detection engineering, security automation, and continuous monitoring.</p>
+    </div>
+
+    <div class="container">
+        <h2>Resume</h2>
+        <p>Download my full resume here:</p>
+        <a href="https://drive.google.com/file/d/1cYzHyzkfGb-1YFnWRdaPCLPaTrmLqgDA/view?usp=sharing">📄 Download Resume</a> 
+    </div>
+
+    <div class="container">
+        <h2>Skills</h2>
+        <p>✅ SIEM (Splunk, Microsoft Sentinel) | ✅ Cloud Security (AWS, Azure) | ✅ Incident Response & Threat Hunting | ✅ Security Operations Center (SOC) Monitoring | ✅ Threat Intelligence & Detection Engineering | ✅ Security Automation & Orchestration (SOAR) | ✅ Log Analysis & Correlation (Splunk, Sentinel) | ✅ Vulnerability Management & Risk Assessment | ✅ Identity & Access Management (IAM) | ✅ Network Security & Firewall Management | ✅ Compliance & Governance (NIST, ISO 27001, CIS) | ✅ Cloud Security Posture Management (CSPM) | ✅ Active Directory Security & Hardening</p>
+    </div>
+
+    <div class="container">
+        <h2>Education</h2>
+        <h3>Master's in Cybersecurity & IT Management</h3>
+        <p><em>Nov 2024 – Nov 2025</em></p>
+        <h3>Bachelor’s in Criminal Justice</h3>
+        <p><em>Dec 2022 – Jun 2023</em></p>
+    </div>
+
+    <div class="container">
+        <h2>Certifications</h2>
+        <p>✅ AZ-500 (Azure Security Engineer Associate) </p>
+        <p>✅ Microsoft SC-200 (Security Operations Analyst) </p>
+        <p>✅ CompTIA CySA+ </p>
+        <p>✅ CompTIA Security+ </p>
+        <p>✅ CompTIA Network+ </p>
+        <p>✅ AWS Cloud Essentials </p>
+        <p>✅ Google Cybersecurity Certificate </p>
+        <p>✅ NIST Cybersecurity Framework (CSF) Certification </p>
+    </div>
+
+    <div class="container">
+  <h2>Experience</h2>
+
+  <div class="experience-entry">
+    <h3>Cyber Security Analyst Intern, LOG(N) Pacific</h3>
+    <p><em>Mar 2025 – Present (Remote)</em></p>
+    <ul>
+      <li>Conducted threat hunting &amp; incident response using Splunk and Microsoft Sentinel</li>
+      <li>Performed vulnerability scans via Tenable Nessus to mitigate risks</li>
+      <li>Analyzed malware &amp; forensic data to investigate cyber threats</li>
+    </ul>
+  </div>
+
+  <div class="experience-entry">
+    <h3>SOC Analyst, Santander Bank US</h3>
+    <p><em>April 2025 – Present, Quincy, MA</em></p>
+    <ul>
+      <li>Monitored SIEM and IDS/IPS for security anomalies, reducing false positives significantly</li>
+      <li>Correlated cyber alerts with physical breaches, enhancing threat response efficiency</li>
+      <li>Documented incidents for compliance and refined detection rules for improved accuracy</li>
+    </ul>
+  </div>
+
+  <div class="experience-entry">
+    <h3>GSOC Analyst Intern, Mosse Cyber Security Institute</h3>
+    <p><em>Aug 2024 – Feb 2025 (Remote)</em></p>
+    <ul>
+      <li>Monitored SIEM alerts, conducted log analysis, and performed vulnerability assessments</li>
+      <li>Triaged security alerts, assessed severity, and escalated incidents</li>
+      <li>Generated incident reports and optimized SIEM detection rules</li>
+    </ul>
+  </div>
+
+</div>
+
+   <div class="container">
+        <h2>Projects</h2>
+        <div class="projects">
+            <div class="project-card">
+                <h3>Microsoft Azure Home Lab</h3>
+                <p>A cloud-based cybersecurity lab in Azure using Microsoft Sentinel for real-world attack simulations.</p>
+                <a href="https://github.com/Amir6878/Microsoft-Azure-Home-Lab" target="_blank">View Project</a>
+            </div>
+            <div class="project-card">
+                <h3>SOC Automation Project</h3>
+                <p>Implemented automated threat detection workflows using SIEM tools.</p>
+                <a href="https://github.com/Amir6878/SOC-Automation-Project-" target="_blank">View Project</a>
+            </div>
+            <div class="project-card">
+                <h3>Elastic Defense Lab</h3>
+                <p>Cyber defense simulations and detection engineering with Elastic SIEM.</p>
+                <a href="https://github.com/Amir-Fadelelsaid/Elastic-Defense-Lab" target="_blank">View Project</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Contact</h2>
+        <p>📧 Email: <a href="mailto:Amir.Fadelelsaid@gmail.com">Amir.Fadelelsaid@gmail.com</a></p>
+        <p>🔗 LinkedIn: <a href="https://www.linkedin.com/in/amir-fadelelsaid-477453224" target="_blank">linkedin.com/in/amir-fadelelsaid-477453224</a></p>
+        <p>📂 GitHub: <a href="https://github.com/Amir-Fadelelsaid" target="_blank">github.com/Amir-Fadelelsaid</a></p>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 Amir Fadelelsaid | Cybersecurity Portfolio</p>
+    </div>
+
+    <script>
+        particlesJS("particles-js", {
+            particles: { number: { value: 80, density: { enable: true, value_area: 800 } }, color: { value: "#00a8ff" } }
+        });
+    </script>
+</body>
+</html>
