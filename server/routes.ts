@@ -1005,17 +1005,28 @@ export async function registerRoutes(
 async function seedDatabase() {
   const existingLabs = await storage.getLabs();
   
-  // Check which labs need to be added
-  const existingTitles = new Set(existingLabs.map(l => l.title));
+  // Check which labs need to be added or updated
+  const existingByTitle = new Map(existingLabs.map(l => [l.title, l]));
   
   for (const labDef of allLabs) {
-    if (!existingTitles.has(labDef.title)) {
+    const existingLab = existingByTitle.get(labDef.title);
+    
+    // Update existing labs with estimatedTime if missing
+    if (existingLab && !existingLab.estimatedTime) {
+      await storage.updateLab(existingLab.id, { 
+        estimatedTime: labDef.estimatedTime,
+        steps: labDef.steps 
+      });
+    }
+    
+    if (!existingByTitle.has(labDef.title)) {
       // Create lab
       const lab = await storage.createLab({
         title: labDef.title,
         description: labDef.description,
         difficulty: labDef.difficulty,
         category: labDef.category,
+        estimatedTime: labDef.estimatedTime,
         initialState: labDef.initialState,
         steps: labDef.steps
       });

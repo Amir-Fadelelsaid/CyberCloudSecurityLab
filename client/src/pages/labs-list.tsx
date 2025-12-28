@@ -1,7 +1,7 @@
 import { useLabs } from "@/hooks/use-labs";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Loader2, Search, Filter } from "lucide-react";
+import { Loader2, Search, Filter, Clock, ListChecks } from "lucide-react";
 import { useState } from "react";
 import { clsx } from "clsx";
 
@@ -117,9 +117,24 @@ export default function LabsList() {
                     {lab.title}
                   </h3>
                   
-                  <p className="relative z-10 text-sm text-muted-foreground/80 flex-1 px-6 mb-6 group-hover:text-muted-foreground transition-colors">
+                  <p className="relative z-10 text-sm text-muted-foreground/80 flex-1 px-6 mb-4 group-hover:text-muted-foreground transition-colors">
                     {lab.description}
                   </p>
+
+                  <div className="relative z-10 flex items-center gap-4 px-6 mb-4 text-xs text-muted-foreground/70">
+                    {lab.estimatedTime && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {String(lab.estimatedTime)}
+                      </span>
+                    )}
+                    {lab.steps && Array.isArray(lab.steps) && (
+                      <span className="flex items-center gap-1">
+                        <ListChecks className="w-3 h-3" />
+                        {(lab.steps as any[]).length} steps
+                      </span>
+                    )}
+                  </div>
 
                   <div className="relative z-10 mt-auto px-6 pb-6">
                     <motion.button 
