@@ -64,11 +64,17 @@ export default function Dashboard() {
           <div className="grid gap-4">
             {labsLoading ? (
               // Loading Skeletons
-              [1, 2].map(i => (
+              [1, 2, 3].map(i => (
                 <div key={i} className="h-40 rounded-xl bg-card/50 animate-pulse border border-border/30" />
               ))
             ) : (
-              labs?.slice(0, 3).map((lab, idx) => {
+              // Show one lab from each difficulty level
+              (() => {
+                const beginner = labs?.find(l => l.difficulty === 'Beginner');
+                const intermediate = labs?.find(l => l.difficulty === 'Intermediate');
+                const advanced = labs?.find(l => l.difficulty === 'Advanced');
+                return [beginner, intermediate, advanced].filter((l): l is NonNullable<typeof l> => l !== undefined);
+              })().map((lab) => {
                 const isCompleted = progress?.some(p => p.labId === lab.id && p.completed);
                 return (
                   <Link key={lab.id} href={`/labs/${lab.id}`}>
