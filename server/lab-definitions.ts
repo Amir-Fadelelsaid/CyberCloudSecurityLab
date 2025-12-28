@@ -8,6 +8,8 @@
 export interface LabDefinition {
   title: string;
   description: string;
+  briefing?: string;
+  scenario?: string;
   difficulty: "Beginner" | "Intermediate" | "Advanced" | "Challenge";
   category: "Storage Security" | "Network Security" | "SOC Operations" | "SOC Engineer" | "Cloud Security Analyst";
   estimatedTime: string;
@@ -17,6 +19,7 @@ export interface LabDefinition {
     title: string;
     description: string;
     hint: string;
+    intel?: string;
   }>;
   resources: Array<{
     type: string;
@@ -26,144 +29,166 @@ export interface LabDefinition {
     status: string;
   }>;
   fixCommands: string[];
+  successMessage?: string;
 }
 
-// ============= STORAGE SECURITY LABS (10) =============
+// ============= STORAGE SECURITY LABS (11) =============
 export const storageSecurityLabs: LabDefinition[] = [
   // BEGINNER LABS (3-4 steps, quick fixes)
   {
     title: "Public S3 Bucket Exposure",
     description: "A sensitive corporate S3 bucket has been accidentally left open to the public. Identify and secure it quickly.",
+    briefing: "URGENT ALERT: Our threat intelligence feed detected the 'corp-payroll-data' bucket appearing on a dark web forum listing exposed AWS resources. A security researcher notified us before threat actors could exploit it. You have 10 minutes before this hits the news.",
+    scenario: "It's 3:47 AM. Your phone buzzes with a PagerDuty alert. A Twitter bot that monitors exposed S3 buckets just flagged your company's payroll data. The CFO's salary, everyone's SSNs, bank account details - all potentially exposed. Your mission: contain this before market open.",
     difficulty: "Beginner",
     category: "Storage Security",
     estimatedTime: "5-10 minutes",
     initialState: { buckets: ["corp-payroll-data"] },
     steps: [
-      { number: 1, title: "Scan for Vulnerabilities", description: "Run a security scan to identify exposed resources.", hint: "Type 'scan' to see vulnerable resources." },
-      { number: 2, title: "List S3 Buckets", description: "Review your S3 buckets and their security status.", hint: "Type 'aws s3 ls' to list buckets." },
-      { number: 3, title: "Fix the Vulnerable Bucket", description: "Apply a secure bucket policy to block public access.", hint: "Type 'aws s3 fix corp-payroll-data' to secure it." }
+      { number: 1, title: "Threat Assessment", description: "Run an immediate security scan to assess the damage. How many resources are exposed?", hint: "Type 'scan' to see vulnerable resources.", intel: "The bucket was likely misconfigured during last week's migration. Always verify permissions after infrastructure changes." },
+      { number: 2, title: "Confirm the Target", description: "List all S3 buckets and identify which one is leaking sensitive payroll data.", hint: "Type 'aws s3 ls' to list buckets.", intel: "Look for naming patterns. 'corp-payroll-data' suggests high-value PII content." },
+      { number: 3, title: "Execute Remediation", description: "Apply an emergency bucket policy to block all public access immediately.", hint: "Type 'aws s3 fix corp-payroll-data' to secure it.", intel: "After fixing, you'll need to check CloudTrail logs to see if anyone accessed the data during the exposure window." }
     ],
     resources: [
       { type: "s3", name: "corp-payroll-data", config: { access: "public-read" }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws s3 fix corp-payroll-data"]
+    fixCommands: ["aws s3 fix corp-payroll-data"],
+    successMessage: "Bucket secured! You contained a potential data breach. Next step: forensics to determine if any data was exfiltrated during the exposure window."
   },
   {
     title: "Unencrypted S3 Bucket",
     description: "Customer data is stored without encryption. Enable server-side encryption to protect data at rest.",
+    briefing: "COMPLIANCE VIOLATION: The quarterly security audit flagged a critical finding - customer data in 'customer-data-raw' is stored in plaintext. This violates PCI-DSS and could result in $100K/day in fines. Remediate within 24 hours.",
+    scenario: "The compliance team is breathing down your neck. An auditor discovered that credit card data flows through an unencrypted bucket before processing. If regulators find out, it's not just fines - your company could lose its ability to process payments entirely.",
     difficulty: "Beginner",
     category: "Storage Security",
     estimatedTime: "5-10 minutes",
     initialState: { buckets: ["customer-data-raw"] },
     steps: [
-      { number: 1, title: "Scan Infrastructure", description: "Identify unencrypted storage.", hint: "Type 'scan' to find vulnerabilities." },
-      { number: 2, title: "Check Encryption Status", description: "View bucket encryption details.", hint: "Type 'aws s3 ls-encryption' to check." },
-      { number: 3, title: "Enable Encryption", description: "Apply AES-256 encryption.", hint: "Type 'aws s3 enable-encryption customer-data-raw'." }
+      { number: 1, title: "Audit the Environment", description: "Scan your infrastructure to find all unencrypted storage resources.", hint: "Type 'scan' to find vulnerabilities.", intel: "PCI-DSS Requirement 3.4: Render PAN unreadable anywhere it is stored using encryption." },
+      { number: 2, title: "Verify Encryption Gap", description: "Confirm which buckets lack server-side encryption.", hint: "Type 'aws s3 ls-encryption' to check.", intel: "AWS offers SSE-S3 (AES-256), SSE-KMS, and SSE-C. For PCI compliance, SSE-KMS with CMK is recommended." },
+      { number: 3, title: "Enable Encryption", description: "Apply AES-256 server-side encryption to protect data at rest.", hint: "Type 'aws s3 enable-encryption customer-data-raw'.", intel: "Enabling encryption on existing buckets only affects new objects. Run aws s3 cp to re-encrypt existing objects." }
     ],
     resources: [
       { type: "s3", name: "customer-data-raw", config: { encryption: "none" }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws s3 enable-encryption customer-data-raw"]
+    fixCommands: ["aws s3 enable-encryption customer-data-raw"],
+    successMessage: "Encryption enabled! Document this remediation for the auditors and schedule a re-audit to close the finding."
   },
   {
     title: "S3 Bucket Logging Disabled",
     description: "Access logging is disabled, making it impossible to audit data access. Enable logging.",
+    briefing: "BLIND SPOT DETECTED: The SOC team tried to investigate suspicious activity on 'financial-reports' bucket but discovered logging was never enabled. We're flying blind - any past intrusions would be undetectable.",
+    scenario: "The CISO wants answers: 'Who accessed the Q3 financial reports before the earnings call?' You check the logs... there are none. Someone disabled logging on this critical bucket. Without audit trails, insider trading investigations hit a dead end.",
     difficulty: "Beginner",
     category: "Storage Security",
     estimatedTime: "5-10 minutes",
     initialState: { buckets: ["financial-reports"] },
     steps: [
-      { number: 1, title: "Identify Issue", description: "Scan for buckets missing audit logs.", hint: "Type 'scan' to identify issues." },
-      { number: 2, title: "Check Logging", description: "Review logging configuration.", hint: "Type 'aws s3 ls-logging' to check." },
-      { number: 3, title: "Enable Logging", description: "Turn on access logging.", hint: "Type 'aws s3 enable-logging financial-reports'." }
+      { number: 1, title: "Identify Blind Spots", description: "Scan for buckets that lack proper audit logging.", hint: "Type 'scan' to identify issues.", intel: "CIS AWS Benchmark 2.1.3: Ensure S3 bucket access logging is enabled on the CloudTrail S3 bucket." },
+      { number: 2, title: "Confirm Logging Gap", description: "Check the current logging configuration on the financial reports bucket.", hint: "Type 'aws s3 ls-logging' to check.", intel: "S3 access logs include requester, bucket name, request time, action, response status, and error codes." },
+      { number: 3, title: "Enable Audit Trail", description: "Turn on server access logging to capture all future activity.", hint: "Type 'aws s3 enable-logging financial-reports'.", intel: "Logs are delivered on a best-effort basis within a few hours. For real-time alerting, use CloudTrail with EventBridge." }
     ],
     resources: [
       { type: "s3", name: "financial-reports", config: { logging: false }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws s3 enable-logging financial-reports"]
+    fixCommands: ["aws s3 enable-logging financial-reports"],
+    successMessage: "Logging enabled! Future access will be tracked. Consider enabling CloudTrail data events for real-time monitoring."
   },
 
   // INTERMEDIATE LABS (5-7 steps, multiple phases)
   {
     title: "S3 Versioning and Backup Compliance",
     description: "A backup bucket lacks versioning and lifecycle policies, risking permanent data loss. Configure proper backup protections.",
+    briefing: "DISASTER RECOVERY RISK: Internal audit discovered our disaster recovery bucket has no versioning. If ransomware hits or an insider goes rogue, we have no way to recover deleted data. The board wants this fixed before the next audit.",
+    scenario: "Last month, a disgruntled employee at a competitor deleted their backups before quitting. The company lost 3 years of customer data. Your CISO saw the headlines and immediately asked: 'Can this happen to us?' Your job: make sure it can't.",
     difficulty: "Intermediate",
     category: "Storage Security",
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["disaster-recovery-backup", "backup-logs"] },
     steps: [
-      { number: 1, title: "Assess Current State", description: "Scan infrastructure for backup vulnerabilities.", hint: "Type 'scan' to identify issues." },
-      { number: 2, title: "Review Versioning Status", description: "Check which buckets have versioning enabled.", hint: "Type 'aws s3 ls-versioning' to review." },
-      { number: 3, title: "Understand the Risk", description: "Without versioning, deleted files cannot be recovered. This violates backup compliance requirements.", hint: "Consider what happens if someone accidentally deletes critical backups." },
-      { number: 4, title: "Enable Versioning", description: "Turn on versioning for the backup bucket.", hint: "Type 'aws s3 enable-versioning disaster-recovery-backup'." },
-      { number: 5, title: "Verify Configuration", description: "Confirm versioning is now active.", hint: "Type 'aws s3 ls-versioning' to verify." },
-      { number: 6, title: "Document Compliance", description: "Run a final scan to confirm compliance status.", hint: "Type 'scan' to generate compliance report." }
+      { number: 1, title: "Assess Current State", description: "Scan infrastructure for backup vulnerabilities.", hint: "Type 'scan' to identify issues.", intel: "Ransomware operators specifically target backups first to maximize impact." },
+      { number: 2, title: "Review Versioning Status", description: "Check which buckets have versioning enabled.", hint: "Type 'aws s3 ls-versioning' to review.", intel: "S3 versioning keeps multiple variants of an object. When enabled, you can recover any previous version." },
+      { number: 3, title: "Understand the Risk", description: "Without versioning, deleted files cannot be recovered. This violates backup compliance requirements.", hint: "Consider what happens if someone accidentally deletes critical backups.", intel: "NIST CSF: PR.IP-4 requires backups to be conducted, maintained, and tested." },
+      { number: 4, title: "Enable Versioning", description: "Turn on versioning for the backup bucket.", hint: "Type 'aws s3 enable-versioning disaster-recovery-backup'.", intel: "Pro tip: Combine versioning with MFA Delete for an additional layer of protection against accidental or malicious deletion." },
+      { number: 5, title: "Verify Configuration", description: "Confirm versioning is now active.", hint: "Type 'aws s3 ls-versioning' to verify.", intel: "Once enabled, versioning cannot be fully disabled - only suspended. This is a feature, not a bug." },
+      { number: 6, title: "Document Compliance", description: "Run a final scan to confirm compliance status.", hint: "Type 'scan' to generate compliance report.", intel: "Document this change for your audit trail. Compliance isn't just about fixing - it's about proving you fixed it." }
     ],
     resources: [
       { type: "s3", name: "disaster-recovery-backup", config: { versioning: false }, isVulnerable: true, status: "active" },
       { type: "s3", name: "backup-logs", config: { versioning: true }, isVulnerable: false, status: "active" }
     ],
-    fixCommands: ["aws s3 enable-versioning disaster-recovery-backup"]
+    fixCommands: ["aws s3 enable-versioning disaster-recovery-backup"],
+    successMessage: "Versioning enabled! Your backups are now protected against deletion. Consider adding lifecycle policies to manage storage costs."
   },
   {
     title: "Overly Permissive Bucket Policy",
     description: "A data lake bucket grants wildcard permissions to all principals. Investigate the policy and implement least privilege access.",
+    briefing: "CRITICAL MISCONFIGURATION: A new data engineer accidentally applied a policy granting full access to everyone. The 'shared-data-lake' bucket contains 2TB of analytics data including user behavior patterns. Lock it down now.",
+    scenario: "A junior engineer tried to share data with a contractor and 'just made it work' by using Principal: '*'. Now anyone on the internet can read, write, or delete your entire data lake. Time to fix this before someone notices the open door.",
     difficulty: "Intermediate",
     category: "Storage Security",
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["shared-data-lake"] },
     steps: [
-      { number: 1, title: "Identify Policy Risk", description: "Scan for overly permissive bucket policies.", hint: "Type 'scan' to find misconfigurations." },
-      { number: 2, title: "Review Current Policy", description: "Examine the bucket's IAM policy document.", hint: "Type 'aws s3 get-policy shared-data-lake' to view." },
-      { number: 3, title: "Analyze Permissions", description: "The policy grants 's3:*' to principal '*'. This allows anyone to read, write, and delete data.", hint: "Wildcard policies violate CIS Benchmark 2.1.5." },
-      { number: 4, title: "Apply Least Privilege", description: "Restrict the policy to specific actions and principals.", hint: "Type 'aws s3 restrict-policy shared-data-lake'." },
-      { number: 5, title: "Verify New Policy", description: "Check that the policy is now restrictive.", hint: "Type 'aws s3 get-policy shared-data-lake' to confirm." },
-      { number: 6, title: "Final Verification", description: "Run security scan to confirm remediation.", hint: "Type 'scan' to verify." }
+      { number: 1, title: "Identify Policy Risk", description: "Scan for overly permissive bucket policies.", hint: "Type 'scan' to find misconfigurations.", intel: "AWS Config rule 's3-bucket-public-read-prohibited' can automatically detect and alert on these issues." },
+      { number: 2, title: "Review Current Policy", description: "Examine the bucket's IAM policy document.", hint: "Type 'aws s3 get-policy shared-data-lake' to view.", intel: "Look for Principal: '*' or Principal: {'AWS': '*'} - both mean 'everyone in the world'." },
+      { number: 3, title: "Analyze Permissions", description: "The policy grants 's3:*' to principal '*'. This allows anyone to read, write, and delete data.", hint: "Wildcard policies violate CIS Benchmark 2.1.5.", intel: "This is a common finding in penetration tests. Attackers use tools like 'bucket_finder' to discover misconfigured buckets." },
+      { number: 4, title: "Apply Least Privilege", description: "Restrict the policy to specific actions and principals.", hint: "Type 'aws s3 restrict-policy shared-data-lake'.", intel: "Best practice: Use specific IAM roles instead of wildcards. Grant only read access if write isn't needed." },
+      { number: 5, title: "Verify New Policy", description: "Check that the policy is now restrictive.", hint: "Type 'aws s3 get-policy shared-data-lake' to confirm.", intel: "After fixing, test that legitimate users can still access what they need." },
+      { number: 6, title: "Final Verification", description: "Run security scan to confirm remediation.", hint: "Type 'scan' to verify.", intel: "Consider implementing S3 Block Public Access at the account level to prevent future misconfigurations." }
     ],
     resources: [
       { type: "s3", name: "shared-data-lake", config: { policy: "s3:*", principal: "*" }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws s3 restrict-policy shared-data-lake"]
+    fixCommands: ["aws s3 restrict-policy shared-data-lake"],
+    successMessage: "Policy locked down! You've implemented least privilege access. Consider setting up AWS Config rules to catch this automatically next time."
   },
   {
     title: "Cross-Account Bucket Access Investigation",
     description: "Security detected a bucket with access from unknown AWS accounts. Investigate and remove unauthorized access.",
+    briefing: "SUSPICIOUS ACTIVITY: CloudTrail detected API calls from AWS account 999888777666 accessing our 'partner-data-exchange' bucket. This account is NOT in our approved partner list. Investigate immediately - this could be data exfiltration.",
+    scenario: "Your SIEM just fired an alert: 'Unusual cross-account S3 access detected.' Someone added an unknown AWS account to your bucket policy. Was it a mistake, or did an attacker modify the policy to exfiltrate data? Time to investigate.",
     difficulty: "Intermediate",
     category: "Storage Security",
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["partner-data-exchange"] },
     steps: [
-      { number: 1, title: "Detect Anomaly", description: "Scan for buckets with external access.", hint: "Type 'scan' to identify issues." },
-      { number: 2, title: "List External Access", description: "Check which accounts have access to the bucket.", hint: "Type 'aws s3 check-access partner-data-exchange'." },
-      { number: 3, title: "Identify Unauthorized Accounts", description: "Account 999888777666 is not in our approved partners list. This could be a compromise.", hint: "Cross-reference with your organization's approved account list." },
-      { number: 4, title: "Review Bucket Policy", description: "Examine how the external access was granted.", hint: "Type 'aws s3 get-policy partner-data-exchange'." },
-      { number: 5, title: "Revoke Unauthorized Access", description: "Remove access for unknown accounts.", hint: "Type 'aws s3 revoke-external partner-data-exchange'." },
-      { number: 6, title: "Verify Remediation", description: "Confirm only authorized accounts remain.", hint: "Type 'aws s3 check-access partner-data-exchange' to verify." }
+      { number: 1, title: "Detect Anomaly", description: "Scan for buckets with external access.", hint: "Type 'scan' to identify issues.", intel: "Cross-account access is a common lateral movement technique. Attackers grant their accounts access for persistent data theft." },
+      { number: 2, title: "List External Access", description: "Check which accounts have access to the bucket.", hint: "Type 'aws s3 check-access partner-data-exchange'.", intel: "MITRE ATT&CK T1537: Transfer Data to Cloud Account - Adversaries may exfiltrate data by granting themselves access." },
+      { number: 3, title: "Identify Unauthorized Accounts", description: "Account 999888777666 is not in our approved partners list. This could be a compromise.", hint: "Cross-reference with your organization's approved account list.", intel: "Pro tip: Maintain a documented list of approved external accounts. Audit this list quarterly." },
+      { number: 4, title: "Review Bucket Policy", description: "Examine how the external access was granted.", hint: "Type 'aws s3 get-policy partner-data-exchange'.", intel: "Check CloudTrail for 'PutBucketPolicy' events to see WHO added this account and WHEN." },
+      { number: 5, title: "Revoke Unauthorized Access", description: "Remove access for unknown accounts.", hint: "Type 'aws s3 revoke-external partner-data-exchange'.", intel: "After revoking, monitor for re-addition attempts. If it happens again, you have an active compromise." },
+      { number: 6, title: "Verify Remediation", description: "Confirm only authorized accounts remain.", hint: "Type 'aws s3 check-access partner-data-exchange' to verify.", intel: "Document this incident. If data was accessed, you may need to notify affected parties under GDPR/CCPA." }
     ],
     resources: [
       { type: "s3", name: "partner-data-exchange", config: { crossAccount: ["123456789012", "999888777666"] }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws s3 revoke-external partner-data-exchange"]
+    fixCommands: ["aws s3 revoke-external partner-data-exchange"],
+    successMessage: "Unauthorized access revoked! Review CloudTrail to determine the scope of potential data access. Consider this a potential incident."
   },
   {
     title: "S3 Object Lock for Compliance",
     description: "Regulatory requirements mandate WORM protection for audit logs. Configure Object Lock to prevent deletion or modification.",
+    briefing: "COMPLIANCE DEADLINE: The legal team just informed us that our SEC filing requires WORM-compliant storage for audit logs. We have 48 hours to implement Object Lock on 'compliance-audit-logs' or face regulatory action.",
+    scenario: "After the Enron scandal, regulations require financial records to be immutable. Your company's audit logs can currently be deleted by anyone with S3 access. If a bad actor covers their tracks by deleting logs, you'll have no evidence for investigations.",
     difficulty: "Intermediate",
     category: "Storage Security",
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["compliance-audit-logs"] },
     steps: [
-      { number: 1, title: "Identify Compliance Gap", description: "Scan for buckets missing WORM protection.", hint: "Type 'scan' to identify issues." },
-      { number: 2, title: "Check Object Lock Status", description: "Review current Object Lock configuration.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'." },
-      { number: 3, title: "Understand Requirements", description: "SOX and HIPAA require immutable audit logs. Without Object Lock, logs can be tampered with.", hint: "MITRE ATT&CK T1565: Data Manipulation." },
-      { number: 4, title: "Enable Object Lock", description: "Configure WORM protection in compliance mode.", hint: "Type 'aws s3 enable-object-lock compliance-audit-logs'." },
-      { number: 5, title: "Verify Protection", description: "Confirm Object Lock is active.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'." },
-      { number: 6, title: "Generate Compliance Report", description: "Document the remediation for auditors.", hint: "Type 'scan' to generate report." }
+      { number: 1, title: "Identify Compliance Gap", description: "Scan for buckets missing WORM protection.", hint: "Type 'scan' to identify issues.", intel: "SEC Rule 17a-4 and FINRA Rule 4511 require broker-dealers to preserve records in non-rewriteable, non-erasable format." },
+      { number: 2, title: "Check Object Lock Status", description: "Review current Object Lock configuration.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'.", intel: "Object Lock has two modes: Governance (admins can override) and Compliance (nobody can delete, not even root)." },
+      { number: 3, title: "Understand Requirements", description: "SOX and HIPAA require immutable audit logs. Without Object Lock, logs can be tampered with.", hint: "MITRE ATT&CK T1565: Data Manipulation.", intel: "Attackers who compromise systems often delete logs first to cover their tracks. Immutable logs are your insurance policy." },
+      { number: 4, title: "Enable Object Lock", description: "Configure WORM protection in compliance mode.", hint: "Type 'aws s3 enable-object-lock compliance-audit-logs'.", intel: "Warning: Compliance mode is PERMANENT. Objects cannot be deleted until retention expires. Choose retention period carefully." },
+      { number: 5, title: "Verify Protection", description: "Confirm Object Lock is active.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'.", intel: "Test by attempting to delete a locked object - you should receive an 'Access Denied' error even with admin permissions." },
+      { number: 6, title: "Generate Compliance Report", description: "Document the remediation for auditors.", hint: "Type 'scan' to generate report.", intel: "Keep screenshots and timestamps. Auditors love documentation that proves exactly when controls were implemented." }
     ],
     resources: [
       { type: "s3", name: "compliance-audit-logs", config: { objectLock: false }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws s3 enable-object-lock compliance-audit-logs"]
+    fixCommands: ["aws s3 enable-object-lock compliance-audit-logs"],
+    successMessage: "WORM protection enabled! Your audit logs are now tamper-proof. You're compliant with SEC 17a-4 and SOX requirements."
   },
 
   // ADVANCED LABS (8-12 steps, complex scenarios)
@@ -250,59 +275,68 @@ export const storageSecurityLabs: LabDefinition[] = [
   }
 ];
 
-// ============= NETWORK SECURITY LABS (10) =============
+// ============= NETWORK SECURITY LABS (11) =============
 export const networkSecurityLabs: LabDefinition[] = [
   // BEGINNER LABS
   {
     title: "Insecure Security Group - SSH Exposed",
     description: "An EC2 instance allows SSH from the entire internet. Quickly restrict access.",
+    briefing: "ACTIVE THREAT: Honeypot data shows attackers are actively scanning our IP ranges for open SSH ports. They've found 'db-prod-01' and brute force attempts have begun. You have minutes before they gain access.",
+    scenario: "Shodan just indexed your database server with port 22 open to the world. Automated bots are already trying 1000+ username/password combinations per minute. One weak password is all it takes. Shut this door NOW.",
     difficulty: "Beginner",
     category: "Network Security",
     estimatedTime: "5-10 minutes",
     initialState: { instances: ["db-prod-01"] },
     steps: [
-      { number: 1, title: "Scan for Issues", description: "Identify exposed network ports.", hint: "Type 'scan' to find vulnerabilities." },
-      { number: 2, title: "Review Security Group", description: "Check the security group rules.", hint: "Type 'aws ec2 describe-sg db-prod-01'." },
-      { number: 3, title: "Restrict SSH Access", description: "Limit SSH to internal networks only.", hint: "Type 'aws ec2 restrict-ssh db-prod-01'." }
+      { number: 1, title: "Scan for Issues", description: "Identify exposed network ports.", hint: "Type 'scan' to find vulnerabilities.", intel: "Exposed SSH is the #1 attack vector for cloud compromises. Most attacks are automated and happen within hours of exposure." },
+      { number: 2, title: "Review Security Group", description: "Check the security group rules.", hint: "Type 'aws ec2 describe-sg db-prod-01'.", intel: "Look for 0.0.0.0/0 - this means 'everyone on the internet'. Never use this for management ports." },
+      { number: 3, title: "Restrict SSH Access", description: "Limit SSH to internal networks only.", hint: "Type 'aws ec2 restrict-ssh db-prod-01'.", intel: "Best practice: Use Systems Manager Session Manager instead of SSH. It provides audit trails and doesn't require open ports." }
     ],
     resources: [
       { type: "security_group", name: "sg-db-prod-01", config: { ingress: [{ port: 22, source: "0.0.0.0/0" }] }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws ec2 restrict-ssh db-prod-01"]
+    fixCommands: ["aws ec2 restrict-ssh db-prod-01"],
+    successMessage: "SSH locked down! Brute force attacks will now fail at the network layer. Consider implementing Session Manager for passwordless, audited access."
   },
   {
     title: "Open RDP Port to Internet",
     description: "A Windows server has RDP exposed to the world - a common ransomware vector. Close it.",
+    briefing: "RANSOMWARE RISK: Threat intelligence reports a new RDP brute-force campaign by 'LockBit' targeting exposed Windows servers. Your admin server 'win-admin-01' has RDP wide open. Secure it before you become the next victim.",
+    scenario: "The FBI just issued an advisory: ransomware gangs are specifically targeting RDP. Your Windows admin server is visible to 4 billion internet users right now. The only thing between you and a $500K ransom demand is a password.",
     difficulty: "Beginner",
     category: "Network Security",
     estimatedTime: "5-10 minutes",
     initialState: { instances: ["win-admin-01"] },
     steps: [
-      { number: 1, title: "Identify Risk", description: "Scan for exposed RDP ports.", hint: "Type 'scan' to find issues." },
-      { number: 2, title: "List Security Groups", description: "Review current configurations.", hint: "Type 'aws ec2 ls-sg'." },
-      { number: 3, title: "Restrict RDP", description: "Allow RDP only from VPN.", hint: "Type 'aws ec2 restrict-rdp win-admin-01'." }
+      { number: 1, title: "Identify Risk", description: "Scan for exposed RDP ports.", hint: "Type 'scan' to find issues.", intel: "RDP (port 3389) is the most commonly exploited port. Ransomware operators actively buy access to exposed RDP servers." },
+      { number: 2, title: "List Security Groups", description: "Review current configurations.", hint: "Type 'aws ec2 ls-sg'.", intel: "BlueKeep (CVE-2019-0708) made RDP exploitation trivial. Even patched systems are vulnerable to credential attacks." },
+      { number: 3, title: "Restrict RDP", description: "Allow RDP only from VPN.", hint: "Type 'aws ec2 restrict-rdp win-admin-01'.", intel: "After restricting, enable NLA (Network Level Authentication) for an additional security layer." }
     ],
     resources: [
       { type: "security_group", name: "sg-win-admin", config: { ingress: [{ port: 3389, source: "0.0.0.0/0" }] }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws ec2 restrict-rdp win-admin-01"]
+    fixCommands: ["aws ec2 restrict-rdp win-admin-01"],
+    successMessage: "RDP secured! You've closed one of the most dangerous attack vectors. Consider using AWS Fleet Manager or Azure Bastion for secure remote access."
   },
   {
     title: "Database Port Exposed",
     description: "MySQL port 3306 is accessible from the internet. Restrict to app servers.",
+    briefing: "DATA BREACH IMMINENT: Your MySQL database is reachable from any IP address on earth. Attackers can attempt to connect, brute force credentials, or exploit SQL injection directly. This is how major breaches start.",
+    scenario: "A security researcher just responsibly disclosed that your MySQL port is open. You have 24 hours before they publish the finding. If attackers find it first, customer data could be exfiltrated in minutes.",
     difficulty: "Beginner",
     category: "Network Security",
     estimatedTime: "5-10 minutes",
     initialState: { instances: ["mysql-prod-01"] },
     steps: [
-      { number: 1, title: "Find Exposed Ports", description: "Scan for database exposure.", hint: "Type 'scan' to identify." },
-      { number: 2, title: "Check Database SG", description: "Review MySQL security group.", hint: "Type 'aws ec2 describe-sg mysql-prod-01'." },
-      { number: 3, title: "Restrict Access", description: "Allow only app server security group.", hint: "Type 'aws ec2 restrict-db mysql-prod-01'." }
+      { number: 1, title: "Find Exposed Ports", description: "Scan for database exposure.", hint: "Type 'scan' to identify.", intel: "Database ports should NEVER be internet-facing. Always place databases in private subnets." },
+      { number: 2, title: "Check Database SG", description: "Review MySQL security group.", hint: "Type 'aws ec2 describe-sg mysql-prod-01'.", intel: "The 2017 MongoDB apocalypse happened because thousands of databases were internet-exposed with no authentication." },
+      { number: 3, title: "Restrict Access", description: "Allow only app server security group.", hint: "Type 'aws ec2 restrict-db mysql-prod-01'.", intel: "Use security group references (sg-xxxxx) instead of IP ranges when possible. This ensures only authorized instances can connect." }
     ],
     resources: [
       { type: "security_group", name: "sg-mysql-prod", config: { ingress: [{ port: 3306, source: "0.0.0.0/0" }] }, isVulnerable: true, status: "active" }
     ],
-    fixCommands: ["aws ec2 restrict-db mysql-prod-01"]
+    fixCommands: ["aws ec2 restrict-db mysql-prod-01"],
+    successMessage: "Database secured! Only your application servers can now reach MySQL. Consider enabling IAM database authentication for passwordless, audited access."
   },
 
   // INTERMEDIATE LABS
