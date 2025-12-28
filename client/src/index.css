@@ -106,4 +106,48 @@
   @keyframes blink {
     50% { opacity: 0; }
   }
+
+  /* Neon glow effects */
+  .neon-glow {
+    box-shadow: 0 0 10px rgba(0, 255, 128, 0.3), inset 0 0 10px rgba(0, 255, 128, 0.1);
+  }
+
+  .neon-glow:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 128, 0.6), inset 0 0 10px rgba(0, 255, 128, 0.2);
+  }
+
+  /* Floating animation */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .float-animation {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Gradient text animation */
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .gradient-text-animated {
+    background: linear-gradient(90deg, rgba(0, 255, 128, 1), rgba(0, 255, 200, 0.8), rgba(0, 255, 128, 1));
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Pulse glow animation */
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 128, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 128, 0.5); }
+  }
+
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
 }
