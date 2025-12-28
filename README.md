@@ -2,9 +2,9 @@
 
 [![Public Repository](https://img.shields.io/badge/Repository-Public-blue)](https://github.com/Amir-Fadelelsaid/CyberSecurityLab)
 [![TypeScript](https://img.shields.io/badge/TypeScript-97.7%25-blue)](https://www.typescriptlang.org/)
-[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://cyberlab.replit.dev)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://cloudshieldlabbyamirfadel.com/)
 
-## 🎮 [▶ Try CyberLab Live](https://FadelsCloudsecuritylabtraining.replit.app) 
+## 🎮 [▶ Try CyberLab Live](https://cloudshieldlabbyamirfadel.com/) 
 
 A cutting-edge interactive cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations.
 
