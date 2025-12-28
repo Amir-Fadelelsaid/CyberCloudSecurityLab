@@ -4,6 +4,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-97.7%25-blue)](https://www.typescriptlang.org/)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://cyberlab.replit.dev)
 
+## 🎮 [▶ Try CyberLab Live](https://FadelsCloudsecuritylabtraining.replit.app) 
+
 A cutting-edge interactive cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations.
 
 ## 🎯 Features
