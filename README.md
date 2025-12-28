@@ -1,5 +1,14 @@
 # CloudShieldLab - Interactive Cloud Security Training Platform
 
+Built to demonstrate real-world cloud security, SOC analysis, and incident response skills in a production-like environment.
+
+### Who CloudShieldLab Is Designed For
+
+- Aspiring SOC Analysts
+- Cloud Security Engineers
+- IAM / SecOps professionals
+- Security teams onboarding junior analysts
+
 [![Public Repository](https://img.shields.io/badge/Repository-Public-blue)](https://github.com/Amir-Fadelelsaid/CyberSecurityLab)
 [![TypeScript](https://img.shields.io/badge/TypeScript-97.7%25-blue)](https://www.typescriptlang.org/)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://cloudshieldlabbyamirfadel.com/)
