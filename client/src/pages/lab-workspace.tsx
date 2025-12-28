@@ -197,8 +197,18 @@ export default function LabWorkspace() {
                           className="ml-10 text-xs text-primary/80 font-mono bg-gradient-to-r from-black/60 to-black/40 p-3 rounded border border-primary/30 relative"
                           whileHover={{ borderColor: 'rgba(0, 255, 128, 0.6)' }}
                         >
-                          <span className="text-accent">💡</span> {step.hint}
+                          <span className="text-accent font-bold">HINT:</span> {step.hint}
                         </motion.div>
+                        {step.intel && (
+                          <motion.div 
+                            className="ml-10 text-xs text-cyan-400/80 font-mono bg-gradient-to-r from-cyan-950/40 to-cyan-900/20 p-3 rounded border border-cyan-500/30 relative mt-2"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            <span className="text-cyan-400 font-bold">INTEL:</span> {step.intel}
+                          </motion.div>
+                        )}
                       </motion.div>
                     ))}
                   </div>
@@ -207,21 +217,47 @@ export default function LabWorkspace() {
                 )}
               </motion.div>
             ) : (
-              <div className="prose prose-invert prose-sm prose-p:text-muted-foreground prose-headings:text-white prose-headings:font-display">
+              <div className="prose prose-invert prose-sm prose-p:text-muted-foreground prose-headings:text-white prose-headings:font-display space-y-4">
                 <h3 className="text-primary flex items-center gap-2">
-                  <PlayCircle className="w-4 h-4" /> Objective
+                  <PlayCircle className="w-4 h-4" /> Mission Objective
                 </h3>
                 <p>{lab.description}</p>
                 
-                <h4 className="text-white mt-6 mb-2 text-xs uppercase tracking-widest font-bold opacity-70">Scenario Intel</h4>
-                <div className="bg-black/30 p-4 rounded-lg border border-white/5 text-xs font-mono leading-relaxed text-gray-400">
-                   <p>Our automated scanners detected a misconfiguration in the cloud infrastructure shown in the console.</p>
-                   <p className="mt-2 text-primary/80">
-                     &gt; TARGET: Identify vulnerable resource.<br/>
-                     &gt; ACTION: Use the terminal to patch the vulnerability.<br/>
-                     &gt; HINT: Check bucket policies or security group rules.
-                   </p>
-                </div>
+                {(lab as any).briefing && (
+                  <>
+                    <h4 className="text-destructive mt-6 mb-2 text-xs uppercase tracking-widest font-bold flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5" /> Alert Briefing
+                    </h4>
+                    <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/30 text-xs font-mono leading-relaxed text-destructive/90">
+                      {(lab as any).briefing}
+                    </div>
+                  </>
+                )}
+                
+                {(lab as any).scenario && (
+                  <>
+                    <h4 className="text-cyan-400 mt-6 mb-2 text-xs uppercase tracking-widest font-bold flex items-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5" /> Scenario
+                    </h4>
+                    <div className="bg-cyan-950/30 p-4 rounded-lg border border-cyan-500/30 text-xs leading-relaxed text-cyan-100/80">
+                      {(lab as any).scenario}
+                    </div>
+                  </>
+                )}
+
+                {!(lab as any).briefing && !(lab as any).scenario && (
+                  <>
+                    <h4 className="text-white mt-6 mb-2 text-xs uppercase tracking-widest font-bold opacity-70">Scenario Intel</h4>
+                    <div className="bg-black/30 p-4 rounded-lg border border-white/5 text-xs font-mono leading-relaxed text-gray-400">
+                       <p>Our automated scanners detected a misconfiguration in the cloud infrastructure shown in the console.</p>
+                       <p className="mt-2 text-primary/80">
+                         &gt; TARGET: Identify vulnerable resource.<br/>
+                         &gt; ACTION: Use the terminal to patch the vulnerability.<br/>
+                         &gt; HINT: Check bucket policies or security group rules.
+                       </p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
