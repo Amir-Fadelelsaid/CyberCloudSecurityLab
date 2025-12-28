@@ -1,4 +1,4 @@
-// Badge Definitions for CyberLab
+// Badge Definitions for CloudShieldLab
 // Categories: Level (progression), Category (mastery), Achievement (special)
 
 export interface BadgeDefinition {
@@ -139,7 +139,7 @@ export const achievementBadges: BadgeDefinition[] = [
   },
   {
     name: "Completionist",
-    description: "Complete every single lab in CyberLab",
+    description: "Complete every single lab in CloudShieldLab",
     icon: "Trophy",
     category: "Achievement",
     requirement: JSON.stringify({ type: "total_labs", count: 57 })

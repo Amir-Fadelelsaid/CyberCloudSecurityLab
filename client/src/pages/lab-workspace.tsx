@@ -3,11 +3,12 @@ import { useRoute, Link } from "wouter";
 import { TerminalWindow } from "@/components/terminal-window";
 import { ResourceGraph } from "@/components/resource-graph";
 import { MissionCompleteModal } from "@/components/mission-complete-modal";
-import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { clsx } from "clsx";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 export default function LabWorkspace() {
   const [, params] = useRoute("/labs/:id");
@@ -16,6 +17,14 @@ export default function LabWorkspace() {
   const { mutate: resetLab, isPending: isResetting } = useResetLab();
   const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('steps');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showStepsPanel, setShowStepsPanel] = useState(() => {
+    const saved = localStorage.getItem(`lab-${labId}-showSteps`);
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`lab-${labId}-showSteps`, String(showStepsPanel));
+  }, [labId, showStepsPanel]);
 
   if (isLoading) {
     return (
@@ -69,23 +78,52 @@ export default function LabWorkspace() {
           </div>
         </div>
 
-        <motion.button 
-          onClick={() => resetLab(labId)}
-          disabled={isResetting}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-mono text-primary hover:text-white hover:bg-gradient-to-r hover:from-primary/20 hover:to-accent/20 rounded-lg transition-all border border-primary/30 hover:border-primary/60 shadow-md hover:shadow-lg hover:shadow-primary/30"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <RefreshCw className={clsx("w-3.5 h-3.5", isResetting && "animate-spin")} />
-          {isResetting ? "RESETTING..." : "RESET_ENV"}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowStepsPanel(!showStepsPanel)}
+            className="flex items-center gap-2 text-xs font-mono border-primary/30 hover:border-primary/60"
+            data-testid="button-toggle-steps"
+          >
+            {showStepsPanel ? (
+              <>
+                <PanelLeftClose className="w-3.5 h-3.5" />
+                HIDE_GUIDE
+              </>
+            ) : (
+              <>
+                <PanelLeft className="w-3.5 h-3.5" />
+                SHOW_GUIDE
+              </>
+            )}
+          </Button>
+          <motion.button 
+            onClick={() => resetLab(labId)}
+            disabled={isResetting}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-mono text-primary hover:text-white hover:bg-gradient-to-r hover:from-primary/20 hover:to-accent/20 rounded-lg transition-all border border-primary/30 hover:border-primary/60 shadow-md hover:shadow-lg hover:shadow-primary/30"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <RefreshCw className={clsx("w-3.5 h-3.5", isResetting && "animate-spin")} />
+            {isResetting ? "RESETTING..." : "RESET_ENV"}
+          </motion.button>
+        </div>
       </header>
 
       {/* Main Workspace Layout - Responsive Split */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+      <div className={clsx("flex-1 grid grid-cols-1 gap-6 min-h-0", showStepsPanel ? "lg:grid-cols-12" : "lg:grid-cols-1")}>
         
-        {/* Left Panel: Brief & Info (3 cols) */}
-        <div className="lg:col-span-3 bg-card border border-border/50 rounded-xl flex flex-col overflow-hidden shadow-lg">
+        {/* Left Panel: Brief & Info (3 cols) - Collapsible */}
+        <AnimatePresence>
+        {showStepsPanel && (
+        <motion.div 
+          className="lg:col-span-3 bg-card border border-border/50 rounded-xl flex flex-col overflow-hidden shadow-lg"
+          initial={{ opacity: 0, x: -20, width: 0 }}
+          animate={{ opacity: 1, x: 0, width: "auto" }}
+          exit={{ opacity: 0, x: -20, width: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <div className="flex border-b border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
             <motion.button 
               onClick={() => setActiveTab('steps')}
@@ -187,10 +225,12 @@ export default function LabWorkspace() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
+        )}
+        </AnimatePresence>
 
-        {/* Center/Right Panel: Cloud Console & Terminal (9 cols) */}
-        <div className="lg:col-span-9 flex flex-col gap-6 min-h-0">
+        {/* Center/Right Panel: Cloud Console & Terminal */}
+        <div className={clsx("flex flex-col gap-6 min-h-0", showStepsPanel ? "lg:col-span-9" : "lg:col-span-1")}>
           
           {/* Top: Cloud Console Visualization */}
           <div className="flex-[4] bg-card/50 border border-border/50 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm min-h-[300px]">

@@ -1,22 +1,22 @@
-# 🔐 CyberLab - Interactive Cloud Security Training Platform
+# CloudShieldLab - Interactive Cloud Security Training Platform
 
 [![Public Repository](https://img.shields.io/badge/Repository-Public-blue)](https://github.com/Amir-Fadelelsaid/CyberSecurityLab)
 [![TypeScript](https://img.shields.io/badge/TypeScript-97.7%25-blue)](https://www.typescriptlang.org/)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)](https://cloudshieldlabbyamirfadel.com/)
 
-## 🎮 [▶ Try CyberLab Live](https://cloudshieldlabbyamirfadel.com/) 
+## [Try CloudShieldLab Live](https://cloudshieldlabbyamirfadel.com/) 
 
 A cutting-edge interactive cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations.
 
 ---
 
-## 💡 Why I Built This
+## Why I Built This
 
 As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in cloud security training: most platforms teach theory without hands-on practice. Junior analysts struggle to translate compliance frameworks like NIST and CIS Controls into actionable remediation steps.
 
 **The Problem:** Cloud misconfigurations cause 80% of data breaches, yet there's no safe environment for security teams to practice identifying and fixing them before they encounter real incidents.
 
-**My Solution:** CyberLab provides an interactive, gamified training ground where security professionals can:
+**My Solution:** CloudShieldLab provides an interactive, gamified training ground where security professionals can:
 - Practice real-world vulnerability remediation in a safe sandbox
 - Learn the "why" behind each fix through MITRE ATT&CK and CIS Control mappings
 - Build muscle memory for incident response before facing production emergencies
@@ -30,15 +30,34 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ---
 
-## 🎯 Features
+## Features
 
-### 33 Interactive Labs Across 3 Categories
+### 57 Interactive Labs Across 5 Categories
 
 | Category | Beginner | Intermediate | Advanced | Challenge | **Total** |
 |----------|----------|--------------|----------|-----------|-----------|
 | **Storage Security** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
 | **Network Security** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
 | **SOC Operations** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
+| **SOC Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
+| **Cloud Security Analyst** | 4 labs | 4 labs | 4 labs | - | **12** |
+
+### Dynamic Leveling System
+
+| Level | Title | Labs Required |
+|-------|-------|---------------|
+| 0 | Recruit | 0-4 labs |
+| 1 | Operator | 5-11 labs |
+| 2 | Analyst | 12-19 labs |
+| 3 | Engineer | 20-34 labs |
+| 4 | Architect | 35-56 labs |
+| 5 | Elite Defender | All 57 labs |
+
+### 17 Unlockable Badges
+
+- **5 Level Badges**: Operator, Analyst, Engineer, Architect, Elite Defender
+- **5 Category Mastery Badges**: Storage Guardian, Network Sentinel, SOC Commander, SIEM Master, Cloud Protector
+- **7 Achievement Badges**: First Blood, Speed Runner, Deep Diver, Expert Hunter, Lone Wolf, Perfect Week, Completionist
 
 ### Difficulty-Based Learning Path
 
@@ -51,6 +70,7 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ### Smart Learning System
 - **Step-by-Step Guidance**: Detailed instructions for each lab with numbered steps
+- **Hideable Guide Panel**: Toggle the steps panel to practice independently
 - **Progressive Difficulty**: Labs organized by difficulty level (Beginner, Intermediate, Advanced, Challenge)
 - **Challenge Mode**: Practice labs with no guidance - apply your skills independently
 - **Real-time Feedback**: Immediate validation of your security fixes
@@ -58,9 +78,11 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 - **Mission Completion Artifacts**: 4-tab modal with Incident Summary, Security Framework mappings, Technical Details, and Recommendations
 
 ### Categories
-- 🛡️ **Storage Security** - S3 bucket policies, encryption, versioning, cross-account access
-- 🌐 **Network Security** - Security groups, VPC peering, WAF, Transit Gateway, NACLs
-- 📊 **SOC Operations** - CloudTrail analysis, GuardDuty alerts, credential compromise, persistence detection
+- **Storage Security** - S3 bucket policies, encryption, versioning, cross-account access
+- **Network Security** - Security groups, VPC peering, WAF, Transit Gateway, NACLs
+- **SOC Operations** - CloudTrail analysis, GuardDuty alerts, credential compromise, persistence detection
+- **SOC Engineer** - SIEM configuration, threat intel, SOAR automation, detection engineering, purple team
+- **Cloud Security Analyst** - Asset inventory, compliance assessment, container security, multi-cloud posture
 
 ### Realistic Simulation
 - Terminal-based interface mimicking real AWS CLI
@@ -70,7 +92,7 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ---
 
-## 🔬 Security Framework Depth
+## Security Framework Depth
 
 Each lab is mapped to industry-standard security frameworks, turning exercises into **interview ammunition**:
 
@@ -103,7 +125,7 @@ Each lab is mapped to industry-standard security frameworks, turning exercises i
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 
 **Frontend**
 - React 18+ with TypeScript
@@ -124,7 +146,7 @@ Each lab is mapped to industry-standard security frameworks, turning exercises i
 - Session-based authentication
 - Secure token management
 
-## 📦 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 18+
@@ -157,15 +179,16 @@ npm run dev
 
 The app will be available at `http://localhost:5000`
 
-## 🎓 Usage
+## Usage
 
 ### For Learners
 1. Visit the landing page and click **"INITIATE_TRAINING"**
 2. Browse available training labs
 3. Select a lab by difficulty level (Beginner, Intermediate, Advanced)
-4. Follow the step-by-step guide in the left panel
+4. Follow the step-by-step guide in the left panel (or hide it for challenge mode)
 5. Use the terminal to execute commands and fix vulnerabilities
 6. Track your progress in the Mission Control dashboard
+7. Earn badges as you complete labs and level up
 
 ### Example Commands
 ```bash
@@ -182,13 +205,13 @@ aws s3 fix corp-payroll-data
 scan
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-CyberSecurityLab/
+CloudShieldLab/
 ├── client/                 # React frontend
 │   ├── src/
-│   │   ├── pages/         # Page components (landing, labs, workspace)
+│   │   ├── pages/         # Page components (landing, labs, workspace, badges)
 │   │   ├── components/    # Reusable UI components
 │   │   ├── hooks/         # Custom React hooks
 │   │   ├── lib/           # Utilities and helpers
@@ -197,18 +220,18 @@ CyberSecurityLab/
 ├── server/                # Express backend
 │   ├── routes.ts          # API endpoints
 │   ├── storage.ts         # Data persistence layer
-│   ├── index.ts           # Server entry point
-│   └── replit_integrations/  # Replit-specific integrations
+│   ├── lab-definitions.ts # 57 lab definitions
+│   ├── badge-definitions.ts # 17 badge definitions
+│   └── index.ts           # Server entry point
 ├── shared/                # Shared types and schemas
 │   └── schema.ts          # Drizzle schema & Zod validators
-├── script/                # Database scripts
 ├── design_guidelines.md   # UI/UX design specifications
 └── package.json          # Project dependencies
 ```
 
-## 🎨 Visual Design
+## Visual Design
 
-CyberLab features a **Matrix-meets-modern-SaaS** dark interface with:
+CloudShieldLab features a **Matrix-meets-modern-SaaS** dark interface with:
 
 | Element | Color | Usage |
 |---------|-------|-------|
@@ -226,7 +249,7 @@ CyberLab features a **Matrix-meets-modern-SaaS** dark interface with:
 - Progress bars with gradient fills
 - Cyberpunk-inspired UI with professional polish
 
-## 🔄 Learning Path
+## Learning Path
 
 ```
 Beginner Labs (5-10 min, 3 steps)
@@ -254,7 +277,7 @@ Challenge Labs (20-45 min, no guidance)
     └─ SOC: SOC Operations Challenge - Investigate alerts and respond independently
 ```
 
-## 🔐 Security Considerations
+## Security Considerations
 
 - **Authentication**: Uses Replit OAuth for secure login
 - **Data Validation**: All inputs validated with Zod schemas
@@ -262,7 +285,7 @@ Challenge Labs (20-45 min, no guidance)
 - **Session Management**: Secure session storage with connect-pg-simple
 - **HTTPS Ready**: Configured for secure deployments
 
-## 📊 API Endpoints
+## API Endpoints
 
 ### Public
 - `GET /` - Landing page
@@ -274,8 +297,11 @@ Challenge Labs (20-45 min, no guidance)
 - `POST /api/progress` - Submit lab completion
 - `PATCH /api/labs/:id/reset` - Reset lab environment
 - `GET /api/progress` - User progress history
+- `GET /api/user/level` - Get user level info
+- `GET /api/badges` - List all badges
+- `GET /api/user/badges` - Get user's earned badges
 
-## 🛠️ Development
+## Development
 
 ### Run Tests
 ```bash
@@ -293,7 +319,7 @@ The project is configured to run on Replit with the `Start application` workflow
 npm run dev
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please:
 1. Fork the repository
@@ -302,31 +328,33 @@ We welcome contributions! Please:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📋 Roadmap
+## Roadmap
 
-- [x] 33 labs across Storage, Network, and SOC Operations (11 per category)
+- [x] 57 labs across 5 categories (Storage, Network, SOC Operations, SOC Engineer, Cloud Security Analyst)
 - [x] Advanced labs with 10-12 steps and multiple resources
 - [x] Challenge labs for independent practice (no step-by-step guidance)
 - [x] Mission completion artifacts with 4-tab modal
 - [x] Security framework mappings (MITRE ATT&CK, CIS Controls, AWS Well-Architected)
 - [x] Hiring Manager demonstration page
-- [ ] Certification system with progress badges
+- [x] Dynamic leveling system (Recruit to Elite Defender)
+- [x] 17 unlockable badges (Level, Category, Achievement)
+- [x] Hideable guide panel for self-challenge mode
 - [ ] Leaderboards and team challenges
 - [ ] Video tutorials and walkthroughs
 - [ ] Community-contributed labs
 - [ ] Mobile app support
 
-## 📝 License
+## License
 
 This project is open source and available under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 💬 Support
+## Support
 
 - **Issues**: Report bugs via [GitHub Issues](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/issues)
 - **Discussions**: Join our [GitHub Discussions](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/discussions)
 - **Live Version**: Visit [cloudshieldlabbyamirfadel.com](https://cloudshieldlabbyamirfadel.com/)
 
-## 👨‍💻 Author
+## Author
 
 **Amir Fadelelsaid** - SOC Analyst & Cybersecurity Professional
 
@@ -336,8 +364,8 @@ Built with expertise in SIEM operations, cloud security, and incident response. 
 
 <div align="center">
 
-**Master Cloud Security Defense** 🔐
+**Master Cloud Security Defense**
 
-[Try Live Demo](https://cloudshieldlabbyamirfadel.com/) · [View on GitHub](https://github.com/Amir-Fadelelsaid/CyberSecurityLab) · [Report Issue](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/issues)
+[Try Live Demo](https://cloudshieldlabbyamirfadel.com/) | [View on GitHub](https://github.com/Amir-Fadelelsaid/CyberSecurityLab) | [Report Issue](https://github.com/Amir-Fadelelsaid/CyberSecurityLab/issues)
 
 </div>

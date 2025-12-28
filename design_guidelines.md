@@ -1,4 +1,4 @@
-# CyberLab Design Guidelines
+# CloudShieldLab Design Guidelines
 
 ## Design Approach
 **Reference-Based with Cybersecurity Aesthetic**

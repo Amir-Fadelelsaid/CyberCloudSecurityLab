@@ -1,4 +1,4 @@
-// Lab Definitions for CyberLab - 33 Labs (11 per category)
+// Lab Definitions for CloudShieldLab - 57 Labs (5 categories)
 // Difficulty Levels:
 // - Beginner: 3-4 steps, single resource, quick fix
 // - Intermediate: 5-7 steps, multiple phases, verification required

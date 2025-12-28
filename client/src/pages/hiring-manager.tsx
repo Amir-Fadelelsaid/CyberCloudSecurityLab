@@ -1,8 +1,9 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, Shield, Terminal, Database, Users, CheckCircle2, Target, Briefcase, Award } from "lucide-react";
+import { ArrowLeft, Shield, Terminal, Database, Users, CheckCircle2, Target, Briefcase, Award, ExternalLink, Github, Network, Eye, Activity, Cloud } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function HiringManager() {
   return (
@@ -25,12 +26,120 @@ export default function HiringManager() {
               For Hiring Managers
             </Badge>
             <h1 className="text-4xl font-display font-bold text-white">
-              What This Platform Demonstrates
+              CloudShieldLab Platform Overview
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              CyberLab showcases practical cloud security skills through hands-on labs that mirror real-world scenarios. 
+              CloudShieldLab showcases practical cloud security skills through 57 hands-on labs across 5 categories that mirror real-world scenarios. 
               Here's what a candidate practicing on this platform has demonstrated.
             </p>
+            <div className="flex justify-center gap-4 pt-4">
+              <a href="https://cloudshieldlabbyamirfadel.com/" target="_blank" rel="noopener noreferrer">
+                <Button className="gap-2" data-testid="link-live-demo">
+                  <ExternalLink className="w-4 h-4" />
+                  Live Demo
+                </Button>
+              </a>
+              <a href="https://github.com/Amir-Fadelelsaid/CyberSecurityLab" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="gap-2" data-testid="link-github">
+                  <Github className="w-4 h-4" />
+                  View Source Code
+                </Button>
+              </a>
+            </div>
+          </div>
+
+          <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30">
+            <CardContent className="py-6">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                <div>
+                  <p className="text-3xl font-bold text-primary">57</p>
+                  <p className="text-sm text-muted-foreground">Labs</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-primary">5</p>
+                  <p className="text-sm text-muted-foreground">Categories</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-primary">17</p>
+                  <p className="text-sm text-muted-foreground">Badges</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-primary">6</p>
+                  <p className="text-sm text-muted-foreground">Skill Levels</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-primary">4</p>
+                  <p className="text-sm text-muted-foreground">Difficulty Tiers</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <Card className="bg-card/50 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Database className="w-4 h-4 text-teal-400" />
+                  Storage Security
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-white">11 Labs</p>
+                <p className="text-xs text-muted-foreground">S3, encryption, policies</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Network className="w-4 h-4 text-blue-400" />
+                  Network Security
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-white">11 Labs</p>
+                <p className="text-xs text-muted-foreground">VPC, SGs, WAF</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Eye className="w-4 h-4 text-violet-400" />
+                  SOC Operations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-white">11 Labs</p>
+                <p className="text-xs text-muted-foreground">CloudTrail, GuardDuty</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Activity className="w-4 h-4 text-orange-400" />
+                  SOC Engineer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-white">12 Labs</p>
+                <p className="text-xs text-muted-foreground">SIEM, SOAR, detection</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Cloud className="w-4 h-4 text-cyan-400" />
+                  Cloud Analyst
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-white">12 Labs</p>
+                <p className="text-xs text-muted-foreground">CSPM, compliance</p>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -38,7 +147,7 @@ export default function HiringManager() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Shield className="w-5 h-5 text-cyan-400" />
-                  SOC Analyst
+                  SOC Analyst Skills
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -90,18 +199,18 @@ export default function HiringManager() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Users className="w-5 h-5 text-violet-400" />
-                  IAM Specialist
+                  Detection Engineer
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">Skills demonstrated:</p>
                 <ul className="space-y-2 text-sm">
                   {[
-                    "Access control configuration",
-                    "Credential rotation procedures",
-                    "Permission boundary enforcement",
-                    "Service account management",
-                    "Identity governance awareness"
+                    "SIEM configuration and tuning",
+                    "Detection rule development",
+                    "SOAR playbook automation",
+                    "Threat intelligence integration",
+                    "Purple team exercise coordination"
                   ].map((skill, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -131,6 +240,10 @@ export default function HiringManager() {
                   { name: "Security Groups", desc: "Network security" },
                   { name: "MITRE ATT&CK", desc: "Threat framework" },
                   { name: "CIS Controls", desc: "Security standards" },
+                  { name: "SIEM/SOAR", desc: "Security operations" },
+                  { name: "Detection Rules", desc: "Threat hunting" },
+                  { name: "Container Security", desc: "K8s/EKS" },
+                  { name: "Compliance", desc: "SOC2, PCI, HIPAA" },
                 ].map((tool, i) => (
                   <div key={i} className="bg-background/50 rounded-lg p-3 border border-border">
                     <p className="font-bold text-white text-sm">{tool.name}</p>
@@ -145,7 +258,7 @@ export default function HiringManager() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-primary" />
-                Lab Scenarios Completed
+                Sample Lab Scenarios
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -157,20 +270,20 @@ export default function HiringManager() {
                   framework: "CIS Control 3.3 - Configure Data Access Control Lists"
                 },
                 {
-                  title: "Insecure Security Group",
+                  title: "SIEM Alert Correlation",
                   difficulty: "Intermediate", 
-                  skills: ["Network segmentation", "Ingress rule analysis", "Port security"],
-                  framework: "CIS Control 12.1 - Maintain Secure Network Configurations"
+                  skills: ["Log analysis", "Alert triage", "Threat hunting", "Detection tuning"],
+                  framework: "MITRE ATT&CK - Multiple Techniques"
                 },
                 {
-                  title: "CloudTrail Log Analysis",
+                  title: "Multi-Cloud Security Assessment",
                   difficulty: "Advanced",
-                  skills: ["Log correlation", "IOC identification", "Incident response", "Credential revocation"],
-                  framework: "MITRE ATT&CK T1078 - Valid Accounts"
+                  skills: ["Cross-cloud posture management", "Unified compliance", "Attack surface reduction"],
+                  framework: "CIS Cloud Benchmarks"
                 }
               ].map((lab, i) => (
                 <div key={i} className="bg-background/50 rounded-lg p-4 border border-border">
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start justify-between gap-4 mb-2">
                     <div>
                       <h4 className="font-bold text-white">{lab.title}</h4>
                       <p className="text-xs text-muted-foreground">{lab.framework}</p>
@@ -221,9 +334,20 @@ export default function HiringManager() {
             </CardContent>
           </Card>
 
-          <p className="text-center text-muted-foreground text-sm">
-            Built by Amir Fadelelsaid - SOC Analyst & Cloud Security Professional
-          </p>
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground text-sm">
+              Built by Amir Fadelelsaid - SOC Analyst & Cloud Security Professional
+            </p>
+            <div className="flex justify-center gap-4">
+              <a href="https://cloudshieldlabbyamirfadel.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
+                cloudshieldlabbyamirfadel.com
+              </a>
+              <span className="text-muted-foreground">|</span>
+              <a href="https://github.com/Amir-Fadelelsaid/CyberSecurityLab" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
+                GitHub Repository
+              </a>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>

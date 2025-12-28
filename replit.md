@@ -1,8 +1,8 @@
-# CyberLab - Interactive Cloud Security Training Platform
+# CloudShieldLab - Interactive Cloud Security Training Platform
 
 ## Overview
 
-CyberLab is a gamified cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations. The application provides interactive labs covering S3 bucket security, security group configurations, CloudTrail log analysis, and IAM credential compromise scenarios. Users learn through hands-on practice with simulated AWS CLI commands and receive real-time feedback mapped to security frameworks like MITRE ATT&CK and CIS Controls.
+CloudShieldLab is a gamified cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations. The application provides 57 interactive labs across 5 categories covering Storage Security, Network Security, SOC Operations, SOC Engineer, and Cloud Security Analyst scenarios. Users learn through hands-on practice with simulated AWS CLI commands and receive real-time feedback mapped to security frameworks like MITRE ATT&CK and CIS Controls.
 
 ## User Preferences
 
@@ -35,12 +35,15 @@ Preferred communication style: Simple, everyday language.
   - `resources` - Simulated cloud resources (S3, EC2, IAM, security groups)
   - `userProgress` - Tracks completed labs and scores
   - `terminalLogs` - Command history for learning analytics
+  - `badges` and `userBadges` - Achievement and leveling system
 
 ### Key Design Patterns
 - **Shared Types**: Schema definitions in `shared/` folder used by both client and server
 - **Route Definitions**: API routes defined in `shared/routes.ts` with Zod schemas for type-safe API contracts
 - **Terminal Simulation**: Server-side command processor simulates AWS CLI responses without real cloud resources
 - **Resource State Management**: Labs have mutable resource states that change from "vulnerable" to "fixed" as users complete remediation steps
+- **Leveling System**: Dynamic user levels (Recruit to Elite Defender) based on completed lab count
+- **Badge System**: 17 unlockable badges across Level, Category, and Achievement types
 
 ### Build System
 - **Development**: Vite dev server with HMR, proxies API requests to Express
