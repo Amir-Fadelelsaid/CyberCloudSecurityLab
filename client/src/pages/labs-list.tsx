@@ -66,46 +66,72 @@ export default function LabsList() {
           {filteredLabs?.map((lab, index) => (
             <motion.div
               key={lab.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: index * 0.08, duration: 0.4 }}
+              whileHover={{ y: -8, scale: 1.02 }}
             >
               <Link href={`/labs/${lab.id}`} className="block h-full">
-                <div className="h-full bg-card hover:bg-card/80 border border-border/50 hover:border-primary/50 rounded-xl p-6 flex flex-col transition-all duration-300 group shadow-lg hover:shadow-primary/5 relative overflow-hidden">
+                <div className="h-full relative overflow-hidden rounded-xl flex flex-col transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-primary/30">
+                  {/* Animated gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-card group-hover:bg-gradient-to-br group-hover:from-card group-hover:via-card/80 group-hover:to-accent/5 transition-all duration-300" />
                   
-                  {/* Category Stripe */}
-                  <div className={clsx(
-                    "absolute top-0 left-0 w-1 h-full",
-                    lab.category === 'IAM' ? "bg-blue-500" :
-                    lab.category === 'Network' ? "bg-purple-500" : "bg-orange-500"
-                  )} />
+                  {/* Animated border glow */}
+                  <div className="absolute inset-0 rounded-xl border border-primary/30 group-hover:border-primary/60 transition-all duration-300" />
+                  <div className="absolute inset-0 rounded-xl border border-accent/20 group-hover:border-accent/40 transition-all duration-300 blur-sm opacity-0 group-hover:opacity-100" />
+                  
+                  {/* Category Stripe - Enhanced */}
+                  <motion.div 
+                    className={clsx(
+                      "absolute top-0 left-0 w-1.5 h-full transition-all group-hover:w-2",
+                      lab.category === 'IAM' ? "bg-gradient-to-b from-blue-500 to-blue-600" :
+                      lab.category === 'Network' ? "bg-gradient-to-b from-purple-500 to-purple-600" : "bg-gradient-to-b from-orange-500 to-orange-600"
+                    )}
+                    animate={{ boxShadow: ["0 0 10px rgba(0, 0, 0, 0)", "0 0 20px rgba(255, 150, 0, 0.5)"] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
 
-                  <div className="flex justify-between items-start mb-4 pl-2">
-                     <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest bg-white/5 px-2 py-1 rounded border border-white/5">
+                  <div className="relative z-10 flex justify-between items-start mb-4 p-6 pb-0">
+                     <motion.span 
+                       className="text-[10px] font-mono text-primary/80 uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full border border-primary/40 font-bold"
+                       whileHover={{ scale: 1.1 }}
+                     >
                         {lab.category}
-                     </span>
-                     <span className={clsx(
-                        "text-[10px] font-bold px-2 py-0.5 rounded border uppercase",
-                        lab.difficulty === 'Beginner' ? "text-green-400 border-green-500/30 bg-green-500/10" :
-                        lab.difficulty === 'Intermediate' ? "text-yellow-400 border-yellow-500/30 bg-yellow-500/10" :
-                        "text-red-400 border-red-500/30 bg-red-500/10"
-                     )}>
+                     </motion.span>
+                     <motion.span 
+                       className={clsx(
+                          "text-[10px] font-bold px-3 py-1.5 rounded-full border uppercase font-mono",
+                          lab.difficulty === 'Beginner' ? "text-green-300 border-green-500/50 bg-green-500/15 shadow-lg shadow-green-500/20" :
+                          lab.difficulty === 'Intermediate' ? "text-yellow-300 border-yellow-500/50 bg-yellow-500/15 shadow-lg shadow-yellow-500/20" :
+                          "text-red-300 border-red-500/50 bg-red-500/15 shadow-lg shadow-red-500/20"
+                       )}
+                       animate={{ boxShadow: ["0 0 10px rgba(255, 200, 0, 0.2)", "0 0 20px rgba(255, 200, 0, 0.4)"] }}
+                       transition={{ duration: 2, repeat: Infinity }}
+                     >
                         {lab.difficulty}
-                     </span>
+                     </motion.span>
                   </div>
 
-                  <h3 className="text-xl font-bold font-display mb-2 group-hover:text-primary transition-colors pl-2">
+                  <h3 className="relative z-10 text-lg font-bold font-display mb-3 px-6 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent transition-all duration-300">
                     {lab.title}
                   </h3>
                   
-                  <p className="text-sm text-muted-foreground flex-1 pl-2 mb-6">
+                  <p className="relative z-10 text-sm text-muted-foreground/80 flex-1 px-6 mb-6 group-hover:text-muted-foreground transition-colors">
                     {lab.description}
                   </p>
 
-                  <div className="mt-auto pl-2">
-                    <div className="w-full py-2.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-center text-xs font-mono font-bold group-hover:bg-primary group-hover:text-background transition-all uppercase tracking-wider">
+                  <div className="relative z-10 mt-auto px-6 pb-6">
+                    <motion.button 
+                      className="w-full py-3 rounded-lg bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/40 text-primary text-center text-xs font-mono font-bold group-hover:from-primary group-hover:to-accent group-hover:text-background transition-all uppercase tracking-wider shadow-lg"
+                      whileHover={{ 
+                        boxShadow: "0 0 25px rgba(0, 255, 128, 0.5)",
+                        scale: 1.05
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       Initialize Simulation
-                    </div>
+                    </motion.button>
                   </div>
                 </div>
               </Link>

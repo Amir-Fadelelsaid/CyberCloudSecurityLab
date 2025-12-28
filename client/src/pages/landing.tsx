@@ -81,26 +81,58 @@ export default function Landing() {
             { 
               icon: Shield, 
               title: "Real-time Simulation", 
-              desc: "Interact with mock S3 buckets, EC2 instances, and IAM roles that react to your commands." 
+              desc: "Interact with mock S3 buckets, EC2 instances, and IAM roles that react to your commands.",
+              color: "from-cyan-500/20 to-blue-500/20",
+              borderColor: "border-cyan-500/40",
+              shadowColor: "shadow-cyan-500/20"
             },
             { 
               icon: Terminal, 
               title: "CLI-Based Defense", 
-              desc: "Use a realistic terminal interface to identify threats and execute remediation scripts." 
+              desc: "Use a realistic terminal interface to identify threats and execute remediation scripts.",
+              color: "from-primary/20 to-emerald-500/20",
+              borderColor: "border-primary/40",
+              shadowColor: "shadow-primary/20"
             },
             { 
               icon: Lock, 
               title: "Progress Tracking", 
-              desc: "Earn certifications and track your skill growth across IAM, Network, and Storage domains." 
+              desc: "Earn certifications and track your skill growth across IAM, Network, and Storage domains.",
+              color: "from-purple-500/20 to-pink-500/20",
+              borderColor: "border-purple-500/40",
+              shadowColor: "shadow-purple-500/20"
             }
           ].map((feature, i) => (
-            <div key={i} className="bg-card/30 backdrop-blur-md border border-white/5 p-8 rounded-2xl hover:bg-card/50 transition-colors group">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform duration-300">
-                <feature.icon className="w-6 h-6" />
+            <motion.div 
+              key={i} 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 + i * 0.1 }}
+              whileHover={{ y: -8 }}
+              className={`relative overflow-hidden bg-gradient-to-br ${feature.color} backdrop-blur-xl border ${feature.borderColor} p-8 rounded-2xl group cursor-pointer shadow-lg hover:shadow-2xl ${feature.shadowColor} transition-all duration-300`}
+            >
+              {/* Animated background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              {/* Glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-br opacity-0 group-hover:opacity-30 blur-xl transition-all duration-300 rounded-2xl" style={{ background: `linear-gradient(to right, ${i === 0 ? '#00d9ff' : i === 1 ? '#00ff80' : '#ff00ff'}, transparent)` }} />
+              
+              <div className="relative z-10">
+                <motion.div 
+                  className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} border ${feature.borderColor} flex items-center justify-center mb-6 group-hover:scale-125 transition-transform duration-300 shadow-lg`}
+                  animate={{ 
+                    boxShadow: i === 0 ? ["0 0 20px rgba(0, 217, 255, 0.3)", "0 0 40px rgba(0, 217, 255, 0.6)"] :
+                               i === 1 ? ["0 0 20px rgba(0, 255, 128, 0.3)", "0 0 40px rgba(0, 255, 128, 0.6)"] :
+                               ["0 0 20px rgba(255, 0, 255, 0.3)", "0 0 40px rgba(255, 0, 255, 0.6)"]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <feature.icon className="w-7 h-7 text-white" />
+                </motion.div>
+                <h3 className="text-xl font-bold font-display mb-3 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent transition-all duration-300">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed group-hover:text-muted-foreground/90 transition-colors">{feature.desc}</p>
               </div>
-              <h3 className="text-xl font-bold font-display mb-3 text-white">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </main>
