@@ -38,32 +38,45 @@ export default function LabWorkspace() {
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col space-y-4 overflow-hidden">
       {/* Workspace Header */}
-      <header className="flex items-center justify-between flex-shrink-0 bg-card/30 p-4 rounded-xl border border-border/50 backdrop-blur-md">
+      <header className="flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-card/50 via-card/30 to-card/50 p-4 rounded-xl border border-primary/20 backdrop-blur-md shadow-lg shadow-primary/10">
         <div className="flex items-center gap-4">
           <Link href="/labs">
-            <button className="p-2 hover:bg-white/5 rounded-lg transition-colors group">
-              <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-white" />
+            <button className="p-2 hover:bg-primary/10 rounded-lg transition-all group hover:shadow-lg hover:shadow-primary/30">
+              <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
             </button>
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-lg font-bold font-display tracking-wide">{lab.title}</h1>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-mono uppercase">
+              <motion.h1 
+                className="text-lg font-bold font-display tracking-wide bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {lab.title}
+              </motion.h1>
+              <motion.span 
+                className="text-[10px] px-3 py-1 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 text-primary border border-primary/40 font-mono uppercase font-bold shadow-md shadow-primary/20"
+                animate={{ boxShadow: ["0 0 10px rgba(0, 255, 128, 0.2)", "0 0 20px rgba(0, 255, 128, 0.4)", "0 0 10px rgba(0, 255, 128, 0.2)"] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
                 Active Session
-              </span>
+              </motion.span>
             </div>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: LAB-{labId.toString().padStart(4, '0')}</p>
+            <p className="text-xs text-primary/60 font-mono mt-0.5">ID: LAB-{labId.toString().padStart(4, '0')}</p>
           </div>
         </div>
 
-        <button 
+        <motion.button 
           onClick={() => resetLab(labId)}
           disabled={isResetting}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono text-muted-foreground hover:text-white hover:bg-white/5 rounded-lg transition-colors border border-transparent hover:border-white/10"
+          className="flex items-center gap-2 px-4 py-2 text-xs font-mono text-primary hover:text-white hover:bg-gradient-to-r hover:from-primary/20 hover:to-accent/20 rounded-lg transition-all border border-primary/30 hover:border-primary/60 shadow-md hover:shadow-lg hover:shadow-primary/30"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           <RefreshCw className={clsx("w-3.5 h-3.5", isResetting && "animate-spin")} />
           {isResetting ? "RESETTING..." : "RESET_ENV"}
-        </button>
+        </motion.button>
       </header>
 
       {/* Main Workspace Layout - Responsive Split */}
@@ -71,54 +84,88 @@ export default function LabWorkspace() {
         
         {/* Left Panel: Brief & Info (3 cols) */}
         <div className="lg:col-span-3 bg-card border border-border/50 rounded-xl flex flex-col overflow-hidden shadow-lg">
-          <div className="flex border-b border-border/50">
-            <button 
+          <div className="flex border-b border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+            <motion.button 
               onClick={() => setActiveTab('steps')}
               className={clsx(
-                "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-colors flex items-center justify-center gap-2",
-                activeTab === 'steps' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-white"
+                "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
+                activeTab === 'steps' 
+                  ? "border-primary text-primary bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg shadow-primary/20" 
+                  : "border-transparent text-muted-foreground hover:text-white hover:bg-white/5"
               )}
+              whileHover={{ y: -2 }}
+              whileTap={{ y: 0 }}
             >
-              <CheckCircle2 className="w-4 h-4" /> Steps
-            </button>
-            <button 
+              <motion.div
+                animate={activeTab === 'steps' ? { rotate: 360 } : { rotate: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+              </motion.div>
+              Steps
+            </motion.button>
+            <motion.button 
               onClick={() => setActiveTab('brief')}
               className={clsx(
-                "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-colors flex items-center justify-center gap-2",
-                activeTab === 'brief' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-white"
+                "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
+                activeTab === 'brief' 
+                  ? "border-primary text-primary bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg shadow-primary/20" 
+                  : "border-transparent text-muted-foreground hover:text-white hover:bg-white/5"
               )}
+              whileHover={{ y: -2 }}
+              whileTap={{ y: 0 }}
             >
               <BookOpen className="w-4 h-4" /> Brief
-            </button>
+            </motion.button>
           </div>
           
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {activeTab === 'steps' ? (
-              <div className="space-y-4">
-                <h3 className="text-primary font-bold flex items-center gap-2 mb-4">
-                  <CheckCircle2 className="w-4 h-4" /> Step-by-Step Guide
+              <motion.div className="space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                <h3 className="text-primary font-bold flex items-center gap-2 mb-6 text-base">
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity }}>
+                    <CheckCircle2 className="w-5 h-5" />
+                  </motion.div>
+                  Step-by-Step Guide
                 </h3>
                 {lab.steps && Array.isArray(lab.steps) && lab.steps.length > 0 ? (
                   <div className="space-y-3">
-                    {(lab.steps as any[]).map((step) => (
-                      <div key={step.number} className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-bold text-primary">
+                    {(lab.steps as any[]).map((step, idx) => (
+                      <motion.div 
+                        key={step.number} 
+                        className="group relative bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-primary/30 p-4 space-y-2 cursor-pointer transition-all hover:border-primary/60 hover:shadow-lg hover:shadow-primary/20"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.05 }}
+                        whileHover={{ y: -2 }}
+                      >
+                        {/* Subtle glow effect */}
+                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                        
+                        <div className="relative flex items-center gap-3">
+                          <motion.div 
+                            className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent border-2 border-primary/60 flex items-center justify-center text-xs font-bold text-background shadow-lg shadow-primary/40"
+                            animate={{ boxShadow: ["0 0 10px rgba(0, 255, 128, 0.3)", "0 0 20px rgba(0, 255, 128, 0.5)"] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          >
                             {step.number}
-                          </div>
+                          </motion.div>
                           <h4 className="text-sm font-bold text-white">{step.title}</h4>
                         </div>
-                        <p className="text-xs text-muted-foreground ml-8">{step.description}</p>
-                        <div className="ml-8 text-xs text-primary/70 font-mono bg-black/50 p-2 rounded border border-primary/10">
-                          💡 {step.hint}
-                        </div>
-                      </div>
+                        <p className="text-xs text-muted-foreground ml-10 relative">{step.description}</p>
+                        <motion.div 
+                          className="ml-10 text-xs text-primary/80 font-mono bg-gradient-to-r from-black/60 to-black/40 p-3 rounded border border-primary/30 relative"
+                          whileHover={{ borderColor: 'rgba(0, 255, 128, 0.6)' }}
+                        >
+                          <span className="text-accent">💡</span> {step.hint}
+                        </motion.div>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-sm">No steps available</p>
                 )}
-              </div>
+              </motion.div>
             ) : (
               <div className="prose prose-invert prose-sm prose-p:text-muted-foreground prose-headings:text-white prose-headings:font-display">
                 <h3 className="text-primary flex items-center gap-2">
