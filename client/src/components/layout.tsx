@@ -78,6 +78,10 @@ export function Layout({ children }: LayoutProps) {
             <LogOut className="w-4 h-4" />
             <span>TERMINATE_SESSION</span>
           </button>
+          <div className="pt-4 mt-4 border-t border-border/30 text-center">
+            <p className="text-[10px] text-muted-foreground font-mono">Created by</p>
+            <p className="text-xs text-primary/80 font-medium">Amir Fadelelsaid</p>
+          </div>
         </div>
       </aside>
 
