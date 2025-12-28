@@ -206,13 +206,23 @@ CyberSecurityLab/
 
 ## 🎨 Visual Design
 
-CyberLab features a **cyber-themed dark interface** with:
-- 🟢 Neon green primary accent (#00FF80)
-- 🟣 Neon purple secondary accent (#A000FF)
-- 🔵 Vibrant cyan accents (#00DCFF)
-- Smooth animations and hover effects
-- Glowing elements and pulsing shadows
-- Scanline effects and cyberpunk aesthetic
+CyberLab features a **Matrix-meets-modern-SaaS** dark interface with:
+
+| Element | Color | Usage |
+|---------|-------|-------|
+| **Primary** | Teal Green `hsl(160, 60%, 45%)` | Buttons, highlights, progress bars |
+| **Accent** | Purple/Violet `hsl(250, 50%, 55%)` | Secondary actions, gradients |
+| **Background** | Dark Gray `hsl(220, 20%, 8%)` | Main background, cards |
+| **Success** | Green | Fixed resources, completed steps |
+| **Danger** | Red | Vulnerable resources, alerts |
+
+**Design Elements:**
+- Terminal-style monospace fonts (JetBrains Mono)
+- Neon glow effects on interactive elements
+- Gradient borders and shadow animations
+- Card hover lift effects with colored shadows
+- Progress bars with gradient fills
+- Cyberpunk-inspired UI with professional polish
 
 ## 🔄 Learning Path
 
