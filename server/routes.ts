@@ -1011,12 +1011,18 @@ async function seedDatabase() {
   for (const labDef of allLabs) {
     const existingLab = existingByTitle.get(labDef.title);
     
-    // Update existing labs with estimatedTime if missing
-    if (existingLab && !existingLab.estimatedTime) {
-      await storage.updateLab(existingLab.id, { 
-        estimatedTime: labDef.estimatedTime,
-        steps: labDef.steps 
-      });
+    // Update existing labs with latest step data and estimatedTime
+    if (existingLab) {
+      const existingSteps = Array.isArray(existingLab.steps) ? existingLab.steps.length : 0;
+      const newSteps = labDef.steps.length;
+      // Update if step count differs or estimatedTime is missing
+      if (existingSteps !== newSteps || !existingLab.estimatedTime) {
+        await storage.updateLab(existingLab.id, { 
+          estimatedTime: labDef.estimatedTime,
+          steps: labDef.steps 
+        });
+        console.log(`Updated lab: ${labDef.title} (${existingSteps} -> ${newSteps} steps)`);
+      }
     }
     
     if (!existingByTitle.has(labDef.title)) {
