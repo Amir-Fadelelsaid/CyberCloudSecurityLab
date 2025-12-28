@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Terminal, Shield, Lock, ChevronRight } from "lucide-react";
+import { Terminal, Shield, Lock, ChevronRight, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Landing() {
@@ -18,11 +18,19 @@ export default function Landing() {
           <Terminal className="w-8 h-8 text-primary" />
           <span className="font-display font-bold text-2xl tracking-wider">CYBER<span className="text-primary">LAB</span></span>
         </div>
-        <a href="/api/login">
-          <button className="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-all backdrop-blur-sm text-white">
-            Sign In
-          </button>
-        </a>
+        <div className="flex items-center gap-3">
+          <Link href="/hiring">
+            <button className="px-4 py-2 rounded-lg text-sm font-medium transition-all text-muted-foreground hover:text-white flex items-center gap-1" data-testid="link-hiring-manager">
+              <Briefcase className="w-4 h-4" />
+              For Recruiters
+            </button>
+          </Link>
+          <a href="/api/login">
+            <button className="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-all backdrop-blur-sm text-white" data-testid="button-sign-in">
+              Sign In
+            </button>
+          </a>
+        </div>
       </nav>
 
       {/* Hero */}

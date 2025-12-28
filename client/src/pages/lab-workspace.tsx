@@ -2,6 +2,7 @@ import { useLab } from "@/hooks/use-labs";
 import { useRoute, Link } from "wouter";
 import { TerminalWindow } from "@/components/terminal-window";
 import { ResourceGraph } from "@/components/resource-graph";
+import { MissionCompleteModal } from "@/components/mission-complete-modal";
 import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2 } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
 import { useState } from "react";
@@ -14,6 +15,7 @@ export default function LabWorkspace() {
   const { data: lab, isLoading, error } = useLab(labId);
   const { mutate: resetLab, isPending: isResetting } = useResetLab();
   const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('steps');
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -213,10 +215,22 @@ export default function LabWorkspace() {
                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                LIVE_CONNECTION
              </div>
-             <TerminalWindow labId={labId} className="h-full shadow-2xl border-primary/20" />
+             <TerminalWindow 
+               labId={labId} 
+               className="h-full shadow-2xl border-primary/20" 
+               onLabComplete={() => setShowCompleteModal(true)}
+             />
           </div>
         </div>
       </div>
+
+      <MissionCompleteModal
+        isOpen={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        labTitle={lab.title}
+        labCategory={lab.category}
+        difficulty={lab.difficulty}
+      />
     </div>
   );
 }
