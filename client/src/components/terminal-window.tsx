@@ -7,6 +7,7 @@ interface TerminalWindowProps {
   labId: number;
   className?: string;
   onLabComplete?: () => void;
+  onCommandSuccess?: () => void;
 }
 
 interface LogEntry {
@@ -14,7 +15,7 @@ interface LogEntry {
   content: string;
 }
 
-export function TerminalWindow({ labId, className, onLabComplete }: TerminalWindowProps) {
+export function TerminalWindow({ labId, className, onLabComplete, onCommandSuccess }: TerminalWindowProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<LogEntry[]>([
     { type: "system", content: "Connected to secure shell..." },
@@ -50,6 +51,7 @@ export function TerminalWindow({ labId, className, onLabComplete }: TerminalWind
         onSuccess: (data) => {
           if (data.success) {
             setHistory(prev => [...prev, { type: "success", content: data.output }]);
+            onCommandSuccess?.();
             if (data.labCompleted) {
               setHistory(prev => [...prev, { type: "system", content: ">>> MISSION ACCOMPLISHED: VULNERABILITY PATCHED <<<" }]);
               setTimeout(() => onLabComplete?.(), 1500);

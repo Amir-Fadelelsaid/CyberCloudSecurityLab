@@ -1,19 +1,21 @@
-import { useLab } from "@/hooks/use-labs";
+import { useLab, useLabResources } from "@/hooks/use-labs";
 import { useRoute, Link } from "wouter";
 import { TerminalWindow } from "@/components/terminal-window";
 import { ResourceGraph } from "@/components/resource-graph";
 import { MissionCompleteModal } from "@/components/mission-complete-modal";
-import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft, Clock, Shield, Target, Zap, AlertTriangle, Trophy } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 export default function LabWorkspace() {
   const [, params] = useRoute("/labs/:id");
   const labId = Number(params?.id);
   const { data: lab, isLoading, error } = useLab(labId);
+  const { data: resources } = useLabResources(labId);
   const { mutate: resetLab, isPending: isResetting } = useResetLab();
   const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('steps');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -21,10 +23,74 @@ export default function LabWorkspace() {
     const saved = localStorage.getItem(`lab-${labId}-showSteps`);
     return saved !== null ? saved === 'true' : true;
   });
+  
+  // Game state
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(() => {
+    const saved = localStorage.getItem(`lab-${labId}-completedSteps`);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [commandStreak, setCommandStreak] = useState(0);
+  const [showSuccessFlash, setShowSuccessFlash] = useState(false);
+
+  // Calculate threat level from resources
+  const vulnerableCount = resources?.filter((r: any) => r.isVulnerable).length || 0;
+  const totalResources = resources?.length || 1;
+  const threatLevel = Math.round((vulnerableCount / totalResources) * 100);
+  const totalSteps = lab?.steps ? (lab.steps as any[]).length : 0;
+  const progressPercent = totalSteps > 0 ? Math.round((completedSteps.size / totalSteps) * 100) : 0;
+
+  // Timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [labId]);
+
+  // Save completed steps
+  useEffect(() => {
+    localStorage.setItem(`lab-${labId}-completedSteps`, JSON.stringify(Array.from(completedSteps)));
+  }, [labId, completedSteps]);
 
   useEffect(() => {
     localStorage.setItem(`lab-${labId}-showSteps`, String(showStepsPanel));
   }, [labId, showStepsPanel]);
+
+  // Format time
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle step completion
+  const toggleStep = (stepNum: number) => {
+    setCompletedSteps(prev => {
+      const next = new Set(prev);
+      if (next.has(stepNum)) {
+        next.delete(stepNum);
+      } else {
+        next.add(stepNum);
+      }
+      return next;
+    });
+  };
+
+  // Handle command success (called from terminal)
+  const handleCommandSuccess = useCallback(() => {
+    setCommandStreak(prev => prev + 1);
+    setShowSuccessFlash(true);
+    setTimeout(() => setShowSuccessFlash(false), 500);
+  }, []);
+
+  // Reset on lab change
+  useEffect(() => {
+    setElapsedTime(0);
+    setCommandStreak(0);
+    const saved = localStorage.getItem(`lab-${labId}-completedSteps`);
+    setCompletedSteps(saved ? new Set(JSON.parse(saved)) : new Set());
+  }, [labId]);
 
   if (isLoading) {
     return (
@@ -47,37 +113,105 @@ export default function LabWorkspace() {
   }
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col space-y-4 overflow-hidden">
-      {/* Workspace Header */}
-      <header className="flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-card/50 via-card/30 to-card/50 p-4 rounded-xl border border-primary/20 backdrop-blur-md shadow-lg shadow-primary/10">
-        <div className="flex items-center gap-4">
+    <div className="h-[calc(100vh-6rem)] flex flex-col space-y-3 overflow-hidden relative">
+      {/* Success Flash Overlay */}
+      <AnimatePresence>
+        {showSuccessFlash && (
+          <motion.div
+            className="absolute inset-0 bg-primary/10 pointer-events-none z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mission HUD Bar */}
+      <div className="flex items-center justify-between flex-shrink-0 bg-gradient-to-r from-black/80 via-card/60 to-black/80 px-4 py-2 rounded-lg border border-primary/30 backdrop-blur-md">
+        <div className="flex items-center gap-6">
+          {/* Back Button & Title */}
           <Link href="/labs">
-            <button className="p-2 hover:bg-primary/10 rounded-lg transition-all group hover:shadow-lg hover:shadow-primary/30">
-              <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <button className="p-2 hover:bg-primary/10 rounded-lg transition-all group" data-testid="button-back">
+              <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </button>
           </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <motion.h1 
-                className="text-lg font-bold font-display tracking-wide bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                {lab.title}
-              </motion.h1>
-              <motion.span 
-                className="text-[10px] px-3 py-1 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 text-primary border border-primary/40 font-mono uppercase font-bold shadow-md shadow-primary/20"
-                animate={{ boxShadow: ["0 0 10px rgba(0, 255, 128, 0.2)", "0 0 20px rgba(0, 255, 128, 0.4)", "0 0 10px rgba(0, 255, 128, 0.2)"] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                Active Session
-              </motion.span>
+          
+          <div className="flex items-center gap-3">
+            <motion.div
+              className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40 flex items-center justify-center"
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            >
+              <Target className="w-4 h-4 text-primary" />
+            </motion.div>
+            <div>
+              <h1 className="text-sm font-bold text-white truncate max-w-[200px]">{lab.title}</h1>
+              <p className="text-[10px] text-primary/60 font-mono">MISSION #{labId.toString().padStart(4, '0')}</p>
             </div>
-            <p className="text-xs text-primary/60 font-mono mt-0.5">ID: LAB-{labId.toString().padStart(4, '0')}</p>
           </div>
         </div>
 
+        {/* HUD Stats */}
+        <div className="flex items-center gap-4">
+          {/* Timer */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 rounded-lg border border-white/10">
+            <Clock className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-xs font-mono text-cyan-400">{formatTime(elapsedTime)}</span>
+          </div>
+
+          {/* Threat Level */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 rounded-lg border border-white/10 min-w-[120px]">
+            <AlertTriangle className={clsx("w-3.5 h-3.5", threatLevel > 50 ? "text-destructive" : threatLevel > 0 ? "text-yellow-400" : "text-primary")} />
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-muted-foreground">THREAT</span>
+                <span className={clsx("text-[10px] font-bold", threatLevel > 50 ? "text-destructive" : threatLevel > 0 ? "text-yellow-400" : "text-primary")}>{threatLevel}%</span>
+              </div>
+              <div className="h-1 bg-black/60 rounded-full overflow-hidden">
+                <motion.div 
+                  className={clsx("h-full rounded-full", threatLevel > 50 ? "bg-destructive" : threatLevel > 0 ? "bg-yellow-400" : "bg-primary")}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${threatLevel}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 rounded-lg border border-white/10 min-w-[120px]">
+            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-muted-foreground">PROGRESS</span>
+                <span className="text-[10px] font-bold text-primary">{progressPercent}%</span>
+              </div>
+              <div className="h-1 bg-black/60 rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercent}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Command Streak */}
+          {commandStreak > 0 && (
+            <motion.div 
+              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-lg border border-amber-500/40"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs font-bold text-amber-400">{commandStreak}x STREAK</span>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Actions */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -86,178 +220,204 @@ export default function LabWorkspace() {
             className="flex items-center gap-2 text-xs font-mono border-primary/30 hover:border-primary/60"
             data-testid="button-toggle-steps"
           >
-            {showStepsPanel ? (
-              <>
-                <PanelLeftClose className="w-3.5 h-3.5" />
-                HIDE_GUIDE
-              </>
-            ) : (
-              <>
-                <PanelLeft className="w-3.5 h-3.5" />
-                SHOW_GUIDE
-              </>
-            )}
+            {showStepsPanel ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeft className="w-3.5 h-3.5" />}
           </Button>
-          <motion.button 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => resetLab(labId)}
             disabled={isResetting}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-mono text-primary hover:text-white hover:bg-gradient-to-r hover:from-primary/20 hover:to-accent/20 rounded-lg transition-all border border-primary/30 hover:border-primary/60 shadow-md hover:shadow-lg hover:shadow-primary/30"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 text-xs font-mono border-primary/30 hover:border-primary/60"
+            data-testid="button-reset"
           >
             <RefreshCw className={clsx("w-3.5 h-3.5", isResetting && "animate-spin")} />
-            {isResetting ? "RESETTING..." : "RESET_ENV"}
-          </motion.button>
+          </Button>
         </div>
-      </header>
+      </div>
 
-      {/* Main Workspace Layout - Responsive Split */}
-      <div className={clsx("flex-1 grid grid-cols-1 gap-6 min-h-0", showStepsPanel ? "lg:grid-cols-12" : "lg:grid-cols-1")}>
+      {/* Main Workspace Layout */}
+      <div className={clsx("flex-1 grid grid-cols-1 gap-4 min-h-0", showStepsPanel ? "lg:grid-cols-12" : "lg:grid-cols-1")}>
         
-        {/* Left Panel: Brief & Info (3 cols) - Collapsible */}
+        {/* Left Panel: Interactive Steps */}
         <AnimatePresence>
         {showStepsPanel && (
         <motion.div 
-          className="lg:col-span-3 bg-card border border-border/50 rounded-xl flex flex-col overflow-hidden shadow-lg"
+          className="lg:col-span-3 bg-gradient-to-b from-card/80 to-card/40 border border-border/50 rounded-xl flex flex-col overflow-hidden backdrop-blur-sm"
           initial={{ opacity: 0, x: -20, width: 0 }}
           animate={{ opacity: 1, x: 0, width: "auto" }}
           exit={{ opacity: 0, x: -20, width: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="flex border-b border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-            <motion.button 
+          {/* Tabs */}
+          <div className="flex border-b border-primary/20">
+            <button 
               onClick={() => setActiveTab('steps')}
               className={clsx(
-                "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
+                "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
                 activeTab === 'steps' 
-                  ? "border-primary text-primary bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg shadow-primary/20" 
-                  : "border-transparent text-muted-foreground hover:text-white hover:bg-white/5"
+                  ? "border-primary text-primary bg-primary/5" 
+                  : "border-transparent text-muted-foreground hover:text-white"
               )}
-              whileHover={{ y: -2 }}
-              whileTap={{ y: 0 }}
+              data-testid="tab-steps"
             >
-              <motion.div
-                animate={activeTab === 'steps' ? { rotate: 360 } : { rotate: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <CheckCircle2 className="w-4 h-4" />
-              </motion.div>
-              Steps
-            </motion.button>
-            <motion.button 
+              <Target className="w-3.5 h-3.5" /> Objectives
+            </button>
+            <button 
               onClick={() => setActiveTab('brief')}
               className={clsx(
-                "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
+                "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
                 activeTab === 'brief' 
-                  ? "border-primary text-primary bg-gradient-to-r from-primary/10 to-accent/10 shadow-lg shadow-primary/20" 
-                  : "border-transparent text-muted-foreground hover:text-white hover:bg-white/5"
+                  ? "border-primary text-primary bg-primary/5" 
+                  : "border-transparent text-muted-foreground hover:text-white"
               )}
-              whileHover={{ y: -2 }}
-              whileTap={{ y: 0 }}
+              data-testid="tab-brief"
             >
-              <BookOpen className="w-4 h-4" /> Brief
-            </motion.button>
+              <BookOpen className="w-3.5 h-3.5" /> Intel
+            </button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {activeTab === 'steps' ? (
-              <motion.div className="space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-                <h3 className="text-primary font-bold flex items-center gap-2 mb-6 text-base">
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity }}>
-                    <CheckCircle2 className="w-5 h-5" />
-                  </motion.div>
-                  Step-by-Step Guide
-                </h3>
+              <div className="space-y-3">
+                {/* Progress Summary */}
+                <div className="bg-black/30 rounded-lg p-3 border border-primary/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-mono text-muted-foreground">MISSION OBJECTIVES</span>
+                    <span className="text-xs font-bold text-primary">{completedSteps.size}/{totalSteps}</span>
+                  </div>
+                  <Progress value={progressPercent} className="h-2" />
+                </div>
+
+                {/* Interactive Steps */}
                 {lab.steps && Array.isArray(lab.steps) && lab.steps.length > 0 ? (
-                  <div className="space-y-3">
-                    {(lab.steps as any[]).map((step, idx) => (
-                      <motion.div 
-                        key={step.number} 
-                        className="group relative bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-primary/30 p-4 space-y-2 cursor-pointer transition-all hover:border-primary/60 hover:shadow-lg hover:shadow-primary/20"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: idx * 0.05 }}
-                        whileHover={{ y: -2 }}
-                      >
-                        {/* Subtle glow effect */}
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                        
-                        <div className="relative flex items-center gap-3">
-                          <motion.div 
-                            className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent border-2 border-primary/60 flex items-center justify-center text-xs font-bold text-background shadow-lg shadow-primary/40"
-                            animate={{ boxShadow: ["0 0 10px rgba(0, 255, 128, 0.3)", "0 0 20px rgba(0, 255, 128, 0.5)"] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          >
-                            {step.number}
-                          </motion.div>
-                          <h4 className="text-sm font-bold text-white">{step.title}</h4>
-                        </div>
-                        <p className="text-xs text-muted-foreground ml-10 relative">{step.description}</p>
+                  <div className="space-y-2">
+                    {(lab.steps as any[]).map((step, idx) => {
+                      const isCompleted = completedSteps.has(step.number);
+                      return (
                         <motion.div 
-                          className="ml-10 text-xs text-primary/80 font-mono bg-gradient-to-r from-black/60 to-black/40 p-3 rounded border border-primary/30 relative"
-                          whileHover={{ borderColor: 'rgba(0, 255, 128, 0.6)' }}
+                          key={step.number}
+                          onClick={() => toggleStep(step.number)}
+                          className={clsx(
+                            "group relative rounded-lg border p-3 cursor-pointer transition-all",
+                            isCompleted 
+                              ? "bg-primary/10 border-primary/40" 
+                              : "bg-black/20 border-white/10 hover:border-primary/30 hover:bg-black/30"
+                          )}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          whileTap={{ scale: 0.98 }}
+                          data-testid={`step-${step.number}`}
                         >
-                          <span className="text-accent font-bold">HINT:</span> {step.hint}
+                          <div className="flex items-start gap-3">
+                            {/* Checkbox */}
+                            <motion.div 
+                              className={clsx(
+                                "w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5",
+                                isCompleted 
+                                  ? "bg-primary border-primary" 
+                                  : "border-muted-foreground/40 group-hover:border-primary/60"
+                              )}
+                              animate={isCompleted ? { scale: [1, 1.2, 1] } : {}}
+                            >
+                              {isCompleted && <CheckCircle2 className="w-4 h-4 text-background" />}
+                              {!isCompleted && <span className="text-[10px] font-bold text-muted-foreground">{step.number}</span>}
+                            </motion.div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h4 className={clsx(
+                                "text-sm font-bold mb-1",
+                                isCompleted ? "text-primary line-through opacity-70" : "text-white"
+                              )}>
+                                {step.title}
+                              </h4>
+                              <p className="text-[11px] text-muted-foreground mb-2">{step.description}</p>
+                              
+                              {/* Hint - collapsible */}
+                              <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20">
+                                <span className="text-primary font-bold">CMD:</span> {step.hint?.replace("Type '", "").replace("'", "").replace(" to ", " ").split('.')[0]}
+                              </div>
+                              
+                              {step.intel && (
+                                <motion.div 
+                                  className="mt-2 text-[10px] text-cyan-400/70 font-mono bg-cyan-950/30 p-2 rounded border border-cyan-500/20"
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                >
+                                  <span className="text-cyan-400 font-bold">INTEL:</span> {step.intel}
+                                </motion.div>
+                              )}
+                            </div>
+                          </div>
                         </motion.div>
-                        {step.intel && (
-                          <motion.div 
-                            className="ml-10 text-xs text-cyan-400/80 font-mono bg-gradient-to-r from-cyan-950/40 to-cyan-900/20 p-3 rounded border border-cyan-500/30 relative mt-2"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                          >
-                            <span className="text-cyan-400 font-bold">INTEL:</span> {step.intel}
-                          </motion.div>
-                        )}
-                      </motion.div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-sm">No steps available</p>
+                  <p className="text-muted-foreground text-sm">No objectives available</p>
                 )}
-              </motion.div>
+              </div>
             ) : (
-              <div className="prose prose-invert prose-sm prose-p:text-muted-foreground prose-headings:text-white prose-headings:font-display space-y-4">
-                <h3 className="text-primary flex items-center gap-2">
-                  <PlayCircle className="w-4 h-4" /> Mission Objective
-                </h3>
-                <p>{lab.description}</p>
-                
+              <div className="space-y-4">
+                {/* Mission Briefing */}
                 {(lab as any).briefing && (
-                  <>
-                    <h4 className="text-destructive mt-6 mb-2 text-xs uppercase tracking-widest font-bold flex items-center gap-2">
-                      <AlertCircle className="w-3.5 h-3.5" /> Alert Briefing
-                    </h4>
-                    <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/30 text-xs font-mono leading-relaxed text-destructive/90">
-                      {(lab as any).briefing}
+                  <motion.div 
+                    className="bg-destructive/10 rounded-lg p-4 border border-destructive/30"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                      <span className="text-xs font-bold text-destructive uppercase tracking-wider">Alert</span>
                     </div>
-                  </>
-                )}
-                
-                {(lab as any).scenario && (
-                  <>
-                    <h4 className="text-cyan-400 mt-6 mb-2 text-xs uppercase tracking-widest font-bold flex items-center gap-2">
-                      <BookOpen className="w-3.5 h-3.5" /> Scenario
-                    </h4>
-                    <div className="bg-cyan-950/30 p-4 rounded-lg border border-cyan-500/30 text-xs leading-relaxed text-cyan-100/80">
-                      {(lab as any).scenario}
-                    </div>
-                  </>
+                    <p className="text-xs text-destructive/90 leading-relaxed">{(lab as any).briefing}</p>
+                  </motion.div>
                 )}
 
-                {!(lab as any).briefing && !(lab as any).scenario && (
-                  <>
-                    <h4 className="text-white mt-6 mb-2 text-xs uppercase tracking-widest font-bold opacity-70">Scenario Intel</h4>
-                    <div className="bg-black/30 p-4 rounded-lg border border-white/5 text-xs font-mono leading-relaxed text-gray-400">
-                       <p>Our automated scanners detected a misconfiguration in the cloud infrastructure shown in the console.</p>
-                       <p className="mt-2 text-primary/80">
-                         &gt; TARGET: Identify vulnerable resource.<br/>
-                         &gt; ACTION: Use the terminal to patch the vulnerability.<br/>
-                         &gt; HINT: Check bucket policies or security group rules.
-                       </p>
+                {/* Scenario */}
+                {(lab as any).scenario && (
+                  <motion.div 
+                    className="bg-cyan-950/30 rounded-lg p-4 border border-cyan-500/30"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Situation</span>
                     </div>
-                  </>
+                    <p className="text-xs text-cyan-100/80 leading-relaxed">{(lab as any).scenario}</p>
+                  </motion.div>
                 )}
+
+                {/* Objective */}
+                <motion.div 
+                  className="bg-primary/5 rounded-lg p-4 border border-primary/30"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-primary uppercase tracking-wider">Objective</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{lab.description}</p>
+                </motion.div>
+
+                {/* Difficulty & Time */}
+                <div className="flex gap-2">
+                  <div className="flex-1 bg-black/30 rounded-lg p-3 border border-white/10 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Difficulty</p>
+                    <p className={clsx("text-sm font-bold", 
+                      lab.difficulty === 'Beginner' ? 'text-primary' :
+                      lab.difficulty === 'Intermediate' ? 'text-yellow-400' : 'text-destructive'
+                    )}>{lab.difficulty}</p>
+                  </div>
+                  <div className="flex-1 bg-black/30 rounded-lg p-3 border border-white/10 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Est. Time</p>
+                    <p className="text-sm font-bold text-white">{lab.estimatedTime || '10-15 min'}</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -266,36 +426,45 @@ export default function LabWorkspace() {
         </AnimatePresence>
 
         {/* Center/Right Panel: Cloud Console & Terminal */}
-        <div className={clsx("flex flex-col gap-6 min-h-0", showStepsPanel ? "lg:col-span-9" : "lg:col-span-1")}>
+        <div className={clsx("flex flex-col gap-4 min-h-0", showStepsPanel ? "lg:col-span-9" : "lg:col-span-1")}>
           
-          {/* Top: Cloud Console Visualization */}
-          <div className="flex-[4] bg-card/50 border border-border/50 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm min-h-[300px]">
-             <div className="absolute top-0 left-0 px-4 py-2 bg-black/40 border-r border-b border-white/10 rounded-br-xl text-[10px] font-mono text-muted-foreground uppercase tracking-widest z-20">
-               Cloud Infrastructure View
-             </div>
-             
-             {/* Grid Background */}
-             <div className="absolute inset-0 opacity-10 pointer-events-none" 
-                  style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} 
-             />
+          {/* Cloud Console Visualization */}
+          <div className="flex-[4] bg-gradient-to-b from-card/60 to-card/30 border border-border/50 rounded-xl p-4 relative overflow-hidden backdrop-blur-sm min-h-[280px]">
+            <div className="absolute top-0 left-0 px-3 py-1.5 bg-black/60 border-r border-b border-white/10 rounded-br-lg text-[10px] font-mono text-primary uppercase tracking-widest z-20 flex items-center gap-2">
+              <motion.div 
+                className="w-2 h-2 rounded-full bg-primary"
+                animate={{ opacity: [1, 0.4, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              Infrastructure Status
+            </div>
+            
+            {/* Grid Background */}
+            <div className="absolute inset-0 opacity-5 pointer-events-none" 
+                 style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} 
+            />
 
-             {/* Graph Content */}
-             <div className="h-full pt-8 overflow-y-auto pr-2 custom-scrollbar">
-                <ResourceGraph labId={labId} />
-             </div>
+            <div className="h-full pt-6 overflow-y-auto pr-2">
+               <ResourceGraph labId={labId} />
+            </div>
           </div>
 
-          {/* Bottom: Terminal */}
-          <div className="flex-[3] min-h-[250px] relative">
-             <div className="absolute -top-3 left-4 px-2 bg-background z-10 text-xs font-mono text-primary flex items-center gap-2">
-               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-               LIVE_CONNECTION
-             </div>
-             <TerminalWindow 
-               labId={labId} 
-               className="h-full shadow-2xl border-primary/20" 
-               onLabComplete={() => setShowCompleteModal(true)}
-             />
+          {/* Terminal */}
+          <div className="flex-[3] min-h-[220px] relative">
+            <div className="absolute -top-2 left-4 px-2 bg-background z-10 text-[10px] font-mono text-primary flex items-center gap-2">
+              <motion.span 
+                className="w-2 h-2 rounded-full bg-primary"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              />
+              SECURE_TERMINAL
+            </div>
+            <TerminalWindow 
+              labId={labId} 
+              className="h-full shadow-2xl border-primary/30" 
+              onLabComplete={() => setShowCompleteModal(true)}
+              onCommandSuccess={handleCommandSuccess}
+            />
           </div>
         </div>
       </div>
@@ -306,6 +475,8 @@ export default function LabWorkspace() {
         labTitle={lab.title}
         labCategory={lab.category}
         difficulty={lab.difficulty}
+        elapsedTime={formatTime(elapsedTime)}
+        commandStreak={commandStreak}
       />
     </div>
   );

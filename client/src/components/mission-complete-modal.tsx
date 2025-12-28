@@ -11,9 +11,11 @@ interface MissionCompleteModalProps {
   labTitle: string;
   labCategory: string;
   difficulty: string;
+  elapsedTime?: string;
+  commandStreak?: number;
 }
 
-export function MissionCompleteModal({ isOpen, onClose, labTitle, labCategory, difficulty }: MissionCompleteModalProps) {
+export function MissionCompleteModal({ isOpen, onClose, labTitle, labCategory, difficulty, elapsedTime, commandStreak }: MissionCompleteModalProps) {
   const [activeTab, setActiveTab] = useState<'summary' | 'timeline' | 'detection' | 'scorecard'>('summary');
 
   const incidentData = getIncidentData(labCategory);
