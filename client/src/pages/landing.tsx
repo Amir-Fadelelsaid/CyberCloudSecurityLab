@@ -16,7 +16,7 @@ export default function Landing() {
       <nav className="relative z-20 container mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Terminal className="w-8 h-8 text-primary" />
-          <span className="font-display font-bold text-2xl tracking-wider">CYBER<span className="text-primary">LAB</span></span>
+          <span className="font-display font-bold text-xl tracking-wider">CLOUDSHIELD<span className="text-primary">LAB</span></span>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/hiring">
@@ -55,8 +55,8 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Interactive training simulations for the modern security engineer. 
-              Find vulnerabilities, patch resources, and secure the cloud in a realistic virtual environment.
+              57 hands-on labs across 5 security domains. Master cloud defense through realistic terminal simulations, 
+              earn 17 badges, and level up from Recruit to Elite Defender.
             </p>
           </motion.div>
 

@@ -47,7 +47,7 @@ export function Layout({ children }: LayoutProps) {
               <Terminal className="w-8 h-8 text-primary relative z-10" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-lg tracking-wider text-white">CLOUDSHIELD<span className="text-primary">LAB</span></h1>
+              <h1 className="font-display font-bold text-base tracking-wide text-white">CLOUDSHIELD<span className="text-primary">LAB</span></h1>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Security Training v1.0</p>
             </div>
           </Link>
