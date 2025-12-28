@@ -1087,18 +1087,17 @@ async function seedDatabase() {
   for (const labDef of allLabs) {
     const existingLab = existingByTitle.get(labDef.title);
     
-    // Update existing labs with latest step data and estimatedTime
+    // Update existing labs with latest content (steps, briefing, scenario, etc.)
     if (existingLab) {
-      const existingSteps = Array.isArray(existingLab.steps) ? existingLab.steps.length : 0;
-      const newSteps = labDef.steps.length;
-      // Update if step count differs or estimatedTime is missing
-      if (existingSteps !== newSteps || !existingLab.estimatedTime) {
-        await storage.updateLab(existingLab.id, { 
-          estimatedTime: labDef.estimatedTime,
-          steps: labDef.steps 
-        });
-        console.log(`Updated lab: ${labDef.title} (${existingSteps} -> ${newSteps} steps)`);
-      }
+      // Always update to ensure latest briefing, scenario, intel content syncs
+      await storage.updateLab(existingLab.id, { 
+        description: labDef.description,
+        estimatedTime: labDef.estimatedTime,
+        steps: labDef.steps,
+        briefing: labDef.briefing || null,
+        scenario: labDef.scenario || null,
+        successMessage: labDef.successMessage || null
+      });
     }
     
     if (!existingByTitle.has(labDef.title)) {
@@ -1106,6 +1105,9 @@ async function seedDatabase() {
       const lab = await storage.createLab({
         title: labDef.title,
         description: labDef.description,
+        briefing: labDef.briefing || null,
+        scenario: labDef.scenario || null,
+        successMessage: labDef.successMessage || null,
         difficulty: labDef.difficulty,
         category: labDef.category,
         estimatedTime: labDef.estimatedTime,
