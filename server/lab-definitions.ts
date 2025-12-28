@@ -1,13 +1,14 @@
-// Lab Definitions for CyberLab - 30 Labs (10 per category)
+// Lab Definitions for CyberLab - 33 Labs (11 per category)
 // Difficulty Levels:
 // - Beginner: 3-4 steps, single resource, quick fix
 // - Intermediate: 5-7 steps, multiple phases, verification required
 // - Advanced: 8-12 steps, multi-stage attack chains, forensics, multiple resources
+// - Challenge: 1 step (objective only), no guidance - users practice independently
 
 export interface LabDefinition {
   title: string;
   description: string;
-  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  difficulty: "Beginner" | "Intermediate" | "Advanced" | "Challenge";
   category: "Storage Security" | "Network Security" | "SOC Operations";
   estimatedTime: string;
   initialState: Record<string, unknown>;
@@ -693,8 +694,67 @@ export const socOperationsLabs: LabDefinition[] = [
   }
 ];
 
+// ============= CHALLENGE LABS (No guidance - practice independently) =============
+export const challengeLabs: LabDefinition[] = [
+  // Storage Security Challenge
+  {
+    title: "Storage Security Challenge",
+    description: "Multiple S3 buckets have various security issues. Identify all vulnerabilities and fix them without guidance. Test your storage security skills!",
+    difficulty: "Challenge",
+    category: "Storage Security",
+    estimatedTime: "20-40 minutes",
+    initialState: { buckets: ["challenge-bucket-1", "challenge-bucket-2", "challenge-bucket-3"] },
+    steps: [
+      { number: 1, title: "Complete the Objective", description: "Find and fix all storage security vulnerabilities. Use 'scan' to discover issues, then apply the appropriate fixes. No hints provided - you're on your own!", hint: "Use your knowledge from previous labs." }
+    ],
+    resources: [
+      { type: "s3", name: "challenge-bucket-1", config: { access: "public-read", encryption: "none" }, isVulnerable: true, status: "active" },
+      { type: "s3", name: "challenge-bucket-2", config: { logging: "disabled", versioning: "disabled" }, isVulnerable: true, status: "active" },
+      { type: "s3", name: "challenge-bucket-3", config: { policy: "overly-permissive" }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["aws s3 fix challenge-bucket-1", "aws s3 enable-encryption challenge-bucket-1", "aws s3 enable-logging challenge-bucket-2", "aws s3 enable-versioning challenge-bucket-2", "aws s3 fix-policy challenge-bucket-3"]
+  },
+  // Network Security Challenge
+  {
+    title: "Network Security Challenge",
+    description: "Your infrastructure has multiple network security misconfigurations. Find all exposed ports and insecure rules without any guidance. Prove your network security expertise!",
+    difficulty: "Challenge",
+    category: "Network Security",
+    estimatedTime: "20-40 minutes",
+    initialState: { instances: ["challenge-instance-1", "challenge-instance-2"] },
+    steps: [
+      { number: 1, title: "Complete the Objective", description: "Identify and remediate all network security issues. Scan the infrastructure, analyze security groups, and lock down all exposed services. No step-by-step guidance!", hint: "Apply what you've learned." }
+    ],
+    resources: [
+      { type: "ec2", name: "challenge-instance-1", config: { securityGroup: "sg-challenge-1", exposedPorts: [22, 3389, 3306] }, isVulnerable: true, status: "running" },
+      { type: "security_group", name: "sg-challenge-1", config: { inboundRules: [{ port: 22, source: "0.0.0.0/0" }, { port: 3389, source: "0.0.0.0/0" }, { port: 3306, source: "0.0.0.0/0" }] }, isVulnerable: true, status: "active" },
+      { type: "ec2", name: "challenge-instance-2", config: { securityGroup: "sg-challenge-2", exposedPorts: [80, 443, 8080] }, isVulnerable: true, status: "running" }
+    ],
+    fixCommands: ["aws ec2 restrict-ssh challenge-instance-1", "aws ec2 restrict-rdp challenge-instance-1", "aws ec2 restrict-db challenge-instance-1"]
+  },
+  // SOC Operations Challenge
+  {
+    title: "SOC Operations Challenge",
+    description: "Your SOC dashboard shows multiple alerts. Investigate the incidents, identify the attack chain, and respond appropriately - all without any guidance. Show your incident response skills!",
+    difficulty: "Challenge",
+    category: "SOC Operations",
+    estimatedTime: "25-45 minutes",
+    initialState: { alerts: ["challenge-alert-1", "challenge-alert-2", "challenge-alert-3"] },
+    steps: [
+      { number: 1, title: "Complete the Objective", description: "Analyze all security alerts, investigate using CloudTrail and GuardDuty, identify compromised resources, and take appropriate remediation actions. No hints - this is your final test!", hint: "Think like a SOC analyst." }
+    ],
+    resources: [
+      { type: "cloudtrail_log", name: "challenge-trail", config: { suspiciousEvents: ["UnauthorizedAPICall", "PolicyChanged", "RoleCreated"] }, isVulnerable: false, status: "evidence" },
+      { type: "guardduty_alert", name: "challenge-alert", config: { alertType: "UnauthorizedAccess:IAMUser/MaliciousIPCaller", severity: "HIGH" }, isVulnerable: false, status: "active" },
+      { type: "iam_user", name: "challenge-compromised-user", config: { hasExcessivePermissions: true, suspiciousActivity: true }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["aws iam disable-user challenge-compromised-user", "aws cloudtrail enable challenge-trail"]
+  }
+];
+
 export const allLabs = [
   ...storageSecurityLabs,
   ...networkSecurityLabs,
-  ...socOperationsLabs
+  ...socOperationsLabs,
+  ...challengeLabs
 ];

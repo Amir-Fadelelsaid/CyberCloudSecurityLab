@@ -39,7 +39,7 @@ export default function LabsList() {
           />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-          {['All', 'Beginner', 'Intermediate', 'Advanced'].map((lvl) => (
+          {['All', 'Beginner', 'Intermediate', 'Advanced', 'Challenge'].map((lvl) => (
             <button
               key={lvl}
               onClick={() => setFilter(lvl)}
@@ -104,7 +104,8 @@ export default function LabsList() {
                           "text-[10px] font-bold px-3 py-1.5 rounded-full border uppercase font-mono",
                           lab.difficulty === 'Beginner' ? "text-green-300 border-green-500/50 bg-green-500/15 shadow-lg shadow-green-500/20" :
                           lab.difficulty === 'Intermediate' ? "text-yellow-300 border-yellow-500/50 bg-yellow-500/15 shadow-lg shadow-yellow-500/20" :
-                          "text-red-300 border-red-500/50 bg-red-500/15 shadow-lg shadow-red-500/20"
+                          lab.difficulty === 'Advanced' ? "text-red-300 border-red-500/50 bg-red-500/15 shadow-lg shadow-red-500/20" :
+                          "text-purple-300 border-purple-500/50 bg-purple-500/15 shadow-lg shadow-purple-500/20"
                        )}
                        animate={{ boxShadow: ["0 0 10px rgba(255, 200, 0, 0.2)", "0 0 20px rgba(255, 200, 0, 0.4)"] }}
                        transition={{ duration: 2, repeat: Infinity }}
