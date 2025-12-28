@@ -1005,8 +1005,20 @@ export async function registerRoutes(
 async function seedDatabase() {
   const existingLabs = await storage.getLabs();
   
-  // Check which labs need to be added or updated
-  const existingByTitle = new Map(existingLabs.map(l => [l.title, l]));
+  // Get valid lab titles from definitions
+  const validTitles = new Set(allLabs.map(l => l.title));
+  
+  // Remove old/orphaned labs not in current definitions
+  for (const lab of existingLabs) {
+    if (!validTitles.has(lab.title)) {
+      await storage.deleteLab(lab.id);
+      console.log(`Removed old lab: ${lab.title}`);
+    }
+  }
+  
+  // Refresh lab list after cleanup
+  const currentLabs = await storage.getLabs();
+  const existingByTitle = new Map(currentLabs.map(l => [l.title, l]));
   
   for (const labDef of allLabs) {
     const existingLab = existingByTitle.get(labDef.title);
@@ -1053,9 +1065,6 @@ async function seedDatabase() {
     }
   }
   
-  if (existingLabs.length === 0) {
-    console.log("Database seeded with 30 labs");
-  } else {
-    console.log(`Labs synced. Total: ${(await storage.getLabs()).length}`);
-  }
+  const finalCount = (await storage.getLabs()).length;
+  console.log(`Labs synced. Total: ${finalCount} labs (expected: 30)`);
 }
