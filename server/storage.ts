@@ -11,6 +11,7 @@ export interface IStorage {
   getLab(id: number): Promise<Lab | undefined>;
   createLab(lab: InsertLab): Promise<Lab>;
   updateLab(id: number, updates: Partial<Lab>): Promise<Lab>;
+  deleteLab(id: number): Promise<void>;
   
   // Resources
   getResources(labId: number, userId?: string): Promise<Resource[]>;
@@ -44,6 +45,11 @@ export class DatabaseStorage implements IStorage {
   async updateLab(id: number, updates: Partial<Lab>): Promise<Lab> {
     const [updated] = await db.update(labs).set(updates).where(eq(labs.id, id)).returning();
     return updated;
+  }
+
+  async deleteLab(id: number): Promise<void> {
+    await db.delete(resources).where(eq(resources.labId, id));
+    await db.delete(labs).where(eq(labs.id, id));
   }
 
   async getResources(labId: number, userId?: string): Promise<Resource[]> {
