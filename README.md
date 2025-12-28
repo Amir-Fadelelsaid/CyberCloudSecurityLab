@@ -32,13 +32,13 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ## 🎯 Features
 
-### 30+ Interactive Labs Across 3 Categories
+### 33 Interactive Labs Across 3 Categories
 
-| Category | Beginner | Intermediate | Advanced |
-|----------|----------|--------------|----------|
-| **Storage Security** | 3 labs | 4 labs | 3 labs |
-| **Network Security** | 3 labs | 4 labs | 3 labs |
-| **SOC Operations** | 3 labs | 5 labs | 3 labs |
+| Category | Beginner | Intermediate | Advanced | Challenge | **Total** |
+|----------|----------|--------------|----------|-----------|-----------|
+| **Storage Security** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
+| **Network Security** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
+| **SOC Operations** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
 
 ### Difficulty-Based Learning Path
 
@@ -47,10 +47,12 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 | **Beginner** | 5-10 min | 3 steps | Quick fixes, single resource |
 | **Intermediate** | 15-25 min | 6-7 steps | Multi-phase remediation with verification |
 | **Advanced** | 30-55 min | 10-12 steps | Complex investigations, multiple resources, forensics |
+| **Challenge** | 20-45 min | 1 step | No guidance - practice independently with multiple resources |
 
 ### Smart Learning System
 - **Step-by-Step Guidance**: Detailed instructions for each lab with numbered steps
-- **Progressive Difficulty**: Labs organized by difficulty level (Beginner, Intermediate, Advanced)
+- **Progressive Difficulty**: Labs organized by difficulty level (Beginner, Intermediate, Advanced, Challenge)
+- **Challenge Mode**: Practice labs with no guidance - apply your skills independently
 - **Real-time Feedback**: Immediate validation of your security fixes
 - **Progress Tracking**: Monitor your learning journey across different security domains
 - **Mission Completion Artifacts**: 4-tab modal with Incident Summary, Security Framework mappings, Technical Details, and Recommendations
@@ -244,6 +246,12 @@ Advanced Labs (30-55 min, 10-12 steps)
     └─ Storage: Data Breach Investigation, Supply Chain Attack, Multi-Bucket Hardening
     └─ Network: WAF Deployment, VPC Peering Audit, Transit Gateway Route Leak
     └─ SOC: Credential Compromise, Cross-Account Role Attack, DataSync Exfiltration
+
+Challenge Labs (20-45 min, no guidance)
+    ↓
+    └─ Storage: Storage Security Challenge - Multiple buckets, find and fix all issues
+    └─ Network: Network Security Challenge - Lock down exposed infrastructure
+    └─ SOC: SOC Operations Challenge - Investigate alerts and respond independently
 ```
 
 ## 🔐 Security Considerations
@@ -296,8 +304,9 @@ We welcome contributions! Please:
 
 ## 📋 Roadmap
 
-- [x] 30+ labs across Storage, Network, and SOC Operations
+- [x] 33 labs across Storage, Network, and SOC Operations (11 per category)
 - [x] Advanced labs with 10-12 steps and multiple resources
+- [x] Challenge labs for independent practice (no step-by-step guidance)
 - [x] Mission completion artifacts with 4-tab modal
 - [x] Security framework mappings (MITRE ATT&CK, CIS Controls, AWS Well-Architected)
 - [x] Hiring Manager demonstration page
