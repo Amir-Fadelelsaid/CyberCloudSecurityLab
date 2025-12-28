@@ -18,11 +18,11 @@ export default function Landing() {
           <Terminal className="w-8 h-8 text-primary" />
           <span className="font-display font-bold text-2xl tracking-wider">CYBER<span className="text-primary">LAB</span></span>
         </div>
-        <Link href="/api/login">
+        <a href="/api/login">
           <button className="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-mono transition-all backdrop-blur-sm">
             OPERATOR_LOGIN
           </button>
-        </Link>
+        </a>
       </nav>
 
       {/* Hero */}
@@ -58,12 +58,12 @@ export default function Landing() {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
           >
-            <Link href="/api/login">
+            <a href="/api/login">
               <button className="px-8 py-4 rounded-xl bg-primary hover:bg-primary/90 text-background font-bold font-mono flex items-center gap-2 transition-all hover:scale-105 shadow-[0_0_20px_rgba(0,255,128,0.4)]">
                 <Terminal className="w-5 h-5" />
                 INITIATE_TRAINING
               </button>
-            </Link>
+            </a>
             <button className="px-8 py-4 rounded-xl bg-card hover:bg-card/80 border border-border text-foreground font-mono font-medium flex items-center gap-2 transition-all">
               VIEW_DOCS <ChevronRight className="w-4 h-4" />
             </button>
