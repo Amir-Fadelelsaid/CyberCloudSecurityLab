@@ -2,7 +2,7 @@ import { useLab } from "@/hooks/use-labs";
 import { useRoute, Link } from "wouter";
 import { TerminalWindow } from "@/components/terminal-window";
 import { ResourceGraph } from "@/components/resource-graph";
-import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen } from "lucide-react";
+import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2 } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
 import { useState } from "react";
 import { clsx } from "clsx";
@@ -13,7 +13,7 @@ export default function LabWorkspace() {
   const labId = Number(params?.id);
   const { data: lab, isLoading, error } = useLab(labId);
   const { mutate: resetLab, isPending: isResetting } = useResetLab();
-  const [activeTab, setActiveTab] = useState<'console' | 'brief'>('console');
+  const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('steps');
 
   if (isLoading) {
     return (
@@ -73,33 +73,70 @@ export default function LabWorkspace() {
         <div className="lg:col-span-3 bg-card border border-border/50 rounded-xl flex flex-col overflow-hidden shadow-lg">
           <div className="flex border-b border-border/50">
             <button 
+              onClick={() => setActiveTab('steps')}
+              className={clsx(
+                "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-colors flex items-center justify-center gap-2",
+                activeTab === 'steps' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-white"
+              )}
+            >
+              <CheckCircle2 className="w-4 h-4" /> Steps
+            </button>
+            <button 
               onClick={() => setActiveTab('brief')}
               className={clsx(
                 "flex-1 py-3 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-colors flex items-center justify-center gap-2",
                 activeTab === 'brief' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-white"
               )}
             >
-              <BookOpen className="w-4 h-4" /> Mission Brief
+              <BookOpen className="w-4 h-4" /> Brief
             </button>
           </div>
           
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-             <div className="prose prose-invert prose-sm prose-p:text-muted-foreground prose-headings:text-white prose-headings:font-display">
-               <h3 className="text-primary flex items-center gap-2">
-                 <PlayCircle className="w-4 h-4" /> Objective
-               </h3>
-               <p>{lab.description}</p>
-               
-               <h4 className="text-white mt-6 mb-2 text-xs uppercase tracking-widest font-bold opacity-70">Scenario Intel</h4>
-               <div className="bg-black/30 p-4 rounded-lg border border-white/5 text-xs font-mono leading-relaxed text-gray-400">
-                  <p>Our automated scanners detected a misconfiguration in the cloud infrastructure shown in the console.</p>
-                  <p className="mt-2 text-primary/80">
-                    &gt; TARGET: Identify vulnerable resource.<br/>
-                    &gt; ACTION: Use the terminal to patch the vulnerability.<br/>
-                    &gt; HINT: Check bucket policies or security group rules.
-                  </p>
-               </div>
-             </div>
+            {activeTab === 'steps' ? (
+              <div className="space-y-4">
+                <h3 className="text-primary font-bold flex items-center gap-2 mb-4">
+                  <CheckCircle2 className="w-4 h-4" /> Step-by-Step Guide
+                </h3>
+                {lab.steps && Array.isArray(lab.steps) && lab.steps.length > 0 ? (
+                  <div className="space-y-3">
+                    {(lab.steps as any[]).map((step) => (
+                      <div key={step.number} className="bg-black/30 rounded-lg border border-white/10 p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-bold text-primary">
+                            {step.number}
+                          </div>
+                          <h4 className="text-sm font-bold text-white">{step.title}</h4>
+                        </div>
+                        <p className="text-xs text-muted-foreground ml-8">{step.description}</p>
+                        <div className="ml-8 text-xs text-primary/70 font-mono bg-black/50 p-2 rounded border border-primary/10">
+                          💡 {step.hint}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No steps available</p>
+                )}
+              </div>
+            ) : (
+              <div className="prose prose-invert prose-sm prose-p:text-muted-foreground prose-headings:text-white prose-headings:font-display">
+                <h3 className="text-primary flex items-center gap-2">
+                  <PlayCircle className="w-4 h-4" /> Objective
+                </h3>
+                <p>{lab.description}</p>
+                
+                <h4 className="text-white mt-6 mb-2 text-xs uppercase tracking-widest font-bold opacity-70">Scenario Intel</h4>
+                <div className="bg-black/30 p-4 rounded-lg border border-white/5 text-xs font-mono leading-relaxed text-gray-400">
+                   <p>Our automated scanners detected a misconfiguration in the cloud infrastructure shown in the console.</p>
+                   <p className="mt-2 text-primary/80">
+                     &gt; TARGET: Identify vulnerable resource.<br/>
+                     &gt; ACTION: Use the terminal to patch the vulnerability.<br/>
+                     &gt; HINT: Check bucket policies or security group rules.
+                   </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
