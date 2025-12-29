@@ -1621,6 +1621,17 @@ export async function registerRoutes(
     }
   });
 
+  // Category Metadata
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const { CATEGORY_METADATA } = await import("./category-metadata");
+      res.json(CATEGORY_METADATA);
+    } catch (error) {
+      console.error("Error fetching category metadata:", error);
+      res.status(500).json({ message: "Failed to fetch category metadata" });
+    }
+  });
+
   // Certificates
   app.get("/api/user/certificates", isAuthenticated, async (req: any, res) => {
     try {

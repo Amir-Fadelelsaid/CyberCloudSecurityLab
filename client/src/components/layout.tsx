@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Terminal, Shield, BarChart3, LogOut, LayoutDashboard, Award, Trophy } from "lucide-react";
+import { Terminal, Shield, BarChart3, LogOut, LayoutDashboard, Award, Trophy, GraduationCap } from "lucide-react";
 import { clsx } from "clsx";
 
 type LevelInfo = {
@@ -30,6 +30,7 @@ export function Layout({ children }: LayoutProps) {
     { icon: Shield, label: "Active Labs", href: "/labs" },
     { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
     { icon: Award, label: "Badges", href: "/badges" },
+    { icon: GraduationCap, label: "Certificates", href: "/certificates" },
     { icon: BarChart3, label: "My Progress", href: "/progress" },
   ];
 
