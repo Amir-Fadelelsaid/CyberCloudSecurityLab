@@ -362,7 +362,7 @@ export default function HiringManager() {
 
           <div className="text-center space-y-4">
             <p className="text-muted-foreground text-sm">
-              Built by Amir Fadelelsaid - SOC Professional & Cloud Security Engineer
+              Built by Amir Fadelelsaid - Cloud Security Enthusiast
             </p>
             <div className="flex justify-center gap-4">
               <a href="https://cloudshieldlab.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
