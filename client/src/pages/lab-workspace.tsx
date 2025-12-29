@@ -5,7 +5,7 @@ import { ResourceGraph } from "@/components/resource-graph";
 import { MissionCompleteModal } from "@/components/mission-complete-modal";
 import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft, Clock, Shield, Target, Zap, AlertTriangle, Trophy } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,9 @@ export default function LabWorkspace() {
   const [, params] = useRoute("/labs/:id");
   const labId = Number(params?.id);
   const { data: lab, isLoading, error } = useLab(labId);
-  const { data: resources } = useLabResources(labId);
-  const { mutate: resetLab, isPending: isResetting } = useResetLab();
+  const { data: resources, refetch: refetchResources } = useLabResources(labId);
+  const { mutate: resetLabMutation, isPending: isResetting } = useResetLab();
+  const terminalResetKey = useRef(0);
   const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('steps');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showStepsPanel, setShowStepsPanel] = useState(() => {
@@ -83,6 +84,26 @@ export default function LabWorkspace() {
     setShowSuccessFlash(true);
     setTimeout(() => setShowSuccessFlash(false), 500);
   }, []);
+
+  // Handle lab reset
+  const handleResetLab = useCallback(() => {
+    resetLabMutation(labId, {
+      onSuccess: () => {
+        // Reset all local state
+        setCompletedSteps(new Set());
+        setElapsedTime(0);
+        setCommandStreak(0);
+        setShowCompleteModal(false);
+        // Clear localStorage for this lab
+        localStorage.removeItem(`lab-${labId}-completedSteps`);
+        localStorage.removeItem(`lab-${labId}-terminalHistory`);
+        // Force terminal to reset by updating key
+        terminalResetKey.current += 1;
+        // Refetch resources
+        refetchResources();
+      }
+    });
+  }, [labId, resetLabMutation, refetchResources]);
 
   // Reset on lab change
   useEffect(() => {
@@ -231,7 +252,7 @@ export default function LabWorkspace() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => resetLab(labId)}
+            onClick={handleResetLab}
             disabled={isResetting}
             className="flex items-center gap-2 text-xs font-mono border-primary/30 hover:border-primary/60"
             data-testid="button-reset"
