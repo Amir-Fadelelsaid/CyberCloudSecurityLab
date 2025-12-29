@@ -29,11 +29,13 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 - Practice real-world vulnerability remediation in a safe sandbox
 - Learn the "why" behind each fix through MITRE ATT&CK and CIS Control mappings
 - Build muscle memory for incident response before facing production emergencies
+- Experience enterprise SOC operations through realistic SIEM simulation
 
 **Skills This Proves:**
 - Full-stack application development (React, TypeScript, Express, PostgreSQL)
 - Cloud security architecture and AWS security best practices
 - Security framework implementation (MITRE ATT&CK, CIS Controls, AWS Well-Architected)
+- SOC operations, SIEM/SOAR concepts, and incident response
 - Terminal-based security tooling and command-line proficiency
 - Gamification design for security awareness training
 
@@ -52,6 +54,39 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 | **Cloud Security Analyst** | 4 labs | 4 labs | 4 labs | - | **12** |
 | **IAM Security** | 4 labs | 4 labs | 4 labs | - | **12** |
 | **Cloud Security Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
+
+### Enterprise SOC Simulation Platform
+
+Full-featured Security Operations Center dashboard with 6 operational tabs:
+
+| Tab | Features |
+|-----|----------|
+| **ALERTS** | Real-time SIEM alerts with severity levels, enrichment data, and investigation panels |
+| **LOGS** | Multi-source log analysis (Windows Events, Linux Syslog, Cloud Telemetry, Network Flows) |
+| **DETECTIONS** | Custom detection rules with MITRE ATT&CK mapping and threshold logic |
+| **CASES** | Case management workflow (open, investigating, pending, closed) with alert linking |
+| **NETWORK** | Network traffic analysis with direction indicators and GeoIP enrichment |
+| **ENDPOINTS** | Endpoint telemetry with process trees, command lines, and file hashes |
+
+**Enrichment Layer:**
+- GeoIP data (country, city, ISP)
+- User context (department, role, risk score)
+- Asset criticality ratings
+- IP reputation scoring
+
+### Certificate System
+
+Earn certificates upon completing all labs in a category:
+
+| Certificate | Labs Required |
+|-------------|---------------|
+| Storage Security | 11 labs |
+| Network Security | 11 labs |
+| SOC Operations | 11 labs |
+| SOC Engineer | 12 labs |
+| Cloud Security Analyst | 12 labs |
+| IAM Security | 12 labs |
+| Cloud Security Engineer | 12 labs |
 
 ### Dynamic Leveling System
 
@@ -102,6 +137,7 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 - Mock cloud resources that respond to your commands
 - Authentic security vulnerability scenarios
 - Practical remediation workflows
+- Enterprise SOC dashboard with SIEM-style alerts
 
 ---
 
@@ -195,13 +231,13 @@ The app will be available at `http://localhost:5000`
 ## Usage
 
 ### For Learners
-1. Visit the landing page and click **"INITIATE_TRAINING"**
+1. Visit the landing page and click **"START TRAINING"**
 2. Browse available training labs
 3. Select a lab by difficulty level (Beginner, Intermediate, Advanced)
 4. Follow the step-by-step guide in the left panel (or hide it for challenge mode)
 5. Use the terminal to execute commands and fix vulnerabilities
 6. Track your progress in the Mission Control dashboard
-7. Earn badges as you complete labs and level up
+7. Earn badges and certificates as you complete labs
 
 ### Example Commands
 ```bash
@@ -224,8 +260,8 @@ scan
 CloudShieldLab/
 ├── client/                 # React frontend
 │   ├── src/
-│   │   ├── pages/         # Page components (landing, labs, workspace, badges)
-│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Page components (landing, labs, workspace, badges, certificates)
+│   │   ├── components/    # Reusable UI components (SOC dashboard, terminal, certificate)
 │   │   ├── hooks/         # Custom React hooks
 │   │   ├── lib/           # Utilities and helpers
 │   │   └── index.css      # Global styles with neon theme
@@ -313,6 +349,7 @@ Challenge Labs (20-45 min, no guidance)
 - `GET /api/user/level` - Get user level info
 - `GET /api/badges` - List all badges
 - `GET /api/user/badges` - Get user's earned badges
+- `GET /api/certificates` - Get user's certificates
 
 ## Development
 
@@ -348,11 +385,17 @@ We welcome contributions! Please:
 - [x] Challenge labs for independent practice (no step-by-step guidance)
 - [x] Mission completion artifacts with 4-tab modal
 - [x] Security framework mappings (MITRE ATT&CK, CIS Controls, AWS Well-Architected)
-- [x] Hiring Manager demonstration page
+- [x] Hiring Manager / Recruiter demonstration page
 - [x] Dynamic leveling system (Recruit to Elite Defender)
 - [x] 19 unlockable badges (Level, Category, Achievement)
 - [x] Hideable guide panel for self-challenge mode
 - [x] Live leaderboard with real-time WebSocket updates
+- [x] Enterprise SOC simulation dashboard (SIEM, logs, detections, cases)
+- [x] Certificate system with category completion tracking
+- [x] Multi-source log analysis (Windows, Linux, Cloud, Network)
+- [x] Enrichment layer (GeoIP, user context, asset criticality)
+- [x] Detection rules with MITRE ATT&CK mapping
+- [x] Case management workflow
 - [ ] Video tutorials and walkthroughs
 - [ ] Community-contributed labs
 - [ ] Mobile app support

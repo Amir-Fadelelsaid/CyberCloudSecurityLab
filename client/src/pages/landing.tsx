@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Terminal, Shield, Lock, ChevronRight, Briefcase } from "lucide-react";
+import { Terminal, Shield, Lock, ChevronRight, Briefcase, AlertTriangle, Award, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Landing() {
@@ -34,7 +34,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <main className="relative z-10 container mx-auto px-6 pt-20 lg:pt-32 pb-20">
+      <main className="relative z-10 container mx-auto px-6 pt-16 lg:pt-24 pb-16">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -46,7 +46,7 @@ export default function Landing() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-50"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              SYSTEM ONLINE // V1.0.4 ACTIVE
+              SYSTEM ONLINE // V2.0 ACTIVE
             </div>
             
             <h1 className="text-5xl md:text-7xl font-display font-black leading-tight text-white mb-6">
@@ -55,8 +55,8 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              81 hands-on labs across 7 security domains. Master cloud defense through realistic terminal simulations, 
-              earn 19 badges, and level up from Recruit to Elite Defender.
+              81 hands-on labs across 7 security domains. Enterprise SOC simulation with SIEM alerts, 
+              detection rules, and case management. Earn certificates and level up from Recruit to Elite Defender.
             </p>
           </motion.div>
 
@@ -71,6 +71,7 @@ export default function Landing() {
                 className="px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold font-mono flex items-center gap-2 transition-all shadow-lg"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
+                data-testid="button-start-training"
               >
                 <Terminal className="w-5 h-5" />
                 START TRAINING
@@ -81,10 +82,31 @@ export default function Landing() {
                 className="px-8 py-4 rounded-xl bg-white/10 border border-white/20 text-white font-mono font-medium flex items-center gap-2 transition-all hover:bg-white/15"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
+                data-testid="button-view-docs"
               >
                 VIEW DOCS <ChevronRight className="w-4 h-4" />
               </motion.button>
             </a>
+          </motion.div>
+
+          {/* Stats Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="flex justify-center gap-8 pt-8 flex-wrap"
+          >
+            {[
+              { value: "81", label: "Labs" },
+              { value: "7", label: "Categories" },
+              { value: "19", label: "Badges" },
+              { value: "7", label: "Certificates" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <p className="text-2xl font-bold text-primary">{stat.value}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+              </div>
+            ))}
           </motion.div>
         </div>
 
@@ -93,7 +115,7 @@ export default function Landing() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-20"
         >
           {[
             { 
@@ -103,16 +125,22 @@ export default function Landing() {
               iconColor: "text-cyan-400"
             },
             { 
-              icon: Terminal, 
-              title: "CLI-Based Defense", 
-              desc: "Use a realistic terminal interface to identify threats and execute remediation scripts.",
+              icon: AlertTriangle, 
+              title: "SOC Dashboard", 
+              desc: "Enterprise SIEM simulation with alerts, logs, detection rules, and case management.",
+              iconColor: "text-violet-400"
+            },
+            { 
+              icon: Award, 
+              title: "Certificates", 
+              desc: "Earn certificates upon completing all labs in a category to prove your skills.",
               iconColor: "text-teal-400"
             },
             { 
-              icon: Lock, 
-              title: "Progress Tracking", 
-              desc: "Earn certifications and track your skill growth across IAM, Network, and Storage domains.",
-              iconColor: "text-violet-400"
+              icon: Users, 
+              title: "Leaderboard", 
+              desc: "Compete with others and track your progress on the live leaderboard.",
+              iconColor: "text-orange-400"
             }
           ].map((feature, i) => (
             <motion.div 
@@ -131,12 +159,38 @@ export default function Landing() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Categories Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+          className="mt-20"
+        >
+          <h2 className="text-2xl font-display font-bold text-center text-white mb-8">7 Security Domains</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            {[
+              { name: "Storage", count: 11, color: "from-teal-500/20 to-teal-600/10" },
+              { name: "Network", count: 11, color: "from-blue-500/20 to-blue-600/10" },
+              { name: "SOC Ops", count: 11, color: "from-violet-500/20 to-violet-600/10" },
+              { name: "SOC Eng", count: 12, color: "from-orange-500/20 to-orange-600/10" },
+              { name: "Cloud Analyst", count: 12, color: "from-cyan-500/20 to-cyan-600/10" },
+              { name: "IAM", count: 12, color: "from-yellow-500/20 to-yellow-600/10" },
+              { name: "Cloud SecEng", count: 12, color: "from-rose-500/20 to-rose-600/10" },
+            ].map((cat, i) => (
+              <div key={i} className={`rounded-xl bg-gradient-to-br ${cat.color} border border-white/10 p-4 text-center`}>
+                <p className="text-2xl font-bold text-white">{cat.count}</p>
+                <p className="text-xs text-muted-foreground">{cat.name}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </main>
 
       {/* Footer with Credit */}
       <footer className="relative z-10 container mx-auto px-6 py-8 text-center border-t border-white/10">
         <p className="text-sm text-muted-foreground font-mono">
-          Created by <span className="text-primary font-medium">Amir Fadelelsaid</span>
+          Created by <span className="text-primary font-medium">Amir Fadelelsaid</span> - SOC Analyst & Cloud Security Professional
         </p>
       </footer>
     </div>
