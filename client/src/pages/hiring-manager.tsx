@@ -173,7 +173,7 @@ export default function HiringManager() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Shield className="w-5 h-5 text-cyan-400" />
-                  SOC Analyst Skills
+                  SOC Professional Skills
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -362,7 +362,7 @@ export default function HiringManager() {
 
           <div className="text-center space-y-4">
             <p className="text-muted-foreground text-sm">
-              Built by Amir Fadelelsaid - SOC Analyst & Cloud Security Professional
+              Built by Amir Fadelelsaid - SOC Professional & Cloud Security Engineer
             </p>
             <div className="flex justify-center gap-4">
               <a href="https://cloudshieldlab.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">

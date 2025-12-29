@@ -46,10 +46,10 @@ export const levelBadges: BadgeDefinition[] = [
   },
   {
     name: "Elite Defender",
-    description: "Complete all 57 labs and achieve elite status",
+    description: "Complete all 81 labs and achieve elite status",
     icon: "Crown",
     category: "Level",
-    requirement: JSON.stringify({ type: "total_labs", count: 57 }),
+    requirement: JSON.stringify({ type: "total_labs", count: 81 }),
     level: 5
   }
 ];
@@ -90,6 +90,20 @@ export const categoryBadges: BadgeDefinition[] = [
     icon: "Cloud",
     category: "Category",
     requirement: JSON.stringify({ type: "category_complete", category: "Cloud Security Analyst" })
+  },
+  {
+    name: "IAM Enforcer",
+    description: "Master all IAM Security labs",
+    icon: "Users",
+    category: "Category",
+    requirement: JSON.stringify({ type: "category_complete", category: "IAM Security" })
+  },
+  {
+    name: "Security Architect",
+    description: "Master all Cloud Security Engineer labs",
+    icon: "Shield",
+    category: "Category",
+    requirement: JSON.stringify({ type: "category_complete", category: "Cloud Security Engineer" })
   }
 ];
 
@@ -142,7 +156,7 @@ export const achievementBadges: BadgeDefinition[] = [
     description: "Complete every single lab in CloudShieldLab",
     icon: "Trophy",
     category: "Achievement",
-    requirement: JSON.stringify({ type: "total_labs", count: 57 })
+    requirement: JSON.stringify({ type: "total_labs", count: 81 })
   }
 ];
 
@@ -154,17 +168,17 @@ export const allBadgeDefinitions = [
 
 // Helper to calculate user level based on completed labs
 export function calculateLevel(completedLabsCount: number): { level: number; title: string; nextLevel: number | null; progress: number } {
-  if (completedLabsCount >= 57) {
+  if (completedLabsCount >= 81) {
     return { level: 5, title: "Elite Defender", nextLevel: null, progress: 100 };
-  } else if (completedLabsCount >= 35) {
-    return { level: 4, title: "Architect", nextLevel: 57, progress: Math.round(((completedLabsCount - 35) / (57 - 35)) * 100) };
-  } else if (completedLabsCount >= 20) {
-    return { level: 3, title: "Engineer", nextLevel: 35, progress: Math.round(((completedLabsCount - 20) / (35 - 20)) * 100) };
-  } else if (completedLabsCount >= 12) {
-    return { level: 2, title: "Analyst", nextLevel: 20, progress: Math.round(((completedLabsCount - 12) / (20 - 12)) * 100) };
-  } else if (completedLabsCount >= 5) {
-    return { level: 1, title: "Operator", nextLevel: 12, progress: Math.round(((completedLabsCount - 5) / (12 - 5)) * 100) };
+  } else if (completedLabsCount >= 51) {
+    return { level: 4, title: "Architect", nextLevel: 81, progress: Math.round(((completedLabsCount - 51) / (81 - 51)) * 100) };
+  } else if (completedLabsCount >= 31) {
+    return { level: 3, title: "Engineer", nextLevel: 51, progress: Math.round(((completedLabsCount - 31) / (51 - 31)) * 100) };
+  } else if (completedLabsCount >= 16) {
+    return { level: 2, title: "Analyst", nextLevel: 31, progress: Math.round(((completedLabsCount - 16) / (31 - 16)) * 100) };
+  } else if (completedLabsCount >= 7) {
+    return { level: 1, title: "Operator", nextLevel: 16, progress: Math.round(((completedLabsCount - 7) / (16 - 7)) * 100) };
   } else {
-    return { level: 0, title: "Recruit", nextLevel: 5, progress: Math.round((completedLabsCount / 5) * 100) };
+    return { level: 0, title: "Recruit", nextLevel: 7, progress: Math.round((completedLabsCount / 7) * 100) };
   }
 }

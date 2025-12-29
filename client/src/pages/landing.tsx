@@ -55,8 +55,8 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              57 hands-on labs across 5 security domains. Master cloud defense through realistic terminal simulations, 
-              earn 17 badges, and level up from Recruit to Elite Defender.
+              81 hands-on labs across 7 security domains. Master cloud defense through realistic terminal simulations, 
+              earn 19 badges, and level up from Recruit to Elite Defender.
             </p>
           </motion.div>
 
