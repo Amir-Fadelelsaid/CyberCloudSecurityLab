@@ -37,6 +37,7 @@ export default function LabWorkspace() {
   });
   const [commandStreak, setCommandStreak] = useState(0);
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
 
   // Calculate threat level from resources
   const vulnerableCount = resources?.filter((r: any) => r.isVulnerable).length || 0;
@@ -465,6 +466,8 @@ export default function LabWorkspace() {
               labId={labId} 
               labCategory={lab.category} 
               className="flex-[4] min-h-[280px]"
+              selectedAlertId={selectedAlertId || undefined}
+              onAlertSelect={(alertId) => setSelectedAlertId(alertId === selectedAlertId ? null : alertId)}
             />
           ) : (
             <div className="flex-[4] bg-gradient-to-b from-card/60 to-card/30 border border-border/50 rounded-xl p-4 relative overflow-hidden backdrop-blur-sm min-h-[280px]">

@@ -125,6 +125,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProgress(userId: string, labId: number, completed: boolean): Promise<UserProgress> {
+    // Calculate score based on lab difficulty if completing
+    let score = 0;
+    if (completed) {
+      const lab = await this.getLab(labId);
+      if (lab) {
+        score = this.calculateScore(lab.difficulty);
+      }
+    }
+
     // Check if progress already exists
     const existing = await db.select()
       .from(userProgress)
@@ -135,7 +144,7 @@ export class DatabaseStorage implements IStorage {
       // Update existing record
       const [updated] = await db
         .update(userProgress)
-        .set({ completed, completedAt: new Date() })
+        .set({ completed, score, completedAt: new Date() })
         .where(and(eq(userProgress.userId, userId), eq(userProgress.labId, labId)))
         .returning();
       return updated;
@@ -143,10 +152,20 @@ export class DatabaseStorage implements IStorage {
       // Insert new record
       const [progress] = await db
         .insert(userProgress)
-        .values({ userId, labId, completed, completedAt: new Date() })
+        .values({ userId, labId, completed, score, completedAt: new Date() })
         .returning();
       return progress;
     }
+  }
+
+  private calculateScore(difficulty: string): number {
+    const scores: Record<string, number> = {
+      'Beginner': 10,
+      'Intermediate': 25,
+      'Advanced': 50,
+      'Challenge': 100
+    };
+    return scores[difficulty] || 10;
   }
 
   async logCommand(userId: string, labId: number, command: string, output: string, isCorrect: boolean): Promise<void> {
