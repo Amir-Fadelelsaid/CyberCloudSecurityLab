@@ -1,19 +1,41 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldAlert, CheckCircle, Clock } from "lucide-react";
+import { ArrowRight, ShieldAlert, CheckCircle, Clock, Award } from "lucide-react";
 import { useLabs } from "@/hooks/use-labs";
 import { useProgress } from "@/hooks/use-progress";
+import { useQuery } from "@tanstack/react-query";
 import { clsx } from "clsx";
+
+type LevelInfo = {
+  level: number;
+  title: string;
+  nextLevel: number | null;
+  progress: number;
+  completedLabs: number;
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: labs, isLoading: labsLoading } = useLabs();
   const { data: progress } = useProgress();
+  
+  const { data: levelInfo } = useQuery<LevelInfo>({
+    queryKey: ["/api/user/level", user?.id],
+    enabled: !!user,
+    staleTime: 0,
+  });
+  
+  const { data: userBadges } = useQuery<any[]>({
+    queryKey: ["/api/user/badges", user?.id],
+    enabled: !!user,
+    staleTime: 0,
+  });
 
   // Basic stats
   const completedCount = progress?.filter(p => p.completed).length || 0;
   const totalScore = progress?.reduce((acc, p) => acc + (p.score || 0), 0) || 0;
+  const badgeCount = userBadges?.length || 0;
 
   return (
     <div className="space-y-8">
@@ -27,7 +49,13 @@ export default function Dashboard() {
           <h1 className="text-4xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50 mb-2">
             MISSION CONTROL
           </h1>
-          <p className="text-muted-foreground font-mono">Welcome back, Operator {user?.firstName || 'Guest'}.</p>
+          <p className="text-muted-foreground font-mono">
+            Welcome back, <span className="text-white">Level {levelInfo?.level || 0} {levelInfo?.title || 'Recruit'}</span> {user?.firstName || 'Guest'}
+            <span className="text-primary ml-2">
+              <Award className="w-3.5 h-3.5 inline-block mr-1" />
+              {badgeCount}/19
+            </span>
+          </p>
         </div>
         <div className="flex gap-4">
           <div className="px-4 py-2 bg-card border border-border/50 rounded-lg">
