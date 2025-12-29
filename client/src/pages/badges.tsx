@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 type BadgeData = {
   id: number;
@@ -95,16 +96,22 @@ function BadgeCard({ badge, earned, earnedAt }: { badge: BadgeData; earned: bool
 }
 
 export default function BadgesPage() {
+  const { user, isLoading: authLoading } = useAuth();
+
   const { data: allBadges, isLoading: badgesLoading } = useQuery<BadgeData[]>({
     queryKey: ["/api/badges"]
   });
 
-  const { data: userBadges, isLoading: userBadgesLoading } = useQuery<UserBadgeData[]>({
-    queryKey: ["/api/user/badges"]
+  const { data: userBadges, isLoading: userBadgesLoading, refetch: refetchUserBadges } = useQuery<UserBadgeData[]>({
+    queryKey: ["/api/user/badges"],
+    enabled: !!user,
+    staleTime: 0,
   });
 
-  const { data: levelInfo, isLoading: levelLoading } = useQuery<LevelInfo>({
-    queryKey: ["/api/user/level"]
+  const { data: levelInfo, isLoading: levelLoading, refetch: refetchLevel } = useQuery<LevelInfo>({
+    queryKey: ["/api/user/level"],
+    enabled: !!user,
+    staleTime: 0,
   });
 
   const checkBadgesMutation = useMutation({
@@ -114,14 +121,19 @@ export default function BadgesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/badges"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/level"] });
     }
   });
 
   useEffect(() => {
-    checkBadgesMutation.mutate();
-  }, []);
+    if (user) {
+      checkBadgesMutation.mutate();
+      refetchUserBadges();
+      refetchLevel();
+    }
+  }, [user]);
 
-  const isLoading = badgesLoading || userBadgesLoading || levelLoading;
+  const isLoading = authLoading || badgesLoading || (user && (userBadgesLoading || levelLoading));
 
   const earnedBadgeIds = new Set(userBadges?.map(ub => ub.badgeId) || []);
   const earnedBadgesMap = new Map(userBadges?.map(ub => [ub.badgeId, ub]) || []);

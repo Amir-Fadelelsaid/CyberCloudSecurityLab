@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -83,15 +83,24 @@ export default function MyProgress() {
     }
   });
   
-  const { data: levelInfo } = useQuery<LevelInfo>({
+  const { data: levelInfo, refetch: refetchLevel } = useQuery<LevelInfo>({
     queryKey: ["/api/user/level"],
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 0,
   });
 
-  const { data: userBadges } = useQuery<any[]>({
+  const { data: userBadges, refetch: refetchBadges } = useQuery<any[]>({
     queryKey: ["/api/user/badges"],
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 0,
   });
+  
+  useEffect(() => {
+    if (user) {
+      refetchLevel();
+      refetchBadges();
+    }
+  }, [user]);
   
   const startEditing = () => {
     setEditedName(profile?.displayName || profile?.firstName || "");
