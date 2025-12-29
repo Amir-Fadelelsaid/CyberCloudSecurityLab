@@ -9,6 +9,7 @@ interface TerminalWindowProps {
   className?: string;
   onLabComplete?: () => void;
   onCommandSuccess?: () => void;
+  onStepComplete?: (stepNumber: number) => void;
 }
 
 interface LogEntry {
@@ -40,7 +41,7 @@ const ACHIEVEMENTS = [
   { trigger: "revoke", title: "Credential Guardian", desc: "Revoked compromised credentials!" },
 ];
 
-export function TerminalWindow({ labId, className, onLabComplete, onCommandSuccess }: TerminalWindowProps) {
+export function TerminalWindow({ labId, className, onLabComplete, onCommandSuccess, onStepComplete }: TerminalWindowProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<LogEntry[]>([
     { type: "system", content: "CLOUDSHIELD TERMINAL v2.0 - Secure Shell Initialized" },
@@ -196,6 +197,10 @@ export function TerminalWindow({ labId, className, onLabComplete, onCommandSucce
             }
           } else {
             setHistory(prev => [...prev, { type: "output", content: data.output }]);
+          }
+          // Auto-complete step if server detected a matching command
+          if (data.completedStep) {
+            onStepComplete?.(data.completedStep);
           }
         },
         onError: (error) => {

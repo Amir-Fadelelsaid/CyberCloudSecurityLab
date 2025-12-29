@@ -470,6 +470,13 @@ export default function LabWorkspace() {
               className="h-full shadow-2xl border-primary/30" 
               onLabComplete={() => setShowCompleteModal(true)}
               onCommandSuccess={handleCommandSuccess}
+              onStepComplete={(stepNumber) => {
+                setCompletedSteps(prev => {
+                  const next = new Set(prev);
+                  next.add(stepNumber);
+                  return next;
+                });
+              }}
             />
           </div>
         </div>

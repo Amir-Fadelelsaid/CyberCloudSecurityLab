@@ -144,4 +144,5 @@ export type CommandResponse = {
   success: boolean;
   newState?: Partial<Resource>;
   labCompleted?: boolean;
+  completedStep?: number;
 };

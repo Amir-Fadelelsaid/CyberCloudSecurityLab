@@ -1015,7 +1015,30 @@ export async function registerRoutes(
     const result = await processCommand(command, labId, userId);
     await storage.logCommand(userId, labId, command, result.output, result.success);
     
-    res.json(result);
+    // Detect which step was completed based on matching command to step hints
+    let completedStep: number | undefined;
+    if (result.success || result.output.includes("===") || command.toLowerCase() === "scan" || command.toLowerCase() === "help") {
+      const lab = await storage.getLab(labId);
+      if (lab && lab.steps && Array.isArray(lab.steps)) {
+        const lowerCmd = command.toLowerCase().trim();
+        for (const step of lab.steps as any[]) {
+          if (step.hint) {
+            // Extract command from hint like "Type 'scan' to..." or "Type 'aws s3 ls'..."
+            const hintMatch = step.hint.match(/[Tt]ype\s+['"]([^'"]+)['"]/);
+            if (hintMatch) {
+              const expectedCmd = hintMatch[1].toLowerCase().trim();
+              // Check if command matches or starts with the expected command
+              if (lowerCmd === expectedCmd || lowerCmd.startsWith(expectedCmd.replace(/<[^>]+>/g, '').trim())) {
+                completedStep = step.number;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    res.json({ ...result, completedStep });
   });
 
   // Progress

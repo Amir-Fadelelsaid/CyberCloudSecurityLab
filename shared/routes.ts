@@ -61,6 +61,7 @@ export const api = {
           output: z.string(),
           success: z.boolean(),
           labCompleted: z.boolean().optional(),
+          completedStep: z.number().optional(),
         }),
       },
     },
