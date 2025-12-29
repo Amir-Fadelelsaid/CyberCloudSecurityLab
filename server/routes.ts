@@ -1,10 +1,32 @@
 import type { Express } from "express";
 import type { Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integrations/auth";
 import { api } from "@shared/routes";
 import { allLabs } from "./lab-definitions";
 import { allBadgeDefinitions, calculateLevel } from "./badge-definitions";
+
+let leaderboardClients: Set<WebSocket> | null = null;
+
+export function broadcastLeaderboardUpdate() {
+  if (!leaderboardClients) return;
+  
+  storage.getLeaderboard().then(leaderboard => {
+    const message = JSON.stringify({ type: 'leaderboard_update', data: leaderboard });
+    leaderboardClients?.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(message);
+        } catch (e) {
+          console.error("Failed to send leaderboard update to client:", e);
+        }
+      }
+    });
+  }).catch(err => {
+    console.error("Failed to fetch leaderboard for broadcast:", err);
+  });
+}
 
 // Generic command handler for fixing resources
 const handleFixCommand = async (
@@ -34,6 +56,7 @@ const handleFixCommand = async (
     labCompleted = true;
     output += "\n[MISSION COMPLETE] All vulnerabilities remediated!";
     await storage.updateProgress(userId, labId, true);
+    broadcastLeaderboardUpdate();
   }
   
   return { output, success: true, labCompleted };
@@ -1060,6 +1083,44 @@ export async function registerRoutes(
     res.json({ newBadges });
   });
 
+  // Leaderboard API
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const leaderboard = await storage.getLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // WebSocket for live leaderboard updates
+  leaderboardClients = new Set<WebSocket>();
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws/leaderboard" });
+  
+  wss.on("connection", (ws) => {
+    leaderboardClients!.add(ws);
+    
+    storage.getLeaderboard().then(leaderboard => {
+      ws.send(JSON.stringify({ type: 'leaderboard_update', data: leaderboard }));
+    }).catch(err => {
+      console.error("Failed to send initial leaderboard:", err);
+    });
+    
+    ws.on("close", () => {
+      leaderboardClients?.delete(ws);
+    });
+    
+    ws.on("error", () => {
+      leaderboardClients?.delete(ws);
+    });
+  });
+  
+  wss.on("close", () => {
+    leaderboardClients?.clear();
+    leaderboardClients = null;
+  });
+
   // Seed Data
   await seedDatabase();
 
@@ -1132,7 +1193,7 @@ async function seedDatabase() {
   }
   
   const finalCount = (await storage.getLabs()).length;
-  console.log(`Labs synced. Total: ${finalCount} labs (expected: 57)`);
+  console.log(`Labs synced. Total: ${finalCount} labs (expected: 81)`);
   
   // Seed badges
   const existingBadges = await storage.getBadges();

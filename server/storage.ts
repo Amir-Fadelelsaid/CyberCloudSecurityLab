@@ -1,9 +1,20 @@
 import { db } from "./db";
 import {
-  labs, resources, userProgress, terminalLogs, badges, userBadges,
-  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource, type Badge, type UserBadge
+  labs, resources, userProgress, terminalLogs, badges, userBadges, users,
+  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource, type Badge, type UserBadge, type User
 } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
+
+export type LeaderboardEntry = {
+  rank: number;
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
+  completedLabs: number;
+  level: number;
+  levelTitle: string;
+};
 
 export interface IStorage {
   // Labs
@@ -33,6 +44,9 @@ export interface IStorage {
   getUserBadges(userId: string): Promise<(UserBadge & { badge: Badge })[]>;
   awardBadge(userId: string, badgeId: number): Promise<UserBadge>;
   hasBadge(userId: string, badgeId: number): Promise<boolean>;
+  
+  // Leaderboard
+  getLeaderboard(): Promise<LeaderboardEntry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -173,6 +187,44 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(userBadges.userId, userId), eq(userBadges.badgeId, badgeId)))
       .limit(1);
     return existing.length > 0;
+  }
+
+  async getLeaderboard(): Promise<LeaderboardEntry[]> {
+    const result = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        completedLabs: sql<number>`COALESCE(COUNT(CASE WHEN ${userProgress.completed} = true THEN 1 END), 0)::int`
+      })
+      .from(users)
+      .leftJoin(userProgress, eq(users.id, userProgress.userId))
+      .groupBy(users.id)
+      .orderBy(desc(sql`COUNT(CASE WHEN ${userProgress.completed} = true THEN 1 END)`));
+
+    const calculateLevelInfo = (completed: number) => {
+      if (completed >= 81) return { level: 6, title: "Elite Defender" };
+      if (completed >= 51) return { level: 5, title: "Architect" };
+      if (completed >= 31) return { level: 4, title: "Engineer" };
+      if (completed >= 16) return { level: 3, title: "Analyst" };
+      if (completed >= 7) return { level: 2, title: "Operator" };
+      return { level: 1, title: "Recruit" };
+    };
+
+    return result.map((row, index) => {
+      const levelInfo = calculateLevelInfo(row.completedLabs);
+      return {
+        rank: index + 1,
+        id: row.id,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        profileImageUrl: row.profileImageUrl,
+        completedLabs: row.completedLabs,
+        level: levelInfo.level,
+        levelTitle: levelInfo.title
+      };
+    });
   }
 }
 
