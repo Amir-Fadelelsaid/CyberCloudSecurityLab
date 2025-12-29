@@ -233,8 +233,8 @@ CloudShieldLab/
 ├── server/                # Express backend
 │   ├── routes.ts          # API endpoints
 │   ├── storage.ts         # Data persistence layer
-│   ├── lab-definitions.ts # 57 lab definitions
-│   ├── badge-definitions.ts # 17 badge definitions
+│   ├── lab-definitions.ts # 81 lab definitions
+│   ├── badge-definitions.ts # 19 badge definitions
 │   └── index.ts           # Server entry point
 ├── shared/                # Shared types and schemas
 │   └── schema.ts          # Drizzle schema & Zod validators
@@ -343,14 +343,14 @@ We welcome contributions! Please:
 
 ## Roadmap
 
-- [x] 57 labs across 5 categories (Storage, Network, SOC Operations, SOC Engineer, Cloud Security Analyst)
+- [x] 81 labs across 7 categories (Storage, Network, SOC Operations, SOC Engineer, Cloud Security Analyst, IAM Security, Cloud Security Engineer)
 - [x] Advanced labs with 10-12 steps and multiple resources
 - [x] Challenge labs for independent practice (no step-by-step guidance)
 - [x] Mission completion artifacts with 4-tab modal
 - [x] Security framework mappings (MITRE ATT&CK, CIS Controls, AWS Well-Architected)
 - [x] Hiring Manager demonstration page
 - [x] Dynamic leveling system (Recruit to Elite Defender)
-- [x] 17 unlockable badges (Level, Category, Achievement)
+- [x] 19 unlockable badges (Level, Category, Achievement)
 - [x] Hideable guide panel for self-challenge mode
 - [ ] Leaderboards and team challenges
 - [ ] Video tutorials and walkthroughs
