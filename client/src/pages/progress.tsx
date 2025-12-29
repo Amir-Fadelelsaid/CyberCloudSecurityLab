@@ -54,7 +54,7 @@ type UserProfile = {
 };
 
 export default function MyProgress() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { data: progress } = useProgress();
   const { data: labs } = useLabs();
   const { toast } = useToast();
@@ -168,6 +168,31 @@ export default function MyProgress() {
     };
     return colors[difficulty] || "bg-muted";
   };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <div className="p-4 rounded-full bg-primary/20">
+          <Shield className="w-12 h-12 text-primary" />
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-display font-bold text-white">Sign In Required</h2>
+          <p className="text-muted-foreground max-w-md">
+            Please log in with Replit to view your training progress and achievements.
+          </p>
+        </div>
+        <Button 
+          onClick={() => window.location.href = "/api/login"}
+          className="gap-2"
+          data-testid="button-login-progress"
+        >
+          <User className="w-4 h-4" />
+          Log in with Replit
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
