@@ -1621,6 +1621,69 @@ export async function registerRoutes(
     }
   });
 
+  // Certificates
+  app.get("/api/user/certificates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const certs = await storage.getUserCertificates(userId);
+      res.json(certs);
+    } catch (error) {
+      console.error("Error fetching certificates:", error);
+      res.status(500).json({ message: "Failed to fetch certificates" });
+    }
+  });
+
+  app.get("/api/user/certificates/:category", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const category = req.params.category;
+      const cert = await storage.getCertificate(userId, category);
+      res.json(cert || null);
+    } catch (error) {
+      console.error("Error fetching certificate:", error);
+      res.status(500).json({ message: "Failed to fetch certificate" });
+    }
+  });
+
+  app.get("/api/user/category-progress/:category", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const category = req.params.category;
+      const progress = await storage.getCategoryCompletion(userId, category);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching category progress:", error);
+      res.status(500).json({ message: "Failed to fetch category progress" });
+    }
+  });
+
+  app.post("/api/user/certificates/check", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { category } = req.body;
+      
+      if (!category) {
+        return res.status(400).json({ message: "Category is required" });
+      }
+
+      const existingCert = await storage.getCertificate(userId, category);
+      if (existingCert) {
+        return res.json({ earned: true, certificate: existingCert, isNew: false });
+      }
+
+      const progress = await storage.getCategoryCompletion(userId, category);
+      if (progress.completed === progress.total && progress.total > 0) {
+        const newCert = await storage.createCertificate(userId, category, progress.completed, 0);
+        return res.json({ earned: true, certificate: newCert, isNew: true });
+      }
+
+      res.json({ earned: false, progress });
+    } catch (error) {
+      console.error("Error checking certificate:", error);
+      res.status(500).json({ message: "Failed to check certificate" });
+    }
+  });
+
   // GitHub README Sync API
   app.post("/api/github/sync-readme", isAuthenticated, async (req, res) => {
     try {

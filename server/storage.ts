@@ -1,7 +1,7 @@
 import { db } from "./db";
 import {
-  labs, resources, userProgress, terminalLogs, badges, userBadges, users,
-  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource, type Badge, type UserBadge, type User
+  labs, resources, userProgress, terminalLogs, badges, userBadges, users, certificates,
+  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource, type Badge, type UserBadge, type User, type Certificate
 } from "@shared/schema";
 import { eq, and, sql, desc } from "drizzle-orm";
 
@@ -52,6 +52,12 @@ export interface IStorage {
   // User profile
   updateUserDisplayName(userId: string, displayName: string): Promise<void>;
   getUser(userId: string): Promise<User | undefined>;
+  
+  // Certificates
+  getUserCertificates(userId: string): Promise<Certificate[]>;
+  getCertificate(userId: string, category: string): Promise<Certificate | undefined>;
+  createCertificate(userId: string, category: string, labsCompleted: number, totalScore: number): Promise<Certificate>;
+  getCategoryCompletion(userId: string, category: string): Promise<{ completed: number; total: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -243,6 +249,48 @@ export class DatabaseStorage implements IStorage {
   async getUser(userId: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     return user;
+  }
+
+  async getUserCertificates(userId: string): Promise<Certificate[]> {
+    return await db.select()
+      .from(certificates)
+      .where(eq(certificates.userId, userId))
+      .orderBy(desc(certificates.completedAt));
+  }
+
+  async getCertificate(userId: string, category: string): Promise<Certificate | undefined> {
+    const [cert] = await db.select()
+      .from(certificates)
+      .where(and(eq(certificates.userId, userId), eq(certificates.category, category)));
+    return cert;
+  }
+
+  async createCertificate(userId: string, category: string, labsCompleted: number, totalScore: number): Promise<Certificate> {
+    const [cert] = await db.insert(certificates)
+      .values({ userId, category, labsCompleted, totalScore })
+      .returning();
+    return cert;
+  }
+
+  async getCategoryCompletion(userId: string, category: string): Promise<{ completed: number; total: number }> {
+    const categoryLabs = await db.select({ id: labs.id })
+      .from(labs)
+      .where(eq(labs.category, category));
+    
+    const labIds = categoryLabs.map(l => l.id);
+    if (labIds.length === 0) return { completed: 0, total: 0 };
+
+    const completedProgress = await db.select()
+      .from(userProgress)
+      .where(and(
+        eq(userProgress.userId, userId),
+        eq(userProgress.completed, true)
+      ));
+
+    const completedLabIds = new Set(completedProgress.map(p => p.labId));
+    const completed = labIds.filter(id => completedLabIds.has(id)).length;
+
+    return { completed, total: labIds.length };
   }
 }
 
