@@ -468,7 +468,13 @@ export default function LabWorkspace() {
             <TerminalWindow 
               labId={labId} 
               className="h-full shadow-2xl border-primary/30" 
-              onLabComplete={() => setShowCompleteModal(true)}
+              onLabComplete={() => {
+                // Mark all steps as complete when lab is done
+                if (lab.steps && Array.isArray(lab.steps)) {
+                  setCompletedSteps(new Set((lab.steps as any[]).map(s => s.number)));
+                }
+                setShowCompleteModal(true);
+              }}
               onCommandSuccess={handleCommandSuccess}
               onStepComplete={(stepNumber) => {
                 setCompletedSteps(prev => {

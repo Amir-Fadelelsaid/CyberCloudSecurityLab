@@ -1017,24 +1017,42 @@ export async function registerRoutes(
     
     // Detect which step was completed based on matching command to step hints
     let completedStep: number | undefined;
-    if (result.success || result.output.includes("===") || command.toLowerCase() === "scan" || command.toLowerCase() === "help") {
-      const lab = await storage.getLab(labId);
-      if (lab && lab.steps && Array.isArray(lab.steps)) {
-        const lowerCmd = command.toLowerCase().trim();
-        for (const step of lab.steps as any[]) {
-          if (step.hint) {
-            // Extract command from hint like "Type 'scan' to..." or "Type 'aws s3 ls'..."
-            const hintMatch = step.hint.match(/[Tt]ype\s+['"]([^'"]+)['"]/);
-            if (hintMatch) {
-              const expectedCmd = hintMatch[1].toLowerCase().trim();
-              // Check if command matches or starts with the expected command
-              if (lowerCmd === expectedCmd || lowerCmd.startsWith(expectedCmd.replace(/<[^>]+>/g, '').trim())) {
+    const lab = await storage.getLab(labId);
+    if (lab && lab.steps && Array.isArray(lab.steps)) {
+      const lowerCmd = command.toLowerCase().trim();
+      const steps = lab.steps as any[];
+      
+      for (const step of steps) {
+        if (step.hint) {
+          // Extract command from hint like "Type 'scan' to..." or "Type 'aws s3 ls'..."
+          const hintMatch = step.hint.match(/[Tt]ype\s+['"]([^'"]+)['"]/);
+          if (hintMatch) {
+            let expectedCmd = hintMatch[1].toLowerCase().trim();
+            // Remove placeholder parts like <bucket>, <instance>, etc.
+            expectedCmd = expectedCmd.replace(/<[^>]+>/g, '').trim();
+            // Remove specific resource names from expected cmd for flexible matching
+            const expectedParts = expectedCmd.split(' ').filter((p: string) => p.length > 0);
+            const cmdParts = lowerCmd.split(' ').filter((p: string) => p.length > 0);
+            
+            // Check if command starts with the base command pattern
+            if (expectedParts.length > 0) {
+              const baseMatch = expectedParts.slice(0, -1).every((part: string, i: number) => cmdParts[i] === part) ||
+                               expectedParts.every((part: string, i: number) => cmdParts[i] === part) ||
+                               lowerCmd.startsWith(expectedCmd) ||
+                               lowerCmd === expectedCmd;
+              if (baseMatch) {
                 completedStep = step.number;
                 break;
               }
             }
           }
         }
+      }
+      
+      // If no specific step matched but command was successful, auto-advance to next logical step
+      if (!completedStep && (result.success || result.output.includes("==="))) {
+        // Find first incomplete step (we'll let frontend track this)
+        completedStep = steps.length > 0 ? steps[0].number : undefined;
       }
     }
     
