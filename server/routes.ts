@@ -81,6 +81,25 @@ const processCommand = async (command: string, labId: number, userId: string) =>
     output = `Available commands:
   scan                       Run security scan
   
+  SOC Commands:
+  siem alerts                List SIEM alerts queue
+  siem triage <alert-id>     Investigate an alert
+  siem enrich <alert-id>     Get threat intel enrichment
+  siem escalate <alert-id>   Escalate to Tier 2
+  siem classify <alert-id>   Classify alert type
+  siem close <alert-id>      Close alert with resolution
+  logs search <query>        Search log events
+  logs recent                Show recent log events
+  endpoint list              List monitored endpoints
+  endpoint status <host>     Get endpoint details
+  endpoint isolate <host>    Isolate compromised endpoint
+  network flows              Show network flow summary
+  network investigate <ip>   Analyze IP traffic
+  network block <ip>         Block malicious IP
+  incident create            Create new incident
+  incident note <text>       Add investigation note
+  incident timeline          View incident timeline
+  
   S3 Commands:
   aws s3 ls                  List S3 buckets
   aws s3 fix <bucket>        Apply secure bucket policy
@@ -936,6 +955,425 @@ const processCommand = async (command: string, labId: number, userId: string) =>
     } else {
       output = `Error: Task ${taskName} not found or already stopped.`;
     }
+  }
+  // ============= SOC SIMULATION COMMANDS =============
+  // SIEM Commands
+  else if (lowerCmd === "siem list-alerts" || lowerCmd === "siem alerts") {
+    output = `=== SIEM Alert Queue ===
+    
+[CRITICAL] ALT-001 | Unauthorized API Key Usage Detected
+  Source: CloudTrail | IP: 198.51.100.45 | Status: NEW
+  MITRE: T1552 (Credential Access)
+  
+[HIGH] ALT-002 | S3 Bucket Policy Modified  
+  Source: AWS Config | Status: NEW
+  MITRE: T1567 (Exfiltration)
+
+[HIGH] ALT-003 | Unusual EC2 Instance Launch
+  Source: GuardDuty | IP: 10.0.1.50 | Status: INVESTIGATING
+  MITRE: T1496 (Resource Hijacking)
+
+[MEDIUM] ALT-004 | Failed Login Attempts Spike
+  Source: IAM | IP: 203.0.113.100 | Status: NEW
+  MITRE: T1110 (Brute Force)
+
+[MEDIUM] ALT-005 | Security Group Rule Added
+  Source: VPC Flow Logs | Status: NEW
+  MITRE: T1098 (Account Manipulation)
+
+Total: 5 alerts | Critical: 1 | High: 2 | Medium: 2
+
+Type 'siem triage <alert-id>' to begin investigation`;
+  }
+  else if (lowerCmd.startsWith("siem triage ") || lowerCmd.startsWith("siem investigate ")) {
+    const alertId = lowerCmd.replace("siem triage ", "").replace("siem investigate ", "").trim().toUpperCase();
+    output = `=== Alert Investigation: ${alertId} ===
+
+Alert Details:
+  Severity: HIGH
+  First Seen: ${new Date(Date.now() - 300000).toISOString()}
+  Last Updated: ${new Date().toISOString()}
+  Status: INVESTIGATING (updated)
+
+Event Timeline:
+  [08:23:15] Initial detection - Anomalous API pattern
+  [08:23:45] Correlation - Similar activity from same IP
+  [08:24:02] Enrichment - IP reputation: MALICIOUS (Tor exit)
+  [08:24:30] Context - User has no prior activity from this IP
+
+Recommended Actions:
+  1. siem enrich ${alertId}     - Get threat intel enrichment
+  2. logs search ip:198.51.100.45  - Search related logs
+  3. siem escalate ${alertId}  - Escalate to Tier 2
+  4. siem close ${alertId}     - Close with resolution
+
+[!] Alert status updated to INVESTIGATING`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem enrich ")) {
+    const alertId = lowerCmd.replace("siem enrich ", "").trim().toUpperCase();
+    output = `=== Threat Intelligence Enrichment: ${alertId} ===
+
+IP Analysis: 198.51.100.45
+  Reputation: MALICIOUS
+  Category: Tor Exit Node
+  First Seen: 2024-06-15
+  Reports: 1,247 abuse reports
+  
+ASN Information:
+  AS: AS12345 - CloudProvider Inc.
+  Country: Netherlands
+  
+Related IOCs:
+  - Associated with APT-29 campaigns
+  - Previously used in credential theft
+  - Known C2 communication endpoint
+
+MITRE ATT&CK Mapping:
+  T1078 - Valid Accounts
+  T1552 - Unsecured Credentials
+  T1071 - Application Layer Protocol
+
+Recommendation: HIGH CONFIDENCE malicious activity`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem escalate ")) {
+    const alertId = lowerCmd.replace("siem escalate ", "").trim().toUpperCase();
+    const alertRes = resources.find(r => r.type === 'siem_alert');
+    if (alertRes && alertRes.isVulnerable) {
+      await storage.updateResource(alertRes.id, { isVulnerable: false, status: 'escalated' });
+      output = `[SUCCESS] Alert ${alertId} escalated to Tier 2
+
+Escalation Details:
+  Assigned To: Senior Analyst
+  Priority: P1 - Critical
+  SLA: 30 minutes
+  
+Notification sent to:
+  - SOC Manager
+  - Incident Response Team
+  - Security Operations Slack channel
+
+Next Steps:
+  - Continue monitoring for related activity
+  - Document findings in incident notes
+  - Await Tier 2 response`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== alertRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Alert properly escalated!";
+        await storage.updateProgress(userId, labId, true);
+      }
+    } else {
+      output = `Alert ${alertId} escalated to Tier 2 for further analysis.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("siem close ")) {
+    const parts = lowerCmd.replace("siem close ", "").trim().split(" ");
+    const alertId = parts[0].toUpperCase();
+    const resolution = parts.slice(1).join(" ") || "Resolved";
+    const alertRes = resources.find(r => r.type === 'siem_alert');
+    if (alertRes && alertRes.isVulnerable) {
+      await storage.updateResource(alertRes.id, { isVulnerable: false, status: 'closed' });
+      output = `[SUCCESS] Alert ${alertId} closed
+
+Resolution: ${resolution}
+Closed By: ${userId}
+Closed At: ${new Date().toISOString()}
+
+Alert archived for compliance retention.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== alertRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All alerts resolved!";
+        await storage.updateProgress(userId, labId, true);
+      }
+    } else {
+      output = `Alert ${alertId} closed successfully.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("siem classify ")) {
+    const parts = lowerCmd.replace("siem classify ", "").trim().split(" ");
+    const alertId = parts[0].toUpperCase();
+    const classification = parts[1] || "true-positive";
+    output = `[SUCCESS] Alert ${alertId} classified as: ${classification.toUpperCase()}
+
+Classification Options:
+  true-positive  - Confirmed malicious activity
+  false-positive - Benign activity incorrectly flagged
+  benign         - Known safe activity
+  suspicious     - Requires further investigation
+
+Alert classification recorded for ML model training.`;
+    success = true;
+  }
+  // Log Search Commands
+  else if (lowerCmd.startsWith("logs search ")) {
+    const query = lowerCmd.replace("logs search ", "").trim();
+    output = `=== Log Search Results: "${query}" ===
+
+Found 47 matching events in last 24 hours:
+
+[2025-01-15T08:23:15Z] cloudtrail | AssumeRole
+  user: compromised-user | ip: 198.51.100.45
+  role: arn:aws:iam::123456789012:role/AdminAccess
+  
+[2025-01-15T08:23:45Z] cloudtrail | CreateAccessKey
+  user: compromised-user | ip: 198.51.100.45
+  target: backdoor-user
+  
+[2025-01-15T08:24:02Z] vpc-flowlogs | ACCEPT
+  src: 198.51.100.45 | dst: 10.0.1.50 | port: 443
+  bytes: 15234
+  
+[2025-01-15T08:24:30Z] guardduty | UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B
+  ip: 198.51.100.45 | severity: HIGH
+
+... and 43 more events
+
+Tip: Use 'logs export ${query}' to download full results`;
+    success = true;
+  }
+  else if (lowerCmd === "logs recent" || lowerCmd === "logs tail") {
+    output = `=== Recent Log Events ===
+
+[${new Date(Date.now() - 30000).toISOString()}] ERROR cloudtrail
+  DeleteTrail API called by user 'unknown-admin'
+  
+[${new Date(Date.now() - 60000).toISOString()}] WARN guardduty
+  CryptoMining DNS request detected from i-0abc123
+  
+[${new Date(Date.now() - 90000).toISOString()}] WARN vpc-flow
+  Unusual outbound traffic volume detected (2.4GB/hr)
+  
+[${new Date(Date.now() - 120000).toISOString()}] INFO iam
+  AssumeRole successful for role 'AdminAccess'
+  
+[${new Date(Date.now() - 150000).toISOString()}] INFO s3
+  GetBucketAcl called on 'prod-data-bucket'
+
+Showing last 5 events. Use 'logs search <query>' for filtered results.`;
+  }
+  // Endpoint Commands
+  else if (lowerCmd === "endpoint list" || lowerCmd === "endpoints") {
+    output = `=== Monitored Endpoints ===
+
+Hostname           Status      Last Check    Alerts
+---------          ------      ----------    ------
+web-server-01      NORMAL      2m ago        0
+web-server-02      NORMAL      2m ago        0
+web-server-03      CRITICAL    1m ago        3
+db-server-01       NORMAL      3m ago        0
+app-server-02      SUSPICIOUS  5m ago        1
+bastion-01         NORMAL      1m ago        0
+
+Total: 6 endpoints | 1 Critical | 1 Suspicious
+
+Type 'endpoint status <hostname>' for details`;
+  }
+  else if (lowerCmd.startsWith("endpoint status ")) {
+    const hostname = lowerCmd.replace("endpoint status ", "").trim();
+    const isCritical = hostname.includes("03") || hostname.includes("compromised");
+    
+    if (isCritical) {
+      output = `=== Endpoint Status: ${hostname} ===
+
+Status: CRITICAL
+Agent: Online
+Last Heartbeat: ${new Date().toISOString()}
+
+Active Alerts:
+  [CRITICAL] Crypto mining process detected
+  [HIGH] Outbound connection to known C2
+  [MEDIUM] Unauthorized process execution
+
+Recent Process Activity:
+  PID 4521 | xmrig       | www-data | MALICIOUS
+  PID 4520 | curl        | www-data | SUSPICIOUS
+  PID 4519 | bash        | www-data | NORMAL
+
+Recommended: Isolate this endpoint immediately
+Command: aws ec2 isolate ${hostname}`;
+    } else {
+      output = `=== Endpoint Status: ${hostname} ===
+
+Status: NORMAL
+Agent: Online
+Last Heartbeat: ${new Date().toISOString()}
+
+No active alerts.
+
+Recent Activity:
+  - Standard application processes running
+  - No suspicious network connections
+  - All security controls active`;
+    }
+    success = true;
+  }
+  else if (lowerCmd.startsWith("endpoint isolate ")) {
+    const hostname = lowerCmd.replace("endpoint isolate ", "").trim();
+    const ec2 = resources.find(r => r.type === 'ec2' && r.name === hostname);
+    if (ec2 && ec2.isVulnerable) {
+      await storage.updateResource(ec2.id, { isVulnerable: false, status: 'isolated' });
+      output = `[SUCCESS] Endpoint ${hostname} isolated
+
+Actions Taken:
+  - Security group replaced with isolation-sg
+  - All inbound/outbound traffic blocked
+  - Instance tagged: "Quarantine=true"
+  - Forensic snapshot initiated
+
+The endpoint is now isolated from the network.
+Run 'endpoint status ${hostname}' to verify.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== ec2.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Threat contained!";
+        await storage.updateProgress(userId, labId, true);
+      }
+    } else {
+      output = `Endpoint ${hostname} isolation initiated.`;
+      success = true;
+    }
+  }
+  // Network Commands
+  else if (lowerCmd === "network flows" || lowerCmd === "netflow") {
+    output = `=== Network Flow Summary ===
+
+Top Talkers (Last Hour):
+  10.0.1.50      -> 198.51.100.45   | 2.4GB  | SUSPICIOUS
+  10.0.2.100     -> pool.minexmr.com | 156MB  | BLOCKED
+  10.0.1.25      -> s3.amazonaws.com | 89MB   | NORMAL
+
+Blocked Connections:
+  203.0.113.50   -> 10.0.1.10:3389  | RDP    | DENIED
+  198.51.100.45  -> 10.0.1.50:22    | SSH    | DENIED
+
+Anomalies Detected:
+  [!] Unusual data volume to external IP
+  [!] Connection attempts to crypto mining pool
+  
+Type 'network investigate <ip>' for IP analysis`;
+  }
+  else if (lowerCmd.startsWith("network investigate ") || lowerCmd.startsWith("network flows ")) {
+    const ip = lowerCmd.replace("network investigate ", "").replace("network flows ", "").trim();
+    output = `=== Network Analysis: ${ip} ===
+
+Connection Summary:
+  Total Flows: 147
+  Bytes In: 45.2 MB
+  Bytes Out: 2.4 GB
+  First Seen: 08:23:15
+  Last Seen: ${new Date().toISOString()}
+
+Top Destination Ports:
+  443 (HTTPS)  - 89 connections
+  22 (SSH)     - 23 connections
+  3333 (Mining) - 35 connections
+
+Geo Location:
+  Country: Netherlands
+  ISP: Anonymous VPN Provider
+  
+Threat Intel:
+  Reputation: MALICIOUS
+  Category: Tor Exit Node / C2
+
+[!] Recommend blocking this IP at firewall level`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("network block ")) {
+    const ip = lowerCmd.replace("network block ", "").trim();
+    const sgRes = resources.find(r => r.type === 'security_group' || r.type === 'nacl');
+    if (sgRes && sgRes.isVulnerable) {
+      await storage.updateResource(sgRes.id, { isVulnerable: false, status: 'blocked' });
+      output = `[SUCCESS] IP ${ip} blocked
+
+Firewall Rule Added:
+  Action: DENY
+  Source: ${ip}/32
+  Destination: All internal subnets
+  Ports: ALL
+
+Rule propagated to:
+  - Network ACLs
+  - Security Groups
+  - WAF IP Sets`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== sgRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Network threat blocked!";
+        await storage.updateProgress(userId, labId, true);
+      }
+    } else {
+      output = `IP ${ip} added to block list.`;
+      success = true;
+    }
+  }
+  // Incident Documentation Commands
+  else if (lowerCmd === "incident create" || lowerCmd === "incident new") {
+    output = `=== New Incident Created ===
+
+Incident ID: INC-${Date.now().toString().slice(-6)}
+Created: ${new Date().toISOString()}
+Status: OPEN
+Severity: Pending Classification
+
+Available Commands:
+  incident note <text>     - Add investigation note
+  incident severity <1-5>  - Set severity level
+  incident assign <user>   - Assign to analyst
+  incident timeline        - View event timeline
+  incident close           - Close incident
+
+[!] Remember to document all investigation steps`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("incident note ")) {
+    const note = lowerCmd.replace("incident note ", "").trim();
+    output = `[SUCCESS] Note added to incident
+
+Timestamp: ${new Date().toISOString()}
+Author: ${userId}
+Note: "${note}"
+
+All notes are timestamped and immutable for audit trail.`;
+    success = true;
+  }
+  else if (lowerCmd === "incident timeline") {
+    output = `=== Incident Timeline ===
+
+[08:23:00] DETECTION
+  GuardDuty alert triggered
+  Severity: HIGH
+  
+[08:23:15] TRIAGE
+  Alert assigned to Tier 1
+  Initial classification: True Positive
+  
+[08:24:00] INVESTIGATION
+  IP reputation checked: MALICIOUS
+  Related logs identified
+  
+[08:25:30] CONTAINMENT
+  Compromised credentials revoked
+  Affected endpoint isolated
+  
+[08:26:00] ERADICATION
+  Malicious processes terminated
+  Persistence mechanisms removed
+  
+[PENDING] RECOVERY
+  Awaiting system restoration
+  
+[PENDING] LESSONS LEARNED
+  Post-incident review scheduled`;
   }
   // Report incident command
   else if (lowerCmd === "report incident") {

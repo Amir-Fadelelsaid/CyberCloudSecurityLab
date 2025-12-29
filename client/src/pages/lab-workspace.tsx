@@ -2,6 +2,7 @@ import { useLab, useLabResources } from "@/hooks/use-labs";
 import { useRoute, Link } from "wouter";
 import { TerminalWindow } from "@/components/terminal-window";
 import { ResourceGraph } from "@/components/resource-graph";
+import { SOCDashboard } from "@/components/soc-dashboard";
 import { MissionCompleteModal } from "@/components/mission-complete-modal";
 import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft, Clock, Shield, Target, Zap, AlertTriangle, Trophy } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
@@ -10,6 +11,8 @@ import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+
+const SOC_CATEGORIES = ["Cloud Security Analyst", "SOC Engineer", "SOC Operations"];
 
 export default function LabWorkspace() {
   const [, params] = useRoute("/labs/:id");
@@ -455,26 +458,34 @@ export default function LabWorkspace() {
         {/* Center/Right Panel: Cloud Console & Terminal */}
         <div className={clsx("flex flex-col gap-4 min-h-0", showStepsPanel ? "lg:col-span-9" : "lg:col-span-1")}>
           
-          {/* Cloud Console Visualization */}
-          <div className="flex-[4] bg-gradient-to-b from-card/60 to-card/30 border border-border/50 rounded-xl p-4 relative overflow-hidden backdrop-blur-sm min-h-[280px]">
-            <div className="absolute top-0 left-0 px-3 py-1.5 bg-black/60 border-r border-b border-white/10 rounded-br-lg text-[10px] font-mono text-primary uppercase tracking-widest z-20 flex items-center gap-2">
-              <motion.div 
-                className="w-2 h-2 rounded-full bg-primary"
-                animate={{ opacity: [1, 0.4, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              Infrastructure Status
-            </div>
-            
-            {/* Grid Background */}
-            <div className="absolute inset-0 opacity-5 pointer-events-none" 
-                 style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} 
+          {/* SOC Dashboard for SOC Labs OR Cloud Console for other labs */}
+          {SOC_CATEGORIES.includes(lab.category) ? (
+            <SOCDashboard 
+              labId={labId} 
+              labCategory={lab.category} 
+              className="flex-[4] min-h-[280px]"
             />
+          ) : (
+            <div className="flex-[4] bg-gradient-to-b from-card/60 to-card/30 border border-border/50 rounded-xl p-4 relative overflow-hidden backdrop-blur-sm min-h-[280px]">
+              <div className="absolute top-0 left-0 px-3 py-1.5 bg-black/60 border-r border-b border-white/10 rounded-br-lg text-[10px] font-mono text-primary uppercase tracking-widest z-20 flex items-center gap-2">
+                <motion.div 
+                  className="w-2 h-2 rounded-full bg-primary"
+                  animate={{ opacity: [1, 0.4, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                Infrastructure Status
+              </div>
+              
+              {/* Grid Background */}
+              <div className="absolute inset-0 opacity-5 pointer-events-none" 
+                   style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} 
+              />
 
-            <div className="h-full pt-6 overflow-y-auto pr-2">
-               <ResourceGraph labId={labId} />
+              <div className="h-full pt-6 overflow-y-auto pr-2">
+                 <ResourceGraph labId={labId} />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Terminal */}
           <div className="flex-[3] min-h-[220px] relative">
