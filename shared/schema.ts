@@ -74,6 +74,16 @@ export const userBadges = pgTable("user_badges", {
   earnedAt: timestamp("earned_at").defaultNow(),
 });
 
+// === CERTIFICATES ===
+export const certificates = pgTable("certificates", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  category: text("category").notNull(),
+  completedAt: timestamp("completed_at").defaultNow(),
+  labsCompleted: integer("labs_completed").notNull(),
+  totalScore: integer("total_score").default(0),
+});
+
 // === RELATIONS ===
 export const labsRelations = relations(labs, ({ many }) => ({
   resources: many(resources),
@@ -114,6 +124,13 @@ export const userBadgesRelations = relations(userBadges, ({ one }) => ({
   }),
 }));
 
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+  user: one(users, {
+    fields: [certificates.userId],
+    references: [users.id],
+  }),
+}));
+
 // === SCHEMAS ===
 export const insertLabSchema = createInsertSchema(labs);
 export const insertResourceSchema = createInsertSchema(resources);
@@ -121,9 +138,11 @@ export const insertProgressSchema = createInsertSchema(userProgress);
 export const insertLogSchema = createInsertSchema(terminalLogs);
 export const insertBadgeSchema = createInsertSchema(badges);
 export const insertUserBadgeSchema = createInsertSchema(userBadges);
+export const insertCertificateSchema = createInsertSchema(certificates);
 
 // === TYPES ===
 export type Lab = typeof labs.$inferSelect;
+export type Certificate = typeof certificates.$inferSelect;
 export type Resource = typeof resources.$inferSelect;
 export type UserProgress = typeof userProgress.$inferSelect;
 export type TerminalLog = typeof terminalLogs.$inferSelect;
