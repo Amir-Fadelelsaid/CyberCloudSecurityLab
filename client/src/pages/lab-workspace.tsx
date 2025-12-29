@@ -212,15 +212,21 @@ export default function LabWorkspace() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
-            variant="outline"
+            variant={showStepsPanel ? "default" : "outline"}
             size="sm"
             onClick={() => setShowStepsPanel(!showStepsPanel)}
-            className="flex items-center gap-2 text-xs font-mono border-primary/30 hover:border-primary/60"
+            className={clsx(
+              "flex items-center gap-2 text-xs font-mono transition-all",
+              showStepsPanel 
+                ? "bg-primary/20 border-primary text-primary hover:bg-primary/30" 
+                : "border-muted-foreground/30 text-muted-foreground hover:border-primary/60 hover:text-primary"
+            )}
             data-testid="button-toggle-steps"
           >
             {showStepsPanel ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeft className="w-3.5 h-3.5" />}
+            <span>{showStepsPanel ? "Guided" : "Challenge"}</span>
           </Button>
           <Button
             variant="outline"
