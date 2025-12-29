@@ -6,6 +6,8 @@ import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integra
 import { api } from "@shared/routes";
 import { allLabs } from "./lab-definitions";
 import { allBadgeDefinitions, calculateLevel } from "./badge-definitions";
+import { getUncachableGitHubClient } from "./github";
+import * as fs from "fs";
 
 let leaderboardClients: Set<WebSocket> | null = null;
 
@@ -1091,6 +1093,38 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // GitHub README Sync API
+  app.post("/api/github/sync-readme", isAuthenticated, async (req, res) => {
+    try {
+      const octokit = await getUncachableGitHubClient();
+      const owner = "Amir-Fadelelsaid";
+      const repo = "CyberSecurityLab";
+      const path = "README.md";
+      
+      const readmeContent = fs.readFileSync("README.md", "utf-8");
+      
+      const { data: currentFile } = await octokit.repos.getContent({
+        owner,
+        repo,
+        path
+      }) as { data: { sha: string } };
+      
+      await octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message: "Update README with latest features and leaderboard",
+        content: Buffer.from(readmeContent).toString("base64"),
+        sha: currentFile.sha
+      });
+      
+      res.json({ success: true, message: "README synced to GitHub" });
+    } catch (error: any) {
+      console.error("GitHub sync error:", error);
+      res.status(500).json({ message: "Failed to sync README", error: error.message });
     }
   });
 

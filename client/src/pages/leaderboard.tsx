@@ -230,7 +230,7 @@ export default function Leaderboard() {
                   </p>
                 </div>
                 
-                <div className="text-right">
+                <div className="text-center min-w-[50px]">
                   <div className="text-2xl font-display font-bold text-white">
                     {entry.completedLabs}
                   </div>
