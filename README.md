@@ -352,7 +352,7 @@ We welcome contributions! Please:
 - [x] Dynamic leveling system (Recruit to Elite Defender)
 - [x] 19 unlockable badges (Level, Category, Achievement)
 - [x] Hideable guide panel for self-challenge mode
-- [ ] Leaderboards and team challenges
+- [x] Live leaderboard with real-time WebSocket updates
 - [ ] Video tutorials and walkthroughs
 - [ ] Community-contributed labs
 - [ ] Mobile app support
