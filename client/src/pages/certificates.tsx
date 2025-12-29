@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Certificate } from "@/components/certificate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Award, Download, CheckCircle2, Lock } from "lucide-react";
+import { Loader2, Award, Download, CheckCircle2, Lock, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef } from "react";
 import type { Certificate as CertificateType } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
 
 interface CategoryMetadata {
   name: string;
@@ -23,8 +24,15 @@ interface UserProfile {
   displayName: string | null;
 }
 
+interface PreviewData {
+  category: string;
+  metadata: CategoryMetadata;
+  isPreview: true;
+}
+
 export default function CertificatesPage() {
   const [selectedCert, setSelectedCert] = useState<CertificateType | null>(null);
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const certificateRef = useRef<HTMLDivElement>(null);
 
   const { data: certificates, isLoading: certsLoading } = useQuery<CertificateType[]>({
@@ -138,8 +146,25 @@ export default function CertificatesPage() {
                     Completed {new Date(cert.completedAt!).toLocaleDateString()}
                   </div>
                 ) : (
-                  <div className="text-xs text-muted-foreground">
-                    Complete all labs to earn this certificate
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      Complete all labs to earn
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (metadata) {
+                          setPreviewData({ category, metadata, isPreview: true });
+                        }
+                      }}
+                      data-testid={`button-preview-${category.replace(/\s+/g, '-').toLowerCase()}`}
+                    >
+                      <Eye className="w-3 h-3" />
+                      Preview
+                    </Button>
                   </div>
                 )}
               </Card>
@@ -193,6 +218,60 @@ export default function CertificatesPage() {
                 skills={categories[selectedCert.category].skills}
                 experience={categories[selectedCert.category].experience}
               />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Preview Modal for locked certificates */}
+      <AnimatePresence>
+        {previewData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setPreviewData(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-[90vw] max-h-[90vh] overflow-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/30">
+                  <Eye className="w-3 h-3 mr-1" />
+                  PREVIEW - Complete all labs to earn this certificate
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPreviewData(null)}
+                >
+                  Close
+                </Button>
+              </div>
+
+              <div className="relative">
+                {/* Preview watermark overlay */}
+                <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center opacity-20">
+                  <div className="text-6xl font-bold text-white transform -rotate-45 select-none">
+                    PREVIEW
+                  </div>
+                </div>
+                
+                <Certificate
+                  userName={userName}
+                  category={previewData.category}
+                  displayName={previewData.metadata.displayName}
+                  completedAt={new Date().toISOString()}
+                  labsCompleted={0}
+                  skills={previewData.metadata.skills}
+                  experience={previewData.metadata.experience}
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}
