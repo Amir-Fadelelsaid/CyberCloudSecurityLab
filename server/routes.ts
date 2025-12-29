@@ -1096,6 +1096,49 @@ export async function registerRoutes(
     }
   });
 
+  // Update user display name
+  app.patch("/api/user/display-name", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { displayName } = req.body;
+      
+      if (typeof displayName !== "string" || displayName.length > 50) {
+        return res.status(400).json({ message: "Display name must be a string under 50 characters" });
+      }
+      
+      const sanitizedName = displayName.trim();
+      await storage.updateUserDisplayName(userId, sanitizedName);
+      
+      res.json({ message: "Display name updated", displayName: sanitizedName });
+    } catch (error) {
+      console.error("Error updating display name:", error);
+      res.status(500).json({ message: "Failed to update display name" });
+    }
+  });
+
+  // Get current user profile
+  app.get("/api/user/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        displayName: user.displayName,
+        profileImageUrl: user.profileImageUrl
+      });
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
   // GitHub README Sync API
   app.post("/api/github/sync-readme", isAuthenticated, async (req, res) => {
     try {

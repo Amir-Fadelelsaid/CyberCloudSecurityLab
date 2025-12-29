@@ -12,10 +12,17 @@ type LeaderboardEntry = {
   id: string;
   firstName: string | null;
   lastName: string | null;
+  displayName: string | null;
   profileImageUrl: string | null;
   completedLabs: number;
   level: number;
   levelTitle: string;
+};
+
+const getDisplayName = (entry: LeaderboardEntry) => {
+  if (entry.displayName) return entry.displayName;
+  if (entry.firstName) return `${entry.firstName} ${entry.lastName || ""}`.trim();
+  return "Anonymous";
 };
 
 export default function Leaderboard() {
@@ -171,7 +178,7 @@ export default function Leaderboard() {
               </div>
               <div className="flex-1">
                 <p className="text-white font-medium">
-                  {currentUserRank.firstName || "Anonymous"} {currentUserRank.lastName || ""}
+                  {getDisplayName(currentUserRank)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {currentUserRank.completedLabs} labs completed
@@ -217,7 +224,7 @@ export default function Leaderboard() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-white truncate">
-                      {entry.firstName || "Anonymous"} {entry.lastName || ""}
+                      {getDisplayName(entry)}
                     </span>
                     {entry.id === user?.id && (
                       <Badge variant="outline" className="text-xs text-primary border-primary/30">

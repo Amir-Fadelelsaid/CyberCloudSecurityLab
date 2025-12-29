@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { 
   Target, 
@@ -11,13 +12,21 @@ import {
   CheckCircle2,
   Circle,
   Flame,
-  Star
+  Star,
+  User,
+  Pencil,
+  Check,
+  X
 } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 import { useLabs } from "@/hooks/use-labs";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 type LevelInfo = {
   level: number;
@@ -36,10 +45,43 @@ const levelThresholds = [
   { level: 5, title: "Elite Defender", min: 81, max: 81 },
 ];
 
+type UserProfile = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+  profileImageUrl: string | null;
+};
+
 export default function MyProgress() {
   const { user } = useAuth();
   const { data: progress } = useProgress();
   const { data: labs } = useLabs();
+  const { toast } = useToast();
+  
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState("");
+  
+  const { data: profile } = useQuery<UserProfile>({
+    queryKey: ["/api/user/profile"],
+    enabled: !!user
+  });
+  
+  const updateNameMutation = useMutation({
+    mutationFn: async (displayName: string) => {
+      const res = await apiRequest("PATCH", "/api/user/display-name", { displayName });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      setIsEditingName(false);
+      toast({ title: "Display name updated", description: "Your name will appear on the leaderboard." });
+    },
+    onError: () => {
+      toast({ title: "Failed to update", description: "Please try again.", variant: "destructive" });
+    }
+  });
   
   const { data: levelInfo } = useQuery<LevelInfo>({
     queryKey: ["/api/user/level"],
@@ -50,6 +92,25 @@ export default function MyProgress() {
     queryKey: ["/api/user/badges"],
     enabled: !!user
   });
+  
+  const startEditing = () => {
+    setEditedName(profile?.displayName || profile?.firstName || "");
+    setIsEditingName(true);
+  };
+  
+  const saveName = () => {
+    if (editedName.trim()) {
+      updateNameMutation.mutate(editedName.trim());
+    }
+  };
+  
+  const cancelEditing = () => {
+    setIsEditingName(false);
+    setEditedName("");
+  };
+  
+  const currentDisplayName = profile?.displayName || 
+    (profile?.firstName ? `${profile.firstName} ${profile.lastName || ""}`.trim() : "Anonymous");
 
   const completedLabs = progress?.filter(p => p.completed) || [];
   const totalScore = progress?.reduce((acc, p) => acc + (p.score || 0), 0) || 0;
@@ -114,18 +175,71 @@ export default function MyProgress() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-accent/20 border border-accent/30">
-            <Activity className="w-6 h-6 text-accent" />
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-accent/20 border border-accent/30">
+              <Activity className="w-6 h-6 text-accent" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-display font-bold text-white">
+                My Progress
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Track your security training journey
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-display font-bold text-white">
-              My Progress
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Track your security training journey
-            </p>
-          </div>
+          
+          <Card className="bg-card/50 border-border/50">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3">
+                <User className="w-4 h-4 text-muted-foreground" />
+                {isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      data-testid="input-display-name"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      placeholder="Your display name"
+                      className="h-8 w-40"
+                      maxLength={50}
+                      onKeyDown={(e) => e.key === "Enter" && saveName()}
+                    />
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={saveName}
+                      disabled={updateNameMutation.isPending}
+                      data-testid="button-save-name"
+                    >
+                      <Check className="w-4 h-4 text-green-400" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={cancelEditing}
+                      data-testid="button-cancel-name"
+                    >
+                      <X className="w-4 h-4 text-red-400" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-white font-medium">{currentDisplayName}</span>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={startEditing}
+                      className="h-7 w-7"
+                      data-testid="button-edit-name"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </motion.div>
 

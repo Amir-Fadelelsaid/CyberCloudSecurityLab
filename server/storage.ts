@@ -10,6 +10,7 @@ export type LeaderboardEntry = {
   id: string;
   firstName: string | null;
   lastName: string | null;
+  displayName: string | null;
   profileImageUrl: string | null;
   completedLabs: number;
   level: number;
@@ -47,6 +48,10 @@ export interface IStorage {
   
   // Leaderboard
   getLeaderboard(): Promise<LeaderboardEntry[]>;
+  
+  // User profile
+  updateUserDisplayName(userId: string, displayName: string): Promise<void>;
+  getUser(userId: string): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -195,6 +200,7 @@ export class DatabaseStorage implements IStorage {
         id: users.id,
         firstName: users.firstName,
         lastName: users.lastName,
+        displayName: users.displayName,
         profileImageUrl: users.profileImageUrl,
         completedLabs: sql<number>`COALESCE(COUNT(CASE WHEN ${userProgress.completed} = true THEN 1 END), 0)::int`
       })
@@ -219,12 +225,24 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         firstName: row.firstName,
         lastName: row.lastName,
+        displayName: row.displayName,
         profileImageUrl: row.profileImageUrl,
         completedLabs: row.completedLabs,
         level: levelInfo.level,
         levelTitle: levelInfo.title
       };
     });
+  }
+
+  async updateUserDisplayName(userId: string, displayName: string): Promise<void> {
+    await db.update(users)
+      .set({ displayName, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async getUser(userId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    return user;
   }
 }
 
