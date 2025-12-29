@@ -2,8 +2,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { Shield, Clock, CheckCircle2, AlertTriangle, FileText, Download, Target, Zap } from "lucide-react";
-import { useState } from "react";
+import { Shield, Clock, CheckCircle2, AlertTriangle, FileText, Download, Target, Zap, GraduationCap, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 interface MissionCompleteModalProps {
   isOpen: boolean;
@@ -13,10 +16,37 @@ interface MissionCompleteModalProps {
   difficulty: string;
   elapsedTime?: string;
   commandStreak?: number;
+  isNewCompletion?: boolean;
 }
 
-export function MissionCompleteModal({ isOpen, onClose, labTitle, labCategory, difficulty, elapsedTime, commandStreak }: MissionCompleteModalProps) {
+export function MissionCompleteModal({ isOpen, onClose, labTitle, labCategory, difficulty, elapsedTime, commandStreak, isNewCompletion = false }: MissionCompleteModalProps) {
   const [activeTab, setActiveTab] = useState<'summary' | 'timeline' | 'detection' | 'scorecard'>('summary');
+  const [certificateEarned, setCertificateEarned] = useState<{ isNew: boolean; category: string } | null>(null);
+  const [hasCheckedCertificate, setHasCheckedCertificate] = useState(false);
+
+  const checkCertificateMutation = useMutation({
+    mutationFn: async (category: string) => {
+      const response = await apiRequest("POST", "/api/user/certificates/check", { category });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.earned && data.isNew && data.certificate?.category === labCategory) {
+        setCertificateEarned({ isNew: true, category: labCategory });
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (isOpen && isNewCompletion && labCategory && !hasCheckedCertificate && !checkCertificateMutation.isPending) {
+      setCertificateEarned(null);
+      setHasCheckedCertificate(true);
+      checkCertificateMutation.mutate(labCategory);
+    }
+    if (!isOpen) {
+      setHasCheckedCertificate(false);
+      setCertificateEarned(null);
+    }
+  }, [isOpen, isNewCompletion, labCategory, hasCheckedCertificate, checkCertificateMutation.isPending]);
 
   const incidentData = getIncidentData(labCategory);
 
@@ -48,6 +78,37 @@ export function MissionCompleteModal({ isOpen, onClose, labTitle, labCategory, d
             </Badge>
           </DialogTitle>
         </DialogHeader>
+
+        {certificateEarned && certificateEarned.isNew && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-orange-500/20 border border-amber-500/50 rounded-lg p-4 mb-2"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, -10, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 0.5, repeat: 3 }}
+                >
+                  <GraduationCap className="w-8 h-8 text-amber-400" />
+                </motion.div>
+                <div>
+                  <h3 className="text-amber-300 font-bold text-lg">Certificate Earned!</h3>
+                  <p className="text-amber-200/80 text-sm">
+                    You completed all {certificateEarned.category} labs!
+                  </p>
+                </div>
+              </div>
+              <Link href="/certificates" onClick={onClose}>
+                <Button variant="outline" className="border-amber-500/50 text-amber-300 gap-2">
+                  View Certificate
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
 
         <div className="flex gap-2 border-b border-border pb-2">
           {['summary', 'timeline', 'detection', 'scorecard'].map((tab) => (

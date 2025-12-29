@@ -23,6 +23,7 @@ export default function LabWorkspace() {
   const terminalResetKey = useRef(0);
   const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('steps');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [isNewCompletion, setIsNewCompletion] = useState(false);
   const [showStepsPanel, setShowStepsPanel] = useState(() => {
     const saved = localStorage.getItem(`lab-${labId}-showSteps`);
     return saved !== null ? saved === 'true' : true;
@@ -505,6 +506,7 @@ export default function LabWorkspace() {
                 if (lab.steps && Array.isArray(lab.steps)) {
                   setCompletedSteps(new Set((lab.steps as any[]).map(s => s.number)));
                 }
+                setIsNewCompletion(true);
                 setShowCompleteModal(true);
               }}
               onCommandSuccess={handleCommandSuccess}
@@ -522,12 +524,16 @@ export default function LabWorkspace() {
 
       <MissionCompleteModal
         isOpen={showCompleteModal}
-        onClose={() => setShowCompleteModal(false)}
+        onClose={() => {
+          setShowCompleteModal(false);
+          setIsNewCompletion(false);
+        }}
         labTitle={lab.title}
         labCategory={lab.category}
         difficulty={lab.difficulty}
         elapsedTime={formatTime(elapsedTime)}
         commandStreak={commandStreak}
+        isNewCompletion={isNewCompletion}
       />
     </div>
   );
