@@ -55,14 +55,14 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ### Dynamic Leveling System
 
-| Level | Title | Labs Required |
-|-------|-------|---------------|
-| 0 | Recruit | 0-6 labs |
-| 1 | Operator | 7-15 labs |
-| 2 | Analyst | 16-30 labs |
-| 3 | Engineer | 31-50 labs |
-| 4 | Architect | 51-80 labs |
-| 5 | Elite Defender | All 81 labs |
+| Level | Title | Labs Required | Badge Unlocked |
+|-------|-------|---------------|----------------|
+| 0 | Recruit | 0-6 labs | - |
+| 1 | Operator | 7+ labs | Operator Badge |
+| 2 | Analyst | 16+ labs | Analyst Badge |
+| 3 | Engineer | 31+ labs | Engineer Badge |
+| 4 | Architect | 51+ labs | Architect Badge |
+| 5 | Elite Defender | All 81 labs | Elite Defender Badge |
 
 ### 19 Unlockable Badges
 
