@@ -1,0 +1,199 @@
+A SOC Engineer lab must generate real logs.
+
+Required sources
+
+Windows Server (Active Directory)
+
+Auth logs, Kerberos, account changes
+
+Windows Endpoints (1–2)
+
+Process creation, PowerShell, registry, login events
+
+Linux Server
+
+Syslog, SSH, sudo, cron
+
+Network telemetry
+
+Firewall logs or VPC flow logs
+
+Cloud telemetry (at least one)
+
+AWS CloudTrail or Azure Activity Logs
+
+If there’s no real telemetry → it’s not a SOC lab.
+
+2️⃣ Log Collection & Pipelines (SOC engineer core skill)
+
+You must build ingestion, not just “turn it on”.
+
+Must include
+
+Agents (Elastic Agent / Universal Forwarder)
+
+Syslog forwarding
+
+Cloud log ingestion
+
+Field normalization
+
+Timestamp correction
+
+Noise filtering
+
+SOC engineers are judged on pipeline quality:
+
+Are fields parsed correctly?
+
+Are useless logs filtered?
+
+Is enrichment applied?
+
+3️⃣ Central SIEM (the brain)
+
+You need one real SIEM:
+
+Elastic
+
+Splunk
+
+Microsoft Sentinel
+
+Must be configured by you
+
+Indexes / data streams
+
+Data sources
+
+Role-based access
+
+Dashboards
+
+If you didn’t configure ingestion → not SOC engineering.
+
+4️⃣ Detection Engineering (this is the line)
+
+This is what separates analysts from engineers.
+
+You must build:
+
+Custom detection rules
+
+Threshold logic
+
+Correlation rules (multi-event)
+
+Risk scoring
+
+Severity logic
+
+Examples that must exist
+
+Brute force → success correlation
+
+Impossible travel
+
+Suspicious PowerShell
+
+Privilege escalation
+
+Cloud IAM abuse
+
+Mapped to MITRE ATT&CK.
+
+If you’re writing detections → you’re doing SOC engineering.
+
+5️⃣ Enrichment Layer (engineer mindset)
+
+A working SOC lab enriches alerts automatically.
+
+Required enrichments
+
+GeoIP
+
+User context
+
+Host context
+
+Asset criticality
+
+Reputation (simulated or static lists)
+
+Alerts without context = junior SOC.
+
+6️⃣ Alert Lifecycle & Case Management
+
+A SOC Engineer lab must show end-to-end flow.
+
+Must include
+
+Alert → case creation
+
+Status tracking
+
+Analyst notes
+
+Evidence attachment
+
+Closure logic
+
+Even if ticketing is simulated — the workflow must exist.
+
+7️⃣ Response & Automation (minimum viable SOAR)
+
+You don’t need full SOAR — but you must automate something.
+
+Examples
+
+Auto-disable user (simulated)
+
+Auto-isolate endpoint (simulated)
+
+Auto-block IP
+
+Auto-close benign alerts
+
+This proves you understand response enablement, not just alerts.
+
+8️⃣ Adversary Simulation (proof it works)
+
+You must trigger your own detections.
+
+Tools
+
+Atomic Red Team
+
+Manual attacks (PowerShell, failed logins)
+
+Credential misuse
+
+Lateral movement simulation
+
+If detections never fire → lab is incomplete.
+
+9️⃣ Dashboards (engineer-facing, not pretty)
+
+Your dashboards should answer:
+
+What’s firing most?
+
+What’s noisy?
+
+What’s high risk?
+
+What’s broken?
+
+SOC engineers build dashboards for analysts, not executives.
+
+10️⃣ Documentation (required)
+
+A real SOC Engineer lab includes:
+
+Architecture diagram
+
+Data flow diagram
+
+Detection logic explanation
+
+Known limitations
