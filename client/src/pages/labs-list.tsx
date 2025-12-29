@@ -5,6 +5,16 @@ import { Loader2, Search, Filter, Clock, ListChecks } from "lucide-react";
 import { useState } from "react";
 import { clsx } from "clsx";
 
+const SEARCH_KEYWORDS: Record<string, string[]> = {
+  "Cloud Security Analyst": ["soc", "analyst", "cloud", "security", "csa"],
+  "Cloud Security Engineer": ["cloud", "security", "engineer", "cse"],
+  "SOC Operations": ["soc", "operations", "ops", "security"],
+  "SOC Engineer": ["soc", "engineer", "security"],
+  "IAM Security": ["iam", "identity", "access", "security"],
+  "Network Security": ["network", "firewall", "vpc", "security"],
+  "Storage Security": ["storage", "s3", "bucket", "security"],
+};
+
 export default function LabsList() {
   const { data: labs, isLoading } = useLabs();
   const [filter, setFilter] = useState('All');
@@ -12,8 +22,16 @@ export default function LabsList() {
 
   const filteredLabs = labs?.filter(lab => {
     const matchesFilter = filter === 'All' || lab.difficulty === filter;
-    const matchesSearch = lab.title.toLowerCase().includes(search.toLowerCase()) || 
-                          lab.description.toLowerCase().includes(search.toLowerCase());
+    const searchLower = search.toLowerCase().trim();
+    if (!searchLower) return matchesFilter;
+    
+    const matchesTitle = lab.title.toLowerCase().includes(searchLower);
+    const matchesDescription = lab.description.toLowerCase().includes(searchLower);
+    const matchesCategory = lab.category.toLowerCase().includes(searchLower);
+    const categoryKeywords = SEARCH_KEYWORDS[lab.category] || [];
+    const matchesKeywords = categoryKeywords.some(keyword => keyword.includes(searchLower) || searchLower.includes(keyword));
+    
+    const matchesSearch = matchesTitle || matchesDescription || matchesCategory || matchesKeywords;
     return matchesFilter && matchesSearch;
   });
 
@@ -129,10 +147,10 @@ export default function LabsList() {
                         {String(lab.estimatedTime)}
                       </span>
                     )}
-                    {lab.steps && Array.isArray(lab.steps) && lab.steps.length > 0 && (
+                    {lab.steps && Array.isArray(lab.steps) && (lab.steps as unknown[]).length > 0 && (
                       <span className="flex items-center gap-1" data-testid={`text-steps-${lab.id}`}>
                         <ListChecks className="w-3 h-3" />
-                        {lab.steps.length} steps
+                        {String((lab.steps as unknown[]).length)} steps
                       </span>
                     )}
                   </div>
