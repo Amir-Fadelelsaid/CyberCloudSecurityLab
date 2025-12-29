@@ -590,18 +590,18 @@ const generateCases = (): Case[] => {
 };
 
 const severityConfig = {
-  critical: { color: "bg-red-500/20 text-red-400 border-red-500/40", icon: XCircle, priority: 1 },
-  high: { color: "bg-orange-500/20 text-orange-400 border-orange-500/40", icon: AlertTriangle, priority: 2 },
-  medium: { color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/40", icon: AlertCircle, priority: 3 },
-  low: { color: "bg-blue-500/20 text-blue-400 border-blue-500/40", icon: Info, priority: 4 },
-  info: { color: "bg-slate-500/20 text-slate-400 border-slate-500/40", icon: Info, priority: 5 }
+  critical: { color: "bg-red-500/10 text-red-300/80 border-red-500/20", icon: XCircle, priority: 1 },
+  high: { color: "bg-orange-500/10 text-orange-300/80 border-orange-500/20", icon: AlertTriangle, priority: 2 },
+  medium: { color: "bg-yellow-500/10 text-yellow-300/80 border-yellow-500/20", icon: AlertCircle, priority: 3 },
+  low: { color: "bg-blue-500/10 text-blue-300/80 border-blue-500/20", icon: Info, priority: 4 },
+  info: { color: "bg-slate-500/10 text-slate-300/80 border-slate-500/20", icon: Info, priority: 5 }
 };
 
 const statusConfig = {
-  new: { color: "bg-red-500/30 text-red-300", label: "NEW" },
-  investigating: { color: "bg-yellow-500/30 text-yellow-300", label: "INVESTIGATING" },
-  escalated: { color: "bg-purple-500/30 text-purple-300", label: "ESCALATED" },
-  resolved: { color: "bg-green-500/30 text-green-300", label: "RESOLVED" }
+  new: { color: "bg-red-500/15 text-red-200/80", label: "NEW" },
+  investigating: { color: "bg-yellow-500/15 text-yellow-200/80", label: "INVESTIGATING" },
+  escalated: { color: "bg-purple-500/15 text-purple-200/80", label: "ESCALATED" },
+  resolved: { color: "bg-green-500/15 text-green-200/80", label: "RESOLVED" }
 };
 
 export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertId, className }: SOCDashboardProps) {
@@ -944,10 +944,10 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                     transition={{ delay: idx * 0.02 }}
                     className={clsx(
                       "p-3 rounded-lg border",
-                      log.level === "error" ? "bg-red-500/10 border-red-500/30" :
-                      log.level === "warn" ? "bg-yellow-500/10 border-yellow-500/30" :
-                      log.level === "info" ? "bg-blue-500/10 border-blue-500/30" :
-                      "bg-slate-500/10 border-slate-500/30"
+                      log.level === "error" ? "bg-red-500/5 border-red-500/15" :
+                      log.level === "warn" ? "bg-yellow-500/5 border-yellow-500/15" :
+                      log.level === "info" ? "bg-blue-500/5 border-blue-500/15" :
+                      "bg-slate-500/5 border-slate-500/15"
                     )}
                     data-testid={`log-${idx}`}
                   >
@@ -959,15 +959,15 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                       </Badge>
                       <Badge variant="outline" className={clsx(
                         "text-[8px] px-1 py-0 uppercase",
-                        log.level === "error" ? "text-red-400 border-red-400/30" :
-                        log.level === "warn" ? "text-yellow-400 border-yellow-400/30" :
-                        log.level === "info" ? "text-blue-400 border-blue-400/30" :
-                        "text-slate-400 border-slate-400/30"
+                        log.level === "error" ? "text-red-300/70 border-red-400/20" :
+                        log.level === "warn" ? "text-yellow-300/70 border-yellow-400/20" :
+                        log.level === "info" ? "text-blue-300/70 border-blue-400/20" :
+                        "text-slate-300/70 border-slate-400/20"
                       )}>
                         {log.level}
                       </Badge>
                       {log.eventId && (
-                        <Badge variant="outline" className="text-[8px] px-1 py-0 text-cyan-400 border-cyan-400/30">
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 text-cyan-300/60 border-cyan-400/20">
                           {log.eventId}
                         </Badge>
                       )}
@@ -1011,9 +1011,9 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                               <span className="text-muted-foreground">({log.enrichment.userContext.role})</span>
                               <Badge className={clsx(
                                 "text-[7px] px-1 py-0",
-                                log.enrichment.userContext.riskScore > 75 ? "bg-red-500/20 text-red-400" :
-                                log.enrichment.userContext.riskScore > 50 ? "bg-yellow-500/20 text-yellow-400" :
-                                "bg-green-500/20 text-green-400"
+                                log.enrichment.userContext.riskScore > 75 ? "bg-red-500/10 text-red-300/70" :
+                                log.enrichment.userContext.riskScore > 50 ? "bg-yellow-500/10 text-yellow-300/70" :
+                                "bg-green-500/10 text-green-300/70"
                               )}>
                                 Risk: {log.enrichment.userContext.riskScore}
                               </Badge>
@@ -1025,10 +1025,10 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                               <span className="text-muted-foreground">Asset:</span>
                               <Badge className={clsx(
                                 "text-[7px] px-1 py-0",
-                                log.enrichment.assetCriticality === "critical" ? "bg-red-500/20 text-red-400" :
-                                log.enrichment.assetCriticality === "high" ? "bg-orange-500/20 text-orange-400" :
-                                log.enrichment.assetCriticality === "medium" ? "bg-yellow-500/20 text-yellow-400" :
-                                "bg-green-500/20 text-green-400"
+                                log.enrichment.assetCriticality === "critical" ? "bg-red-500/10 text-red-300/70" :
+                                log.enrichment.assetCriticality === "high" ? "bg-orange-500/10 text-orange-300/70" :
+                                log.enrichment.assetCriticality === "medium" ? "bg-yellow-500/10 text-yellow-300/70" :
+                                "bg-green-500/10 text-green-300/70"
                               )}>
                                 {log.enrichment.assetCriticality.toUpperCase()}
                               </Badge>
@@ -1040,10 +1040,10 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                               <span className="text-muted-foreground">Reputation:</span>
                               <Badge className={clsx(
                                 "text-[7px] px-1 py-0",
-                                log.enrichment.reputation === "malicious" ? "bg-red-500/20 text-red-400" :
-                                log.enrichment.reputation === "suspicious" ? "bg-yellow-500/20 text-yellow-400" :
-                                log.enrichment.reputation === "clean" ? "bg-green-500/20 text-green-400" :
-                                "bg-slate-500/20 text-slate-400"
+                                log.enrichment.reputation === "malicious" ? "bg-red-500/10 text-red-300/70" :
+                                log.enrichment.reputation === "suspicious" ? "bg-yellow-500/10 text-yellow-300/70" :
+                                log.enrichment.reputation === "clean" ? "bg-green-500/10 text-green-300/70" :
+                                "bg-slate-500/10 text-slate-300/70"
                               )}>
                                 {log.enrichment.reputation.toUpperCase()}
                               </Badge>
@@ -1102,9 +1102,9 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                       <td className="py-2 px-2">
                         <Badge variant="outline" className={clsx(
                           "text-[7px] px-1 py-0",
-                          event.direction === "inbound" ? "text-orange-400 border-orange-400/30" :
-                          event.direction === "outbound" ? "text-blue-400 border-blue-400/30" :
-                          "text-slate-400 border-slate-400/30"
+                          event.direction === "inbound" ? "text-orange-300/60 border-orange-400/20" :
+                          event.direction === "outbound" ? "text-blue-300/60 border-blue-400/20" :
+                          "text-slate-300/60 border-slate-400/20"
                         )}>
                           {event.direction === "inbound" ? "IN" : event.direction === "outbound" ? "OUT" : "INT"}
                         </Badge>
@@ -1126,9 +1126,9 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                       <td className="py-2 px-2">
                         <Badge className={clsx(
                           "text-[8px] px-1.5 py-0",
-                          event.action === "allow" ? "bg-green-500/20 text-green-400" :
-                          event.action === "deny" ? "bg-red-500/20 text-red-400" :
-                          "bg-yellow-500/20 text-yellow-400"
+                          event.action === "allow" ? "bg-green-500/10 text-green-300/70" :
+                          event.action === "deny" ? "bg-red-500/10 text-red-300/70" :
+                          "bg-yellow-500/10 text-yellow-300/70"
                         )}>
                           {event.action.toUpperCase()}
                         </Badge>
@@ -1157,8 +1157,8 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                   transition={{ delay: idx * 0.03 }}
                   className={clsx(
                     "p-3 rounded-lg border",
-                    activity.status === "malicious" ? "bg-red-500/10 border-red-500/30" :
-                    activity.status === "suspicious" ? "bg-yellow-500/10 border-yellow-500/30" :
+                    activity.status === "malicious" ? "bg-red-500/5 border-red-500/15" :
+                    activity.status === "suspicious" ? "bg-yellow-500/5 border-yellow-500/15" :
                     "bg-black/30 border-white/10"
                   )}
                   data-testid={`endpoint-${idx}`}
@@ -1167,24 +1167,24 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                     <div className="flex items-center gap-2">
                       <Monitor className={clsx(
                         "w-4 h-4",
-                        activity.status === "malicious" ? "text-red-400" :
-                        activity.status === "suspicious" ? "text-yellow-400" :
-                        "text-primary"
+                        activity.status === "malicious" ? "text-red-300/70" :
+                        activity.status === "suspicious" ? "text-yellow-300/70" :
+                        "text-primary/70"
                       )} />
                       <span className="text-xs font-bold text-white">{activity.hostname}</span>
                       <Badge variant="outline" className="text-[8px]">{activity.eventId}</Badge>
                     </div>
                     <div className="flex items-center gap-1">
                       {activity.mitreTechnique && (
-                        <Badge variant="outline" className="text-[8px] text-cyan-400 border-cyan-400/30">
+                        <Badge variant="outline" className="text-[8px] text-cyan-300/60 border-cyan-400/20">
                           {activity.mitreTechnique}
                         </Badge>
                       )}
                       <Badge className={clsx(
                         "text-[8px]",
-                        activity.status === "malicious" ? "bg-red-500/20 text-red-400" :
-                        activity.status === "suspicious" ? "bg-yellow-500/20 text-yellow-400" :
-                        "bg-green-500/20 text-green-400"
+                        activity.status === "malicious" ? "bg-red-500/10 text-red-300/70" :
+                        activity.status === "suspicious" ? "bg-yellow-500/10 text-yellow-300/70" :
+                        "bg-green-500/10 text-green-300/70"
                       )}>
                         {activity.status.toUpperCase()}
                       </Badge>
@@ -1199,7 +1199,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">Process:</span>
                         <span className={clsx(
-                          activity.status === "malicious" ? "text-red-400" : "text-cyan-400"
+                          activity.status === "malicious" ? "text-red-300/70" : "text-cyan-300/70"
                         )}>{activity.process}</span>
                         {activity.parentProcess && (
                           <span className="text-muted-foreground">(parent: {activity.parentProcess})</span>
@@ -1209,13 +1209,13 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                     {activity.commandLine && (
                       <div className="flex items-start gap-2">
                         <span className="text-muted-foreground">Cmd:</span>
-                        <span className="text-orange-400 break-all">{activity.commandLine}</span>
+                        <span className="text-orange-300/70 break-all">{activity.commandLine}</span>
                       </div>
                     )}
                     {activity.user && (
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">User:</span>
-                        <span className="text-purple-400">{activity.user}</span>
+                        <span className="text-purple-300/70">{activity.user}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
@@ -1252,14 +1252,14 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                           {rule.severity.toUpperCase()}
                         </Badge>
                         {rule.mitreId && (
-                          <Badge variant="outline" className="text-[8px] text-cyan-400 border-cyan-400/30">
+                          <Badge variant="outline" className="text-[8px] text-cyan-300/60 border-cyan-400/20">
                             {rule.mitreId}
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
                         {rule.enabled ? (
-                          <ToggleRight className="w-4 h-4 text-green-400" />
+                          <ToggleRight className="w-4 h-4 text-green-300/60" />
                         ) : (
                           <ToggleLeft className="w-4 h-4 text-muted-foreground" />
                         )}
