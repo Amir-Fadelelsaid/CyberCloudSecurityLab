@@ -41,7 +41,7 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ## Features
 
-### 57 Interactive Labs Across 5 Categories
+### 81 Interactive Labs Across 7 Categories
 
 | Category | Beginner | Intermediate | Advanced | Challenge | **Total** |
 |----------|----------|--------------|----------|-----------|-----------|
@@ -50,22 +50,24 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 | **SOC Operations** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
 | **SOC Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
 | **Cloud Security Analyst** | 4 labs | 4 labs | 4 labs | - | **12** |
+| **IAM Security** | 4 labs | 4 labs | 4 labs | - | **12** |
+| **Cloud Security Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
 
 ### Dynamic Leveling System
 
 | Level | Title | Labs Required |
 |-------|-------|---------------|
-| 0 | Recruit | 0-4 labs |
-| 1 | Operator | 5-11 labs |
-| 2 | Analyst | 12-19 labs |
-| 3 | Engineer | 20-34 labs |
-| 4 | Architect | 35-56 labs |
-| 5 | Elite Defender | All 57 labs |
+| 0 | Recruit | 0-6 labs |
+| 1 | Operator | 7-15 labs |
+| 2 | Analyst | 16-30 labs |
+| 3 | Engineer | 31-50 labs |
+| 4 | Architect | 51-80 labs |
+| 5 | Elite Defender | All 81 labs |
 
-### 17 Unlockable Badges
+### 19 Unlockable Badges
 
 - **5 Level Badges**: Operator, Analyst, Engineer, Architect, Elite Defender
-- **5 Category Mastery Badges**: Storage Guardian, Network Sentinel, SOC Commander, SIEM Master, Cloud Protector
+- **7 Category Mastery Badges**: Storage Guardian, Network Sentinel, SOC Commander, SIEM Master, Cloud Protector, IAM Enforcer, Security Architect
 - **7 Achievement Badges**: First Blood, Speed Runner, Deep Diver, Expert Hunter, Lone Wolf, Perfect Week, Completionist
 
 ### Difficulty-Based Learning Path
@@ -92,6 +94,8 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 - **SOC Operations** - CloudTrail analysis, GuardDuty alerts, credential compromise, persistence detection
 - **SOC Engineer** - SIEM configuration, threat intel, SOAR automation, detection engineering, purple team
 - **Cloud Security Analyst** - Asset inventory, compliance assessment, container security, multi-cloud posture
+- **IAM Security** - Least privilege, MFA enforcement, access key rotation, cross-account trust, privilege escalation
+- **Cloud Security Engineer** - Security Hub, KMS rotation, VPC flow logs, GuardDuty, multi-account architecture, IaC security
 
 ### Realistic Simulation
 - Terminal-based interface mimicking real AWS CLI

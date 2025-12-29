@@ -29,7 +29,7 @@ export default function HiringManager() {
               CloudShieldLab Platform Overview
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              CloudShieldLab showcases practical cloud security skills through 57 hands-on labs across 5 categories that mirror real-world scenarios. 
+              CloudShieldLab showcases practical cloud security skills through 81 hands-on labs across 7 categories that mirror real-world scenarios. 
               Here's what a candidate practicing on this platform has demonstrated.
             </p>
             <div className="flex justify-center gap-4 pt-4">
@@ -52,15 +52,15 @@ export default function HiringManager() {
             <CardContent className="py-6">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                 <div>
-                  <p className="text-3xl font-bold text-primary">57</p>
+                  <p className="text-3xl font-bold text-primary">81</p>
                   <p className="text-sm text-muted-foreground">Labs</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-primary">5</p>
+                  <p className="text-3xl font-bold text-primary">7</p>
                   <p className="text-sm text-muted-foreground">Categories</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-primary">17</p>
+                  <p className="text-3xl font-bold text-primary">19</p>
                   <p className="text-sm text-muted-foreground">Badges</p>
                 </div>
                 <div>
@@ -75,17 +75,17 @@ export default function HiringManager() {
             </CardContent>
           </Card>
 
-          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid md:grid-cols-4 lg:grid-cols-7 gap-3">
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Database className="w-4 h-4 text-teal-400" />
-                  Storage Security
+                  Storage
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-white">11 Labs</p>
-                <p className="text-xs text-muted-foreground">S3, encryption, policies</p>
+                <p className="text-2xl font-bold text-white">11</p>
+                <p className="text-xs text-muted-foreground">S3, encryption</p>
               </CardContent>
             </Card>
 
@@ -93,11 +93,11 @@ export default function HiringManager() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Network className="w-4 h-4 text-blue-400" />
-                  Network Security
+                  Network
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-white">11 Labs</p>
+                <p className="text-2xl font-bold text-white">11</p>
                 <p className="text-xs text-muted-foreground">VPC, SGs, WAF</p>
               </CardContent>
             </Card>
@@ -106,12 +106,12 @@ export default function HiringManager() {
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-sm">
                   <Eye className="w-4 h-4 text-violet-400" />
-                  SOC Operations
+                  SOC Ops
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-white">11 Labs</p>
-                <p className="text-xs text-muted-foreground">CloudTrail, GuardDuty</p>
+                <p className="text-2xl font-bold text-white">11</p>
+                <p className="text-xs text-muted-foreground">CloudTrail, alerts</p>
               </CardContent>
             </Card>
 
@@ -123,8 +123,8 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-white">12 Labs</p>
-                <p className="text-xs text-muted-foreground">SIEM, SOAR, detection</p>
+                <p className="text-2xl font-bold text-white">12</p>
+                <p className="text-xs text-muted-foreground">SIEM, SOAR</p>
               </CardContent>
             </Card>
 
@@ -136,8 +136,34 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-white">12 Labs</p>
+                <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">CSPM, compliance</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Users className="w-4 h-4 text-yellow-400" />
+                  IAM Security
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-white">12</p>
+                <p className="text-xs text-muted-foreground">Roles, policies, MFA</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Shield className="w-4 h-4 text-rose-400" />
+                  Cloud SecEng
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-white">12</p>
+                <p className="text-xs text-muted-foreground">Security Hub, IaC</p>
               </CardContent>
             </Card>
           </div>

@@ -11,7 +11,7 @@ export interface LabDefinition {
   briefing?: string;
   scenario?: string;
   difficulty: "Beginner" | "Intermediate" | "Advanced" | "Challenge";
-  category: "Storage Security" | "Network Security" | "SOC Operations" | "SOC Engineer" | "Cloud Security Analyst";
+  category: "Storage Security" | "Network Security" | "SOC Operations" | "SOC Engineer" | "Cloud Security Analyst" | "IAM Security" | "Cloud Security Engineer";
   estimatedTime: string;
   initialState: Record<string, unknown>;
   steps: Array<{
@@ -1298,11 +1298,587 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
   }
 ];
 
+// ============= IAM SECURITY LABS (12) =============
+export const iamSecurityLabs: LabDefinition[] = [
+  // BEGINNER LABS (4)
+  {
+    title: "Overly Permissive IAM User",
+    description: "An IAM user has been granted AdministratorAccess. Implement least privilege by restricting permissions.",
+    briefing: "PRIVILEGE ESCALATION RISK: Security audit flagged user 'dev-contractor' with full admin access. This violates least privilege and creates insider threat risk.",
+    scenario: "A contractor who was only supposed to deploy Lambda functions somehow has admin access to everything. One malicious action could wipe out your entire AWS infrastructure.",
+    difficulty: "Beginner",
+    category: "IAM Security",
+    estimatedTime: "5-10 minutes",
+    initialState: { users: ["dev-contractor"] },
+    steps: [
+      { number: 1, title: "Scan for Issues", description: "Identify overly permissive IAM configurations.", hint: "Type 'scan' to find vulnerabilities.", intel: "CIS AWS 1.16: Ensure IAM policies are attached only to groups or roles." },
+      { number: 2, title: "List IAM Users", description: "Review all IAM users and their permissions.", hint: "Type 'aws iam list-users' to see users.", intel: "Look for users with AdministratorAccess or PowerUserAccess policies." },
+      { number: 3, title: "Review User Policies", description: "Check what policies are attached to the contractor.", hint: "Type 'aws iam get-user-policy dev-contractor'.", intel: "Contractors should have time-limited, scoped permissions." },
+      { number: 4, title: "Apply Least Privilege", description: "Replace admin access with minimal required permissions.", hint: "Type 'aws iam restrict-user dev-contractor'.", intel: "Use IAM Access Analyzer to determine what permissions are actually needed." }
+    ],
+    resources: [
+      { type: "iam_user", name: "dev-contractor", config: { policy: "AdministratorAccess" }, isVulnerable: true, status: "overprivileged" }
+    ],
+    fixCommands: ["aws iam restrict-user dev-contractor"]
+  },
+  {
+    title: "Missing MFA on Root Account",
+    description: "The AWS root account lacks multi-factor authentication, exposing the entire account to credential theft.",
+    briefing: "CRITICAL: Root account has no MFA enabled. If credentials are compromised, attackers have unlimited access to all resources.",
+    scenario: "Your root account password was found in a credential dump. Without MFA, you're one password away from total account takeover.",
+    difficulty: "Beginner",
+    category: "IAM Security",
+    estimatedTime: "5-10 minutes",
+    initialState: { accounts: ["root-account"] },
+    steps: [
+      { number: 1, title: "Assess MFA Status", description: "Check if MFA is enabled on the root account.", hint: "Type 'scan' to identify issues.", intel: "CIS AWS 1.5: Ensure MFA is enabled for the root account." },
+      { number: 2, title: "Check Account Summary", description: "Review the account security configuration.", hint: "Type 'aws iam get-account-summary'.", intel: "Look for AccountMFAEnabled = 0 which indicates no MFA." },
+      { number: 3, title: "Verify Root Login History", description: "Check if root has been used recently.", hint: "Type 'aws iam check-root-activity'.", intel: "Root should rarely be used after initial setup." },
+      { number: 4, title: "Enable MFA", description: "Activate multi-factor authentication for root.", hint: "Type 'aws iam enable-root-mfa'.", intel: "Use a hardware MFA device for root, not a virtual one." }
+    ],
+    resources: [
+      { type: "iam_account", name: "root-account", config: { mfa: false }, isVulnerable: true, status: "unprotected" }
+    ],
+    fixCommands: ["aws iam enable-root-mfa"]
+  },
+  {
+    title: "Exposed IAM Access Keys",
+    description: "Long-lived IAM access keys were found in a public repository. Rotate and secure them immediately.",
+    briefing: "KEY EXPOSURE: GitHub secret scanning detected AWS access keys in a public repo. Keys must be rotated immediately.",
+    scenario: "A developer accidentally committed AWS keys to GitHub. Bots scan for these constantly - you have minutes before they're exploited.",
+    difficulty: "Beginner",
+    category: "IAM Security",
+    estimatedTime: "5-10 minutes",
+    initialState: { keys: ["exposed-key-AKIA"] },
+    steps: [
+      { number: 1, title: "Identify Exposed Keys", description: "Find which access keys have been compromised.", hint: "Type 'scan' to identify issues.", intel: "AWS GuardDuty can detect when access keys are used from unusual locations." },
+      { number: 2, title: "List Access Keys", description: "Check all active access keys.", hint: "Type 'aws iam list-access-keys'.", intel: "Keys older than 90 days should be rotated per CIS benchmarks." },
+      { number: 3, title: "Check Key Usage", description: "See when the exposed key was last used.", hint: "Type 'aws iam get-key-last-used exposed-key-AKIA'.", intel: "If used from unknown IPs, assume compromise and investigate." },
+      { number: 4, title: "Rotate Keys", description: "Deactivate the exposed key and create a new one.", hint: "Type 'aws iam rotate-access-key exposed-key-AKIA'.", intel: "Always deactivate before deleting to avoid breaking applications." }
+    ],
+    resources: [
+      { type: "iam_key", name: "exposed-key-AKIA", config: { age: 180, exposed: true }, isVulnerable: true, status: "compromised" }
+    ],
+    fixCommands: ["aws iam rotate-access-key exposed-key-AKIA"]
+  },
+  {
+    title: "Inactive IAM User Cleanup",
+    description: "Multiple IAM users haven't logged in for over 90 days. Remove dormant accounts to reduce attack surface.",
+    briefing: "HYGIENE ISSUE: 5 IAM users have been inactive for 90+ days. Dormant accounts are prime targets for account takeover.",
+    scenario: "Former employees and forgotten service accounts litter your IAM. Each one is a potential backdoor waiting to be exploited.",
+    difficulty: "Beginner",
+    category: "IAM Security",
+    estimatedTime: "5-10 minutes",
+    initialState: { users: ["former-employee", "old-service-acct"] },
+    steps: [
+      { number: 1, title: "Find Inactive Users", description: "Scan for users who haven't logged in recently.", hint: "Type 'scan' to identify issues.", intel: "CIS AWS 1.12: Ensure credentials unused for 90 days or greater are disabled." },
+      { number: 2, title: "Generate Credential Report", description: "Get a detailed report of all user activity.", hint: "Type 'aws iam generate-credential-report'.", intel: "The credential report shows password and access key last used dates." },
+      { number: 3, title: "Review Inactive Accounts", description: "List users with no recent activity.", hint: "Type 'aws iam list-inactive-users'.", intel: "Match against HR termination records to identify former employees." },
+      { number: 4, title: "Disable Inactive Users", description: "Remove or disable dormant accounts.", hint: "Type 'aws iam cleanup-inactive-users'.", intel: "Consider archiving users first in case access needs to be restored." }
+    ],
+    resources: [
+      { type: "iam_user", name: "former-employee", config: { lastLogin: "180 days ago" }, isVulnerable: true, status: "inactive" },
+      { type: "iam_user", name: "old-service-acct", config: { lastLogin: "120 days ago" }, isVulnerable: true, status: "inactive" }
+    ],
+    fixCommands: ["aws iam cleanup-inactive-users"]
+  },
+
+  // INTERMEDIATE LABS (4)
+  {
+    title: "Cross-Account Role Trust Policy",
+    description: "An IAM role trusts an unknown external AWS account. Audit and restrict the trust relationship.",
+    briefing: "TRUST BOUNDARY VIOLATION: Role 'external-data-access' trusts account 999888777666 which is not in our organization. Investigate immediately.",
+    scenario: "A vendor was given cross-account access last year. They've since gone out of business, but their account still has access to your production data.",
+    difficulty: "Intermediate",
+    category: "IAM Security",
+    estimatedTime: "15-25 minutes",
+    initialState: { roles: ["external-data-access"] },
+    steps: [
+      { number: 1, title: "Identify Trust Issues", description: "Scan for roles with external trust relationships.", hint: "Type 'scan' to find vulnerabilities.", intel: "IAM Access Analyzer automatically detects external principals." },
+      { number: 2, title: "List Roles", description: "Review all IAM roles in the account.", hint: "Type 'aws iam list-roles'.", intel: "Focus on roles with trust policies that allow sts:AssumeRole." },
+      { number: 3, title: "Examine Trust Policy", description: "Check who can assume the suspicious role.", hint: "Type 'aws iam get-role-trust external-data-access'.", intel: "Look for Principal statements with external account IDs." },
+      { number: 4, title: "Check Role Usage", description: "See if this role has been used recently.", hint: "Type 'aws iam get-role-last-used external-data-access'.", intel: "Correlate with CloudTrail for specific actions taken." },
+      { number: 5, title: "Verify External Account", description: "Confirm if the trusted account is legitimate.", hint: "Type 'aws organizations describe-account 999888777666'.", intel: "Unknown accounts should be treated as hostile." },
+      { number: 6, title: "Restrict Trust Policy", description: "Update the trust policy to remove unauthorized access.", hint: "Type 'aws iam fix-role-trust external-data-access'.", intel: "Use conditions like aws:PrincipalOrgID to limit trust to your org." }
+    ],
+    resources: [
+      { type: "iam_role", name: "external-data-access", config: { trustedAccount: "999888777666" }, isVulnerable: true, status: "external-trust" }
+    ],
+    fixCommands: ["aws iam fix-role-trust external-data-access"]
+  },
+  {
+    title: "IAM Policy Privilege Escalation Path",
+    description: "An IAM policy allows iam:CreatePolicy and iam:AttachUserPolicy, enabling privilege escalation. Fix the permissions.",
+    briefing: "PRIVILEGE ESCALATION: The 'developer' policy contains a path to admin. Users can create and attach their own policies.",
+    scenario: "A clever developer discovered they can grant themselves any permission. Your 'least privilege' is an illusion.",
+    difficulty: "Intermediate",
+    category: "IAM Security",
+    estimatedTime: "15-25 minutes",
+    initialState: { policies: ["developer-policy"] },
+    steps: [
+      { number: 1, title: "Scan for Escalation Paths", description: "Identify policies that allow privilege escalation.", hint: "Type 'scan' to find vulnerabilities.", intel: "Tools like Pacu and Cloudsplaining can automate this detection." },
+      { number: 2, title: "List Custom Policies", description: "Review all customer-managed IAM policies.", hint: "Type 'aws iam list-policies --scope Local'.", intel: "Custom policies are more likely to contain escalation paths." },
+      { number: 3, title: "Analyze Policy Document", description: "Check the developer policy for dangerous permissions.", hint: "Type 'aws iam get-policy-document developer-policy'.", intel: "Look for iam:*, sts:*, or combinations that allow self-modification." },
+      { number: 4, title: "Simulate Escalation", description: "Test if escalation is actually possible.", hint: "Type 'aws iam simulate-policy developer-policy iam:AttachUserPolicy'.", intel: "Use IAM Policy Simulator to validate your findings." },
+      { number: 5, title: "Create Restricted Version", description: "Build a policy without escalation permissions.", hint: "Type 'aws iam create-safe-policy developer-policy'.", intel: "Add explicit deny for iam:Create*, iam:Attach*, iam:Put*." },
+      { number: 6, title: "Apply Fixed Policy", description: "Replace the vulnerable policy with the secure version.", hint: "Type 'aws iam fix-policy developer-policy'.", intel: "Test thoroughly before applying - this could break developer workflows." }
+    ],
+    resources: [
+      { type: "iam_policy", name: "developer-policy", config: { escalationPath: true }, isVulnerable: true, status: "dangerous" }
+    ],
+    fixCommands: ["aws iam fix-policy developer-policy"]
+  },
+  {
+    title: "Service-Linked Role Audit",
+    description: "Multiple AWS services have created roles with broad permissions. Audit and ensure they follow least privilege.",
+    briefing: "SERVICE ROLES AUDIT: 8 service-linked roles exist with varying privilege levels. Some may be over-permissioned or unused.",
+    scenario: "AWS services create roles automatically, but do they need all those permissions? Time to audit what's actually required.",
+    difficulty: "Intermediate",
+    category: "IAM Security",
+    estimatedTime: "15-25 minutes",
+    initialState: { roles: ["AWSServiceRoleForECS", "AWSServiceRoleForRDS"] },
+    steps: [
+      { number: 1, title: "List Service Roles", description: "Find all service-linked roles in the account.", hint: "Type 'scan' to identify roles.", intel: "Service-linked roles are managed by AWS but can still be audited." },
+      { number: 2, title: "Identify Active Services", description: "Check which services are actually in use.", hint: "Type 'aws service list-active'.", intel: "Unused services shouldn't have roles." },
+      { number: 3, title: "Review Role Permissions", description: "Check what each service role can do.", hint: "Type 'aws iam list-service-roles'.", intel: "Compare against AWS documentation for expected permissions." },
+      { number: 4, title: "Check Usage Patterns", description: "See how each role has been used.", hint: "Type 'aws iam analyze-service-role-usage'.", intel: "CloudTrail shows all role assumption and API calls." },
+      { number: 5, title: "Identify Unused Roles", description: "Find service roles that haven't been used.", hint: "Type 'aws iam find-unused-service-roles'.", intel: "If a service isn't used, its role can be deleted." },
+      { number: 6, title: "Clean Up Unused Roles", description: "Remove roles for services no longer in use.", hint: "Type 'aws iam cleanup-service-roles'.", intel: "Some service roles cannot be deleted while resources exist." }
+    ],
+    resources: [
+      { type: "iam_role", name: "AWSServiceRoleForECS", config: { lastUsed: "30 days ago" }, isVulnerable: false, status: "active" },
+      { type: "iam_role", name: "AWSServiceRoleForRDS", config: { lastUsed: "never" }, isVulnerable: true, status: "unused" }
+    ],
+    fixCommands: ["aws iam cleanup-service-roles"]
+  },
+  {
+    title: "Permission Boundary Implementation",
+    description: "Developers can create IAM roles without restrictions. Implement permission boundaries to limit their scope.",
+    briefing: "GUARDRAILS MISSING: Developers can create roles with any permissions. Implement permission boundaries to prevent privilege escalation.",
+    scenario: "Your developers need to create roles for their applications, but without guardrails they could accidentally (or intentionally) create admin roles.",
+    difficulty: "Intermediate",
+    category: "IAM Security",
+    estimatedTime: "15-25 minutes",
+    initialState: { policies: ["developer-role-creation"] },
+    steps: [
+      { number: 1, title: "Assess Current State", description: "Check how developers currently create roles.", hint: "Type 'scan' to find vulnerabilities.", intel: "Permission boundaries limit what permissions a role can grant." },
+      { number: 2, title: "Review Existing Roles", description: "See what roles developers have created.", hint: "Type 'aws iam list-developer-roles'.", intel: "Look for roles with excessive permissions." },
+      { number: 3, title: "Design Boundary Policy", description: "Create a permission boundary that limits scope.", hint: "Type 'aws iam create-permission-boundary developer-boundary'.", intel: "Boundary should only allow permissions developers actually need." },
+      { number: 4, title: "Test Boundary", description: "Verify the boundary works as expected.", hint: "Type 'aws iam test-boundary developer-boundary'.", intel: "Test both allowed and denied actions." },
+      { number: 5, title: "Apply to Developer Policy", description: "Require boundary on all developer-created roles.", hint: "Type 'aws iam enforce-boundary developer-role-creation'.", intel: "Use iam:CreateRole condition to enforce boundaries." },
+      { number: 6, title: "Verify Enforcement", description: "Confirm developers can only create bounded roles.", hint: "Type 'aws iam verify-boundary-enforcement'.", intel: "Try creating a role without boundary to confirm it fails." }
+    ],
+    resources: [
+      { type: "iam_policy", name: "developer-role-creation", config: { hasBoundary: false }, isVulnerable: true, status: "unbounded" }
+    ],
+    fixCommands: ["aws iam enforce-boundary developer-role-creation"]
+  },
+
+  // ADVANCED LABS (4)
+  {
+    title: "IAM Credential Compromise Investigation",
+    description: "CloudTrail detected suspicious API calls from an IAM user. Investigate the compromise and contain the threat.",
+    briefing: "ACTIVE THREAT: GuardDuty detected anomalous API calls from user 'admin-jenkins'. Source IP is in Russia. Immediate response required.",
+    scenario: "Your CI/CD system's credentials are being used from Moscow at 3 AM. The attacker is actively enumerating your infrastructure.",
+    difficulty: "Advanced",
+    category: "IAM Security",
+    estimatedTime: "30-45 minutes",
+    initialState: { users: ["admin-jenkins"], logs: ["cloudtrail-alerts"] },
+    steps: [
+      { number: 1, title: "Confirm the Alert", description: "Verify the GuardDuty finding is legitimate.", hint: "Type 'scan' to assess the situation.", intel: "Check if the IP geolocation matches expected CI/CD locations." },
+      { number: 2, title: "Review CloudTrail Events", description: "Examine what actions the compromised credential performed.", hint: "Type 'aws cloudtrail lookup-events --username admin-jenkins'.", intel: "Look for reconnaissance commands like List*, Describe*, Get*." },
+      { number: 3, title: "Identify Attack Timeline", description: "Determine when the compromise started.", hint: "Type 'aws cloudtrail analyze-timeline admin-jenkins'.", intel: "Find the first anomalous event to scope the incident." },
+      { number: 4, title: "Check for Persistence", description: "Look for new users, roles, or access keys created.", hint: "Type 'aws iam find-persistence admin-jenkins'.", intel: "Attackers often create backdoor users or roles." },
+      { number: 5, title: "Disable Compromised Credentials", description: "Immediately deactivate the compromised user.", hint: "Type 'aws iam disable-user admin-jenkins'.", intel: "Disable before delete to preserve forensic evidence." },
+      { number: 6, title: "Rotate All Keys", description: "Generate new credentials for the service.", hint: "Type 'aws iam rotate-all-keys admin-jenkins'.", intel: "Assume all keys for this user are compromised." },
+      { number: 7, title: "Remove Persistence", description: "Delete any backdoors the attacker created.", hint: "Type 'aws iam remove-persistence'.", intel: "Check for lambda functions, EC2 instances with roles, etc." },
+      { number: 8, title: "Review Data Access", description: "Determine what data was accessed.", hint: "Type 'aws s3 analyze-access-logs admin-jenkins'.", intel: "S3 access logs show exactly what objects were downloaded." },
+      { number: 9, title: "Implement Controls", description: "Add MFA and IP restrictions.", hint: "Type 'aws iam harden-service-account admin-jenkins'.", intel: "Service accounts should use IAM roles for EC2, not long-lived keys." },
+      { number: 10, title: "Generate Incident Report", description: "Document the incident for compliance.", hint: "Type 'aws iam generate-incident-report admin-jenkins'.", intel: "Include timeline, impact assessment, and remediation steps." }
+    ],
+    resources: [
+      { type: "iam_user", name: "admin-jenkins", config: { compromised: true, sourceIP: "Moscow, Russia" }, isVulnerable: true, status: "compromised" },
+      { type: "cloudtrail", name: "cloudtrail-alerts", config: { anomalousEvents: 47 }, isVulnerable: false, status: "alerting" }
+    ],
+    fixCommands: ["aws iam disable-user admin-jenkins", "aws iam remove-persistence", "aws iam generate-incident-report admin-jenkins"]
+  },
+  {
+    title: "Identity Federation Security Audit",
+    description: "SAML federation is configured with a third-party IdP. Audit the trust relationship and session policies.",
+    briefing: "FEDERATION REVIEW: Your Okta SAML integration hasn't been reviewed since setup. Session durations may be too long, and role mappings may be stale.",
+    scenario: "SSO makes access easy - maybe too easy. Can a terminated employee still access AWS through cached SAML assertions?",
+    difficulty: "Advanced",
+    category: "IAM Security",
+    estimatedTime: "30-45 minutes",
+    initialState: { providers: ["okta-saml-provider"] },
+    steps: [
+      { number: 1, title: "List Identity Providers", description: "Review configured SAML and OIDC providers.", hint: "Type 'scan' to identify configuration.", intel: "Check for multiple IdPs that may have different security postures." },
+      { number: 2, title: "Review SAML Metadata", description: "Examine the federation trust configuration.", hint: "Type 'aws iam get-saml-provider okta-saml-provider'.", intel: "Verify the metadata URL is current and certificates aren't expired." },
+      { number: 3, title: "Check Role Mappings", description: "See which roles can be assumed via SAML.", hint: "Type 'aws iam list-saml-roles'.", intel: "Ensure role mappings align with current org structure." },
+      { number: 4, title: "Audit Session Duration", description: "Check how long federated sessions last.", hint: "Type 'aws iam check-session-duration'.", intel: "Long sessions increase risk if IdP is compromised." },
+      { number: 5, title: "Review Attribute Mapping", description: "Verify SAML attributes map correctly to IAM.", hint: "Type 'aws iam review-saml-attributes'.", intel: "Incorrect mappings could grant wrong permissions." },
+      { number: 6, title: "Check for Stale Mappings", description: "Find role mappings for deleted IdP groups.", hint: "Type 'aws iam find-stale-mappings'.", intel: "Orphaned mappings are security debt." },
+      { number: 7, title: "Test Session Revocation", description: "Verify sessions can be terminated from IdP.", hint: "Type 'aws iam test-session-revocation'.", intel: "SAML doesn't support real-time revocation - test your workarounds." },
+      { number: 8, title: "Reduce Session Duration", description: "Shorten max session duration to reduce risk.", hint: "Type 'aws iam reduce-session-duration'.", intel: "Balance security with user experience." },
+      { number: 9, title: "Implement Conditions", description: "Add IP and MFA conditions to federated roles.", hint: "Type 'aws iam add-federation-conditions'.", intel: "Condition keys like aws:SourceIp work with SAML." },
+      { number: 10, title: "Generate Compliance Report", description: "Document federation security posture.", hint: "Type 'aws iam generate-federation-report'.", intel: "Include recommendations for IdP hardening." }
+    ],
+    resources: [
+      { type: "iam_provider", name: "okta-saml-provider", config: { sessionDuration: 43200, mfaRequired: false }, isVulnerable: true, status: "needs-review" }
+    ],
+    fixCommands: ["aws iam reduce-session-duration", "aws iam add-federation-conditions"]
+  },
+  {
+    title: "Resource-Based Policy Audit",
+    description: "Multiple AWS resources have their own access policies that may bypass IAM. Conduct a comprehensive audit.",
+    briefing: "POLICY SPRAWL: S3, KMS, SNS, SQS, and Lambda all have resource policies. Some may grant public access or cross-account permissions you don't know about.",
+    scenario: "IAM policies aren't the only way to grant access. Resource policies are the shadow IAM - and they're often forgotten.",
+    difficulty: "Advanced",
+    category: "IAM Security",
+    estimatedTime: "35-50 minutes",
+    initialState: { resources: ["s3-policies", "kms-policies", "lambda-policies"] },
+    steps: [
+      { number: 1, title: "Initialize Audit", description: "Scan all resources for inline policies.", hint: "Type 'scan' to begin analysis.", intel: "IAM Access Analyzer can help identify external access." },
+      { number: 2, title: "Audit S3 Bucket Policies", description: "Review all S3 bucket policies for external access.", hint: "Type 'aws s3 audit-bucket-policies'.", intel: "Look for Principal: * which allows public access." },
+      { number: 3, title: "Audit KMS Key Policies", description: "Check who can use encryption keys.", hint: "Type 'aws kms audit-key-policies'.", intel: "KMS policies control encryption access - very sensitive." },
+      { number: 4, title: "Audit Lambda Policies", description: "Review Lambda function resource policies.", hint: "Type 'aws lambda audit-function-policies'.", intel: "Lambda policies control who can invoke functions." },
+      { number: 5, title: "Audit SNS/SQS Policies", description: "Check messaging service access.", hint: "Type 'aws sns-sqs audit-policies'.", intel: "Queue policies can allow cross-account message injection." },
+      { number: 6, title: "Enable Access Analyzer", description: "Set up continuous policy analysis.", hint: "Type 'aws access-analyzer enable'.", intel: "Access Analyzer automatically finds external access grants." },
+      { number: 7, title: "Review Analyzer Findings", description: "Check what external access exists.", hint: "Type 'aws access-analyzer list-findings'.", intel: "Findings show exactly which principals have access." },
+      { number: 8, title: "Remediate Public Access", description: "Remove unintended public access.", hint: "Type 'aws access-analyzer remediate-public'.", intel: "Start with high-severity findings." },
+      { number: 9, title: "Remediate Cross-Account", description: "Fix unauthorized cross-account access.", hint: "Type 'aws access-analyzer remediate-cross-account'.", intel: "Verify before removing - some may be intentional." },
+      { number: 10, title: "Set Up Monitoring", description: "Alert on future policy changes.", hint: "Type 'aws access-analyzer enable-monitoring'.", intel: "Use EventBridge to trigger on policy modifications." },
+      { number: 11, title: "Generate Audit Report", description: "Document all findings and remediations.", hint: "Type 'aws access-analyzer generate-report'.", intel: "Include baseline for future comparisons." }
+    ],
+    resources: [
+      { type: "policy_audit", name: "s3-policies", config: { publicBuckets: 3 }, isVulnerable: true, status: "exposed" },
+      { type: "policy_audit", name: "kms-policies", config: { externalAccess: 2 }, isVulnerable: true, status: "external-access" },
+      { type: "policy_audit", name: "lambda-policies", config: { publicFunctions: 1 }, isVulnerable: true, status: "public" }
+    ],
+    fixCommands: ["aws access-analyzer remediate-public", "aws access-analyzer remediate-cross-account", "aws access-analyzer enable-monitoring"]
+  },
+  {
+    title: "Zero Trust IAM Architecture",
+    description: "Implement a zero trust model by enforcing strict identity verification, least privilege, and continuous authorization.",
+    briefing: "SECURITY TRANSFORMATION: Leadership mandated zero trust. Every access request must be verified, every privilege minimized, every session monitored.",
+    scenario: "The perimeter is dead. VPN doesn't mean trusted anymore. It's time to build an IAM architecture that assumes breach.",
+    difficulty: "Advanced",
+    category: "IAM Security",
+    estimatedTime: "40-55 minutes",
+    initialState: { architecture: ["current-iam-state"] },
+    steps: [
+      { number: 1, title: "Assess Current State", description: "Evaluate existing IAM architecture.", hint: "Type 'scan' to analyze infrastructure.", intel: "Document trust boundaries and access patterns." },
+      { number: 2, title: "Enable MFA Everywhere", description: "Require MFA for all human users.", hint: "Type 'aws iam enforce-mfa-all-users'.", intel: "Zero trust starts with strong authentication." },
+      { number: 3, title: "Implement Least Privilege", description: "Right-size all permissions based on usage.", hint: "Type 'aws iam implement-least-privilege'.", intel: "Use Access Analyzer's policy generation feature." },
+      { number: 4, title: "Enable Session Policies", description: "Add time and scope limits to sessions.", hint: "Type 'aws iam configure-session-policies'.", intel: "Short sessions limit blast radius of compromise." },
+      { number: 5, title: "Configure IP Restrictions", description: "Limit access to known networks.", hint: "Type 'aws iam configure-ip-restrictions'.", intel: "Use aws:SourceIp conditions in policies." },
+      { number: 6, title: "Implement Service Control Policies", description: "Add organization-wide guardrails.", hint: "Type 'aws organizations configure-scps'.", intel: "SCPs are the ultimate preventive control." },
+      { number: 7, title: "Enable Continuous Monitoring", description: "Set up real-time authorization logging.", hint: "Type 'aws cloudtrail enable-enhanced-logging'.", intel: "CloudTrail Insights can detect anomalies." },
+      { number: 8, title: "Configure Anomaly Detection", description: "Alert on unusual access patterns.", hint: "Type 'aws guardduty configure-iam-findings'.", intel: "GuardDuty detects credential abuse automatically." },
+      { number: 9, title: "Implement Just-in-Time Access", description: "Enable temporary privilege escalation.", hint: "Type 'aws iam configure-jit-access'.", intel: "Standing privileges are standing risk." },
+      { number: 10, title: "Test Zero Trust Controls", description: "Verify all controls work together.", hint: "Type 'aws iam test-zero-trust'.", intel: "Try accessing resources from unexpected locations." },
+      { number: 11, title: "Generate Compliance Report", description: "Document zero trust implementation.", hint: "Type 'aws iam generate-zero-trust-report'.", intel: "Map controls to zero trust maturity model." }
+    ],
+    resources: [
+      { type: "iam_architecture", name: "current-iam-state", config: { zeroTrustScore: 35 }, isVulnerable: true, status: "traditional" }
+    ],
+    fixCommands: ["aws iam enforce-mfa-all-users", "aws iam implement-least-privilege", "aws organizations configure-scps", "aws iam generate-zero-trust-report"]
+  }
+];
+
+// ============= CLOUD SECURITY ENGINEER LABS (12) =============
+export const cloudSecurityEngineerLabs: LabDefinition[] = [
+  // BEGINNER LABS (4)
+  {
+    title: "Security Group Rule Hardening",
+    description: "Multiple EC2 instances have overly permissive security group rules. Implement restrictive ingress controls.",
+    briefing: "EXPOSED SERVICES: Port scan detected 15 services exposed to the internet. Most should be internal only.",
+    scenario: "Your production servers are advertising themselves to the entire internet. It's only a matter of time before an exploit is found.",
+    difficulty: "Beginner",
+    category: "Cloud Security Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { securityGroups: ["web-server-sg"] },
+    steps: [
+      { number: 1, title: "Scan for Exposure", description: "Identify overly permissive security groups.", hint: "Type 'scan' to find vulnerabilities.", intel: "CIS AWS 5.2: Ensure no security groups allow ingress from 0.0.0.0/0 to port 22." },
+      { number: 2, title: "List Security Groups", description: "Review all security group configurations.", hint: "Type 'aws ec2 describe-security-groups'.", intel: "Focus on groups attached to production instances." },
+      { number: 3, title: "Identify Risky Rules", description: "Find rules allowing 0.0.0.0/0 access.", hint: "Type 'aws ec2 list-open-rules'.", intel: "SSH (22), RDP (3389), and databases should never be public." },
+      { number: 4, title: "Restrict Access", description: "Update rules to allow only necessary IPs.", hint: "Type 'aws ec2 harden-security-group web-server-sg'.", intel: "Use prefix lists for maintainable IP allowlists." }
+    ],
+    resources: [
+      { type: "security_group", name: "web-server-sg", config: { openPorts: [22, 3306, 80, 443] }, isVulnerable: true, status: "exposed" }
+    ],
+    fixCommands: ["aws ec2 harden-security-group web-server-sg"]
+  },
+  {
+    title: "CloudTrail Logging Configuration",
+    description: "CloudTrail is not enabled in all regions, creating blind spots for security monitoring. Enable comprehensive logging.",
+    briefing: "VISIBILITY GAP: CloudTrail only covers us-east-1. Attackers could operate in other regions undetected.",
+    scenario: "An attacker just spun up crypto miners in eu-west-1. You didn't see it because CloudTrail wasn't watching.",
+    difficulty: "Beginner",
+    category: "Cloud Security Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { cloudtrail: ["partial-trail"] },
+    steps: [
+      { number: 1, title: "Assess Logging Coverage", description: "Check CloudTrail configuration.", hint: "Type 'scan' to identify gaps.", intel: "CIS AWS 3.1: Ensure CloudTrail is enabled in all regions." },
+      { number: 2, title: "List Trails", description: "See which trails exist.", hint: "Type 'aws cloudtrail describe-trails'.", intel: "Look for IsMultiRegionTrail setting." },
+      { number: 3, title: "Check Trail Status", description: "Verify trails are actively logging.", hint: "Type 'aws cloudtrail get-trail-status'.", intel: "A trail can exist but be disabled." },
+      { number: 4, title: "Enable Multi-Region", description: "Configure trail to cover all regions.", hint: "Type 'aws cloudtrail enable-all-regions'.", intel: "One multi-region trail is more efficient than regional trails." }
+    ],
+    resources: [
+      { type: "cloudtrail", name: "partial-trail", config: { multiRegion: false, regions: ["us-east-1"] }, isVulnerable: true, status: "partial" }
+    ],
+    fixCommands: ["aws cloudtrail enable-all-regions"]
+  },
+  {
+    title: "S3 Block Public Access",
+    description: "Account-level S3 Block Public Access is disabled, allowing buckets to be made public. Enable account-wide protection.",
+    briefing: "ACCOUNT EXPOSURE: S3 Block Public Access is off at the account level. Any bucket can be made public accidentally.",
+    scenario: "One misconfigured bucket policy away from a data breach. Time to enable the safety net.",
+    difficulty: "Beginner",
+    category: "Cloud Security Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { s3Account: ["public-access-settings"] },
+    steps: [
+      { number: 1, title: "Check Account Settings", description: "Review S3 account-level settings.", hint: "Type 'scan' to identify configuration.", intel: "Account-level settings override bucket-level settings." },
+      { number: 2, title: "Review Current Config", description: "See current Block Public Access status.", hint: "Type 'aws s3 get-public-access-block'.", intel: "All four settings should be enabled." },
+      { number: 3, title: "Identify Public Buckets", description: "Find any currently public buckets.", hint: "Type 'aws s3 list-public-buckets'.", intel: "Fix these before enabling block to avoid breaking apps." },
+      { number: 4, title: "Enable Block Public Access", description: "Turn on account-level protection.", hint: "Type 'aws s3 enable-account-block-public-access'.", intel: "This is a one-time setting that protects all future buckets." }
+    ],
+    resources: [
+      { type: "s3_account", name: "public-access-settings", config: { blockPublicAccess: false }, isVulnerable: true, status: "unprotected" }
+    ],
+    fixCommands: ["aws s3 enable-account-block-public-access"]
+  },
+  {
+    title: "Default VPC Security Review",
+    description: "The default VPC is in use with default security groups. Implement proper network segmentation.",
+    briefing: "DEFAULT INFRASTRUCTURE: Production workloads are running in the default VPC. This violates security best practices.",
+    scenario: "The default VPC was designed for convenience, not security. Time to implement proper network architecture.",
+    difficulty: "Beginner",
+    category: "Cloud Security Engineer",
+    estimatedTime: "5-10 minutes",
+    initialState: { vpc: ["default-vpc"] },
+    steps: [
+      { number: 1, title: "Identify Default Resources", description: "Find resources using default VPC.", hint: "Type 'scan' to analyze.", intel: "CIS AWS 5.3: Ensure the default security group restricts all traffic." },
+      { number: 2, title: "Check Default VPC", description: "Review default VPC configuration.", hint: "Type 'aws ec2 describe-default-vpc'.", intel: "Default VPCs have internet gateways and public subnets." },
+      { number: 3, title: "Review Default Security Group", description: "Check the default SG rules.", hint: "Type 'aws ec2 describe-default-security-group'.", intel: "Default SGs allow all traffic between members." },
+      { number: 4, title: "Restrict Default Security Group", description: "Remove all rules from default SG.", hint: "Type 'aws ec2 restrict-default-security-group'.", intel: "Never use the default SG - create purpose-specific groups." }
+    ],
+    resources: [
+      { type: "vpc", name: "default-vpc", config: { isDefault: true, instanceCount: 5 }, isVulnerable: true, status: "default-in-use" }
+    ],
+    fixCommands: ["aws ec2 restrict-default-security-group"]
+  },
+
+  // INTERMEDIATE LABS (4)
+  {
+    title: "KMS Key Rotation Policy",
+    description: "Customer-managed KMS keys have automatic rotation disabled. Implement key rotation policies.",
+    briefing: "ENCRYPTION RISK: 8 KMS keys haven't been rotated in over a year. Compliance requires annual rotation.",
+    scenario: "If a key is compromised, you want to limit the blast radius. Rotation ensures old data becomes unreadable to attackers with old keys.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Engineer",
+    estimatedTime: "15-25 minutes",
+    initialState: { kmsKeys: ["prod-encryption-key", "backup-key"] },
+    steps: [
+      { number: 1, title: "Inventory KMS Keys", description: "List all customer-managed keys.", hint: "Type 'scan' to identify keys.", intel: "AWS-managed keys rotate automatically; customer keys don't by default." },
+      { number: 2, title: "Check Rotation Status", description: "See which keys have rotation enabled.", hint: "Type 'aws kms list-keys-rotation-status'.", intel: "CIS AWS 3.8: Ensure rotation for customer-created CMKs is enabled." },
+      { number: 3, title: "Review Key Usage", description: "Identify what each key encrypts.", hint: "Type 'aws kms describe-key-usage prod-encryption-key'.", intel: "Understanding usage helps prioritize rotation." },
+      { number: 4, title: "Check Key Age", description: "Find keys that haven't rotated.", hint: "Type 'aws kms get-key-age prod-encryption-key'.", intel: "Keys older than 365 days should be rotated." },
+      { number: 5, title: "Enable Automatic Rotation", description: "Turn on yearly rotation for all keys.", hint: "Type 'aws kms enable-key-rotation prod-encryption-key'.", intel: "Rotation creates new key material but keeps the same key ID." },
+      { number: 6, title: "Verify Rotation", description: "Confirm rotation is enabled.", hint: "Type 'aws kms verify-rotation-all'.", intel: "Rotation happens on the anniversary of key creation." }
+    ],
+    resources: [
+      { type: "kms_key", name: "prod-encryption-key", config: { rotationEnabled: false, ageMonths: 18 }, isVulnerable: true, status: "rotation-disabled" },
+      { type: "kms_key", name: "backup-key", config: { rotationEnabled: false, ageMonths: 24 }, isVulnerable: true, status: "rotation-disabled" }
+    ],
+    fixCommands: ["aws kms enable-key-rotation prod-encryption-key", "aws kms enable-key-rotation backup-key"]
+  },
+  {
+    title: "VPC Flow Logs Analysis",
+    description: "VPC Flow Logs are disabled, preventing network traffic analysis. Enable and configure flow logging.",
+    briefing: "NETWORK BLINDNESS: No VPC Flow Logs means no visibility into network connections. You can't detect lateral movement.",
+    scenario: "An attacker is inside your VPC. Without flow logs, you can't see what they're connecting to or exfiltrating.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Engineer",
+    estimatedTime: "15-25 minutes",
+    initialState: { vpcs: ["production-vpc"] },
+    steps: [
+      { number: 1, title: "Check Flow Log Status", description: "Identify VPCs without flow logs.", hint: "Type 'scan' to analyze configuration.", intel: "CIS AWS 3.9: Ensure VPC flow logging is enabled in all VPCs." },
+      { number: 2, title: "List VPCs", description: "Review all VPC configurations.", hint: "Type 'aws ec2 describe-vpcs'.", intel: "Production VPCs should always have flow logs." },
+      { number: 3, title: "Check Existing Logs", description: "See if any flow logs exist.", hint: "Type 'aws ec2 describe-flow-logs'.", intel: "Flow logs can go to CloudWatch, S3, or both." },
+      { number: 4, title: "Create Log Group", description: "Set up CloudWatch log group for flows.", hint: "Type 'aws logs create-flow-log-group'.", intel: "Set appropriate retention to balance cost and forensics needs." },
+      { number: 5, title: "Enable Flow Logs", description: "Activate flow logging for the VPC.", hint: "Type 'aws ec2 enable-flow-logs production-vpc'.", intel: "Capture ALL traffic, not just REJECT for security analysis." },
+      { number: 6, title: "Verify Logging", description: "Confirm flow logs are capturing traffic.", hint: "Type 'aws ec2 verify-flow-logs production-vpc'.", intel: "Allow a few minutes for logs to appear." }
+    ],
+    resources: [
+      { type: "vpc", name: "production-vpc", config: { flowLogsEnabled: false }, isVulnerable: true, status: "no-logging" }
+    ],
+    fixCommands: ["aws ec2 enable-flow-logs production-vpc"]
+  },
+  {
+    title: "GuardDuty Threat Detection",
+    description: "GuardDuty is not enabled, missing automated threat detection. Enable and configure GuardDuty.",
+    briefing: "NO AUTOMATED DETECTION: GuardDuty isn't running. You're relying entirely on manual threat hunting.",
+    scenario: "AWS's machine learning-powered threat detection is available - you just haven't turned it on.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Engineer",
+    estimatedTime: "15-25 minutes",
+    initialState: { guardduty: ["detector-config"] },
+    steps: [
+      { number: 1, title: "Check GuardDuty Status", description: "See if GuardDuty is enabled.", hint: "Type 'scan' to analyze.", intel: "GuardDuty analyzes CloudTrail, VPC Flow Logs, and DNS logs." },
+      { number: 2, title: "List Detectors", description: "Check for existing detectors.", hint: "Type 'aws guardduty list-detectors'.", intel: "Each region needs its own detector." },
+      { number: 3, title: "Enable GuardDuty", description: "Activate GuardDuty in this region.", hint: "Type 'aws guardduty create-detector'.", intel: "GuardDuty starts learning your environment immediately." },
+      { number: 4, title: "Configure Data Sources", description: "Enable all threat detection sources.", hint: "Type 'aws guardduty configure-data-sources'.", intel: "S3 protection, EKS protection, and Malware protection are optional add-ons." },
+      { number: 5, title: "Set Up Notifications", description: "Configure alerts for findings.", hint: "Type 'aws guardduty configure-notifications'.", intel: "Use EventBridge to route findings to SNS or Lambda." },
+      { number: 6, title: "Review Sample Findings", description: "Generate sample findings to test.", hint: "Type 'aws guardduty generate-sample-findings'.", intel: "This helps validate your alerting pipeline." }
+    ],
+    resources: [
+      { type: "guardduty", name: "detector-config", config: { enabled: false }, isVulnerable: true, status: "disabled" }
+    ],
+    fixCommands: ["aws guardduty create-detector", "aws guardduty configure-notifications"]
+  },
+  {
+    title: "Secrets Manager Rotation",
+    description: "Database credentials in Secrets Manager haven't been rotated. Implement automatic rotation.",
+    briefing: "STALE SECRETS: Database passwords haven't changed in 6 months. If compromised, attackers have had long-term access.",
+    scenario: "Your database password has been the same since launch. How many ex-employees still have it written down?",
+    difficulty: "Intermediate",
+    category: "Cloud Security Engineer",
+    estimatedTime: "15-25 minutes",
+    initialState: { secrets: ["prod-db-credentials"] },
+    steps: [
+      { number: 1, title: "Inventory Secrets", description: "List all secrets and their rotation status.", hint: "Type 'scan' to analyze.", intel: "Secrets Manager can rotate RDS, Redshift, and DocumentDB credentials automatically." },
+      { number: 2, title: "List Secrets", description: "See all secrets in Secrets Manager.", hint: "Type 'aws secretsmanager list-secrets'.", intel: "Check LastRotatedDate for each secret." },
+      { number: 3, title: "Check Rotation Config", description: "Review rotation settings for DB credentials.", hint: "Type 'aws secretsmanager get-rotation-config prod-db-credentials'.", intel: "No rotation Lambda means no automatic rotation." },
+      { number: 4, title: "Create Rotation Lambda", description: "Set up the rotation function.", hint: "Type 'aws secretsmanager create-rotation-lambda prod-db-credentials'.", intel: "AWS provides rotation templates for common databases." },
+      { number: 5, title: "Enable Rotation", description: "Activate automatic rotation.", hint: "Type 'aws secretsmanager enable-rotation prod-db-credentials'.", intel: "Set rotation interval based on compliance requirements." },
+      { number: 6, title: "Test Rotation", description: "Trigger a manual rotation to verify.", hint: "Type 'aws secretsmanager rotate-secret prod-db-credentials'.", intel: "Verify applications reconnect successfully after rotation." }
+    ],
+    resources: [
+      { type: "secret", name: "prod-db-credentials", config: { rotationEnabled: false, lastRotated: "180 days ago" }, isVulnerable: true, status: "stale" }
+    ],
+    fixCommands: ["aws secretsmanager enable-rotation prod-db-credentials", "aws secretsmanager rotate-secret prod-db-credentials"]
+  },
+
+  // ADVANCED LABS (4)
+  {
+    title: "Multi-Account Security Architecture",
+    description: "Implement AWS Organizations with SCPs for centralized security governance across multiple accounts.",
+    briefing: "ACCOUNT SPRAWL: 15 AWS accounts with inconsistent security controls. Implement centralized governance.",
+    scenario: "Each team has their own AWS account with their own rules. It's the Wild West. Time to bring order.",
+    difficulty: "Advanced",
+    category: "Cloud Security Engineer",
+    estimatedTime: "35-50 minutes",
+    initialState: { organization: ["org-root"] },
+    steps: [
+      { number: 1, title: "Assess Current State", description: "Review organization structure.", hint: "Type 'scan' to analyze.", intel: "Map accounts to business units and security tiers." },
+      { number: 2, title: "Review Organization", description: "Check existing OU structure.", hint: "Type 'aws organizations describe-organization'.", intel: "Well-designed OUs enable targeted SCPs." },
+      { number: 3, title: "Design OU Structure", description: "Plan organizational units for security.", hint: "Type 'aws organizations list-organizational-units'.", intel: "Separate Production, Development, and Sandbox OUs." },
+      { number: 4, title: "Create Security OU", description: "Set up dedicated security account.", hint: "Type 'aws organizations create-security-ou'.", intel: "Security account holds logs, GuardDuty master, etc." },
+      { number: 5, title: "Design SCP Strategy", description: "Plan preventive controls.", hint: "Type 'aws organizations plan-scps'.", intel: "SCPs are guardrails that can't be overridden." },
+      { number: 6, title: "Create Baseline SCP", description: "Implement foundational restrictions.", hint: "Type 'aws organizations create-baseline-scp'.", intel: "Deny regions, deny disabling CloudTrail, etc." },
+      { number: 7, title: "Apply to Production", description: "Attach SCP to production OU.", hint: "Type 'aws organizations attach-scp production-ou'.", intel: "Test in sandbox first to avoid breaking production." },
+      { number: 8, title: "Enable Trusted Access", description: "Set up cross-account services.", hint: "Type 'aws organizations enable-trusted-access'.", intel: "Enable for Config, CloudTrail, GuardDuty, Security Hub." },
+      { number: 9, title: "Configure Delegated Admin", description: "Delegate security services.", hint: "Type 'aws organizations configure-delegated-admin'.", intel: "Security team manages security services." },
+      { number: 10, title: "Test SCPs", description: "Verify controls work as expected.", hint: "Type 'aws organizations test-scps'.", intel: "Try prohibited actions from member accounts." },
+      { number: 11, title: "Document Architecture", description: "Generate organization documentation.", hint: "Type 'aws organizations generate-documentation'.", intel: "Include SCP rationale and OU purpose." }
+    ],
+    resources: [
+      { type: "organization", name: "org-root", config: { accounts: 15, scps: 0 }, isVulnerable: true, status: "ungoverned" }
+    ],
+    fixCommands: ["aws organizations create-baseline-scp", "aws organizations attach-scp production-ou", "aws organizations configure-delegated-admin"]
+  },
+  {
+    title: "Security Hub Centralization",
+    description: "Implement AWS Security Hub for centralized security findings aggregation and compliance monitoring.",
+    briefing: "FRAGMENTED VISIBILITY: Security findings scattered across GuardDuty, Inspector, Macie, and third-party tools. Centralize everything.",
+    scenario: "Your security team checks 5 different dashboards. Critical findings get lost in the noise. Time for a single pane of glass.",
+    difficulty: "Advanced",
+    category: "Cloud Security Engineer",
+    estimatedTime: "35-50 minutes",
+    initialState: { securityHub: ["hub-config"] },
+    steps: [
+      { number: 1, title: "Assess Current Tools", description: "Inventory security services in use.", hint: "Type 'scan' to analyze.", intel: "Security Hub aggregates from 50+ AWS and third-party sources." },
+      { number: 2, title: "Enable Security Hub", description: "Activate Security Hub in the region.", hint: "Type 'aws securityhub enable'.", intel: "Enable in all regions for complete visibility." },
+      { number: 3, title: "Enable Standards", description: "Activate compliance standards.", hint: "Type 'aws securityhub enable-standards cis,pci,aws-foundational'.", intel: "Standards provide continuous compliance checking." },
+      { number: 4, title: "Configure Integrations", description: "Connect GuardDuty, Inspector, etc.", hint: "Type 'aws securityhub configure-integrations'.", intel: "Most AWS services integrate automatically when enabled." },
+      { number: 5, title: "Set Up Cross-Account", description: "Aggregate findings from member accounts.", hint: "Type 'aws securityhub configure-aggregation'.", intel: "Designate a security account as the aggregator." },
+      { number: 6, title: "Create Custom Actions", description: "Set up automated response actions.", hint: "Type 'aws securityhub create-custom-actions'.", intel: "Custom actions can trigger Lambda for auto-remediation." },
+      { number: 7, title: "Configure Insights", description: "Create finding aggregation insights.", hint: "Type 'aws securityhub create-insights'.", intel: "Insights help identify patterns across findings." },
+      { number: 8, title: "Set Up Alerting", description: "Configure notifications for critical findings.", hint: "Type 'aws securityhub configure-alerts'.", intel: "Route CRITICAL and HIGH findings to on-call." },
+      { number: 9, title: "Review Baseline", description: "Check initial compliance posture.", hint: "Type 'aws securityhub get-compliance-summary'.", intel: "Expect many findings on first run - prioritize." },
+      { number: 10, title: "Create Remediation Plan", description: "Prioritize findings for fix.", hint: "Type 'aws securityhub generate-remediation-plan'.", intel: "Focus on CRITICAL findings first." },
+      { number: 11, title: "Document Setup", description: "Generate Security Hub documentation.", hint: "Type 'aws securityhub generate-documentation'.", intel: "Include runbooks for common finding types." }
+    ],
+    resources: [
+      { type: "security_hub", name: "hub-config", config: { enabled: false, standards: 0 }, isVulnerable: true, status: "not-configured" }
+    ],
+    fixCommands: ["aws securityhub enable", "aws securityhub enable-standards cis,pci,aws-foundational", "aws securityhub configure-aggregation"]
+  },
+  {
+    title: "Infrastructure as Code Security",
+    description: "Implement security scanning for CloudFormation and Terraform templates to catch misconfigurations before deployment.",
+    briefing: "SHIFT LEFT: Security issues are found in production. Implement IaC scanning to catch problems before deployment.",
+    scenario: "Every week, a developer deploys a public S3 bucket. Time to catch these in the PR, not production.",
+    difficulty: "Advanced",
+    category: "Cloud Security Engineer",
+    estimatedTime: "35-50 minutes",
+    initialState: { pipeline: ["ci-cd-pipeline"] },
+    steps: [
+      { number: 1, title: "Audit Current State", description: "Review existing IaC practices.", hint: "Type 'scan' to analyze.", intel: "What percentage of infrastructure is defined as code?" },
+      { number: 2, title: "Inventory Templates", description: "Find all CloudFormation/Terraform.", hint: "Type 'aws cloudformation list-stacks'.", intel: "Include modules and nested stacks." },
+      { number: 3, title: "Select Scanner", description: "Choose IaC security scanner.", hint: "Type 'security configure-iac-scanner'.", intel: "Options: cfn-guard, cfn-nag, checkov, tfsec." },
+      { number: 4, title: "Create Policy Set", description: "Define security policies to check.", hint: "Type 'security create-iac-policies'.", intel: "Start with CIS benchmarks and custom org policies." },
+      { number: 5, title: "Test Scanning", description: "Run scanner on existing templates.", hint: "Type 'security scan-templates'.", intel: "Expect many findings - baseline the noise." },
+      { number: 6, title: "Integrate with CI/CD", description: "Add scanning to deployment pipeline.", hint: "Type 'security integrate-ci-cd'.", intel: "Fail builds on HIGH and CRITICAL findings." },
+      { number: 7, title: "Configure Exceptions", description: "Set up policy exceptions for edge cases.", hint: "Type 'security configure-exceptions'.", intel: "Exceptions should require approval and have expiry." },
+      { number: 8, title: "Set Up Reporting", description: "Configure finding reports.", hint: "Type 'security configure-iac-reporting'.", intel: "Track finding trends over time." },
+      { number: 9, title: "Enable Drift Detection", description: "Detect manual changes to IaC resources.", hint: "Type 'aws cloudformation enable-drift-detection'.", intel: "Drift indicates configuration that bypassed IaC." },
+      { number: 10, title: "Train Developers", description: "Create developer guidance.", hint: "Type 'security generate-developer-docs'.", intel: "Include examples of secure patterns." },
+      { number: 11, title: "Measure Improvement", description: "Track security debt reduction.", hint: "Type 'security generate-iac-metrics'.", intel: "Show ROI of shift-left investment." }
+    ],
+    resources: [
+      { type: "pipeline", name: "ci-cd-pipeline", config: { securityScanning: false }, isVulnerable: true, status: "no-scanning" }
+    ],
+    fixCommands: ["security configure-iac-scanner", "security integrate-ci-cd", "security generate-iac-metrics"]
+  },
+  {
+    title: "Cloud Security Incident Response",
+    description: "Build and test a cloud-native incident response capability with automated containment and forensics.",
+    briefing: "IR MATURITY: No cloud-specific incident response plan. When breached, you need automated containment and forensics capability.",
+    scenario: "An attacker is in your environment. Do you have automated containment? Can you preserve evidence? Build the capability now.",
+    difficulty: "Advanced",
+    category: "Cloud Security Engineer",
+    estimatedTime: "40-55 minutes",
+    initialState: { irCapability: ["incident-response-setup"] },
+    steps: [
+      { number: 1, title: "Assess IR Readiness", description: "Evaluate current incident response capability.", hint: "Type 'scan' to analyze.", intel: "NIST CSF RS.RP: Response processes and procedures." },
+      { number: 2, title: "Create IR Account", description: "Set up dedicated forensics account.", hint: "Type 'aws organizations create-ir-account'.", intel: "Isolate forensics from production for integrity." },
+      { number: 3, title: "Configure Log Aggregation", description: "Centralize logs for investigation.", hint: "Type 'aws logs configure-central-logging'.", intel: "Include CloudTrail, VPC Flow Logs, and application logs." },
+      { number: 4, title: "Create Containment Actions", description: "Build automated containment Lambda.", hint: "Type 'aws lambda create-containment-functions'.", intel: "Isolate EC2, revoke keys, snapshot for forensics." },
+      { number: 5, title: "Configure Forensics Bucket", description: "Set up immutable evidence storage.", hint: "Type 'aws s3 create-forensics-bucket'.", intel: "Enable object lock and versioning for evidence integrity." },
+      { number: 6, title: "Create IR Runbooks", description: "Build step-by-step response procedures.", hint: "Type 'aws ssm create-ir-runbooks'.", intel: "Runbooks in SSM enable automation." },
+      { number: 7, title: "Set Up Alerting Pipeline", description: "Configure rapid IR notification.", hint: "Type 'aws events configure-ir-alerts'.", intel: "Critical findings should page immediately." },
+      { number: 8, title: "Create Forensics AMI", description: "Build forensics investigation instance.", hint: "Type 'aws ec2 create-forensics-ami'.", intel: "Pre-install tools like Volatility, aws-cli, etc." },
+      { number: 9, title: "Test Containment", description: "Simulate incident and test response.", hint: "Type 'aws ir simulate-incident'.", intel: "Tabletop exercises reveal gaps." },
+      { number: 10, title: "Measure MTTD/MTTR", description: "Establish response time metrics.", hint: "Type 'aws ir measure-response-times'.", intel: "Mean Time to Detect and Respond are key metrics." },
+      { number: 11, title: "Document IR Plan", description: "Generate comprehensive IR documentation.", hint: "Type 'aws ir generate-documentation'.", intel: "Include contacts, escalation, and legal considerations." }
+    ],
+    resources: [
+      { type: "ir_capability", name: "incident-response-setup", config: { automatedContainment: false, forensicsReady: false }, isVulnerable: true, status: "immature" }
+    ],
+    fixCommands: ["aws lambda create-containment-functions", "aws ssm create-ir-runbooks", "aws ir generate-documentation"]
+  }
+];
+
 export const allLabs = [
   ...storageSecurityLabs,
   ...networkSecurityLabs,
   ...socOperationsLabs,
   ...socEngineerLabs,
   ...cloudSecurityAnalystLabs,
+  ...iamSecurityLabs,
+  ...cloudSecurityEngineerLabs,
   ...challengeLabs
 ];
