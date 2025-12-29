@@ -2,6 +2,9 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { db } from "./db";
+import { badges } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { setupAuth, isAuthenticated, registerAuthRoutes } from "./replit_integrations/auth";
 import { api } from "@shared/routes";
 import { allLabs } from "./lab-definitions";
@@ -1272,12 +1275,13 @@ async function seedDatabase() {
   const finalCount = (await storage.getLabs()).length;
   console.log(`Labs synced. Total: ${finalCount} labs (expected: 81)`);
   
-  // Seed badges
+  // Seed and sync badges
   const existingBadges = await storage.getBadges();
-  const existingBadgeNames = new Set(existingBadges.map(b => b.name));
+  const existingBadgeMap = new Map(existingBadges.map(b => [b.name, b]));
   
   for (const badgeDef of allBadgeDefinitions) {
-    if (!existingBadgeNames.has(badgeDef.name)) {
+    const existing = existingBadgeMap.get(badgeDef.name);
+    if (!existing) {
       await storage.createBadge({
         name: badgeDef.name,
         description: badgeDef.description,
@@ -1287,6 +1291,15 @@ async function seedDatabase() {
         level: badgeDef.level || null
       });
       console.log(`Created badge: ${badgeDef.name}`);
+    } else if (existing.description !== badgeDef.description || existing.requirement !== badgeDef.requirement) {
+      // Update existing badge if description or requirement changed
+      await db.update(badges)
+        .set({ 
+          description: badgeDef.description, 
+          requirement: badgeDef.requirement 
+        })
+        .where(eq(badges.id, existing.id));
+      console.log(`Updated badge: ${badgeDef.name}`);
     }
   }
   
