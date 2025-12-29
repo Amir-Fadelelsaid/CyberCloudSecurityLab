@@ -11,37 +11,38 @@ export interface BadgeDefinition {
 }
 
 // Level-based badges (earned by completing X total labs)
+// Thresholds match calculateLevel: Recruit(0-6), Operator(7-15), Analyst(16-30), Engineer(31-50), Architect(51-80), Elite Defender(81)
 export const levelBadges: BadgeDefinition[] = [
   {
     name: "Operator",
-    description: "Complete your first 5 labs and begin your security journey",
+    description: "Complete 7 labs and begin your security journey",
     icon: "Shield",
     category: "Level",
-    requirement: JSON.stringify({ type: "total_labs", count: 5 }),
+    requirement: JSON.stringify({ type: "total_labs", count: 7 }),
     level: 1
   },
   {
     name: "Analyst",
-    description: "Complete 12 labs and demonstrate security analysis skills",
+    description: "Complete 16 labs and demonstrate security analysis skills",
     icon: "Search",
     category: "Level",
-    requirement: JSON.stringify({ type: "total_labs", count: 12 }),
+    requirement: JSON.stringify({ type: "total_labs", count: 16 }),
     level: 2
   },
   {
     name: "Engineer",
-    description: "Complete 20 labs and show engineering expertise",
+    description: "Complete 31 labs and show engineering expertise",
     icon: "Wrench",
     category: "Level",
-    requirement: JSON.stringify({ type: "total_labs", count: 20 }),
+    requirement: JSON.stringify({ type: "total_labs", count: 31 }),
     level: 3
   },
   {
     name: "Architect",
-    description: "Complete 35 labs and master security architecture",
+    description: "Complete 51 labs and master security architecture",
     icon: "Building2",
     category: "Level",
-    requirement: JSON.stringify({ type: "total_labs", count: 35 }),
+    requirement: JSON.stringify({ type: "total_labs", count: 51 }),
     level: 4
   },
   {
