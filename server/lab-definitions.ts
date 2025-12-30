@@ -1587,288 +1587,370 @@ export const iamSecurityLabs: LabDefinition[] = [
 ];
 
 // ============= CLOUD SECURITY ENGINEER LABS (12) =============
+// Production-style labs with proper architecture: VPCs, subnets, routing, compute, load balancers
+// IAM with least-privilege, MFA, service identities, privilege escalation detection
+// Network security: security groups, firewall rules, flow logs, admin access restriction
+// Comprehensive logging: CloudTrail, SIEM integration, MITRE ATT&CK mapped alerts
+// Attack scenarios: exposed storage, compromised credentials, lateral movement
+// Incident response: automated containment, evidence preservation, forensics
+// Data protection: encryption, key management, compliance controls
+// Infrastructure as Code: scanning, secure defaults, drift detection
+
 export const cloudSecurityEngineerLabs: LabDefinition[] = [
-  // BEGINNER LABS (4)
+  // BEGINNER LABS (4) - Quick fixes, foundational security controls
   {
-    title: "Security Group Rule Hardening",
-    description: "Multiple EC2 instances have overly permissive security group rules. Implement restrictive ingress controls.",
-    briefing: "EXPOSED SERVICES: Port scan detected 15 services exposed to the internet. Most should be internal only.",
-    scenario: "Your production servers are advertising themselves to the entire internet. It's only a matter of time before an exploit is found.",
+    title: "Production VPC Network Segmentation",
+    description: "The production environment runs in a flat network without proper segmentation. Implement a secure multi-tier VPC architecture with public, private, and data subnets.",
+    briefing: "ARCHITECTURE REVIEW FAILED: External auditors flagged your network architecture. All tiers run in the same subnet with no network segmentation. An attacker who compromises the web tier has direct access to databases.",
+    scenario: "Your three-tier web application (web servers, application servers, databases) all share the same subnet. If an attacker exploits an SSRF in your web app, they can pivot directly to your database. Time to implement proper network isolation.",
     difficulty: "Beginner",
     category: "Cloud Security Engineer",
     estimatedTime: "5-10 minutes",
-    initialState: { securityGroups: ["web-server-sg"] },
+    initialState: { vpc: ["prod-vpc"], subnets: ["flat-subnet"], instances: ["web-01", "app-01", "db-01"] },
     steps: [
-      { number: 1, title: "Scan for Exposure", description: "Identify overly permissive security groups.", hint: "Type 'scan' to find vulnerabilities.", intel: "CIS AWS 5.2: Ensure no security groups allow ingress from 0.0.0.0/0 to port 22." },
-      { number: 2, title: "List Security Groups", description: "Review all security group configurations.", hint: "Type 'aws ec2 describe-security-groups'.", intel: "Focus on groups attached to production instances." },
-      { number: 3, title: "Identify Risky Rules", description: "Find rules allowing 0.0.0.0/0 access.", hint: "Type 'aws ec2 list-open-rules'.", intel: "SSH (22), RDP (3389), and databases should never be public." },
-      { number: 4, title: "Restrict Access", description: "Update rules to allow only necessary IPs.", hint: "Type 'aws ec2 harden-security-group web-server-sg'.", intel: "Use prefix lists for maintainable IP allowlists." }
+      { number: 1, title: "Assess Network Architecture", description: "Scan the environment to understand the current network topology and identify segmentation issues.", hint: "Type 'scan' to analyze the infrastructure.", intel: "CIS AWS 5.1: Use network segmentation to isolate sensitive systems. MITRE ATT&CK T1557: Adversaries exploit flat networks for lateral movement." },
+      { number: 2, title: "Review VPC Configuration", description: "Examine the current VPC and subnet configuration to understand the architecture.", hint: "Type 'aws ec2 describe-vpc-architecture'.", intel: "A well-designed VPC has public subnets (ALB, bastion), private subnets (app tier), and data subnets (databases) across multiple AZs." },
+      { number: 3, title: "Identify Segmentation Gaps", description: "List resources and their current subnet placement to identify what needs to move.", hint: "Type 'aws ec2 list-resource-placement'.", intel: "Web servers should be behind ALB in public subnets, app servers in private subnets, databases in isolated data subnets with no internet access." },
+      { number: 4, title: "Implement Network Segmentation", description: "Apply the recommended network architecture with proper tier isolation.", hint: "Type 'aws ec2 implement-network-segmentation prod-vpc'.", intel: "Use NACLs as a second layer of defense. Restrict inter-tier traffic to only required ports (e.g., 443 from web to app, 5432 from app to db)." }
     ],
     resources: [
-      { type: "security_group", name: "web-server-sg", config: { openPorts: [22, 3306, 80, 443] }, isVulnerable: true, status: "exposed" }
+      { type: "vpc", name: "prod-vpc", config: { cidr: "10.0.0.0/16", segmentation: "flat" }, isVulnerable: true, status: "misconfigured" },
+      { type: "subnet", name: "flat-subnet", config: { type: "public", allTiers: true }, isVulnerable: true, status: "flat-network" },
+      { type: "ec2", name: "web-01", config: { tier: "web", subnet: "flat-subnet" }, isVulnerable: false, status: "running" },
+      { type: "ec2", name: "app-01", config: { tier: "app", subnet: "flat-subnet" }, isVulnerable: false, status: "running" },
+      { type: "rds", name: "db-01", config: { tier: "data", subnet: "flat-subnet", publiclyAccessible: true }, isVulnerable: true, status: "exposed" }
     ],
-    fixCommands: ["aws ec2 harden-security-group web-server-sg"]
+    fixCommands: ["aws ec2 implement-network-segmentation prod-vpc"],
+    successMessage: "Network segmentation implemented! Your three-tier architecture now has proper isolation. Web tier in public subnets, app tier in private subnets, data tier in isolated subnets with no internet routes."
   },
   {
-    title: "CloudTrail Logging Configuration",
-    description: "CloudTrail is not enabled in all regions, creating blind spots for security monitoring. Enable comprehensive logging.",
-    briefing: "VISIBILITY GAP: CloudTrail only covers us-east-1. Attackers could operate in other regions undetected.",
-    scenario: "An attacker just spun up crypto miners in eu-west-1. You didn't see it because CloudTrail wasn't watching.",
+    title: "IAM Least Privilege Foundation",
+    description: "Service accounts and application roles have overly permissive policies with administrative access. Implement least privilege principles.",
+    briefing: "IAM AUDIT CRITICAL: The application service role has AdministratorAccess attached. This violates the principle of least privilege and creates massive blast radius if compromised.",
+    scenario: "Your Lambda function only needs to read from S3 and write to DynamoDB, but it has full admin access to all AWS services. If an attacker finds an SSRF or code injection, they own your entire AWS account.",
     difficulty: "Beginner",
     category: "Cloud Security Engineer",
     estimatedTime: "5-10 minutes",
-    initialState: { cloudtrail: ["partial-trail"] },
+    initialState: { roles: ["app-service-role", "lambda-execution-role"], policies: ["AdministratorAccess"] },
     steps: [
-      { number: 1, title: "Assess Logging Coverage", description: "Check CloudTrail configuration.", hint: "Type 'scan' to identify gaps.", intel: "CIS AWS 3.1: Ensure CloudTrail is enabled in all regions." },
-      { number: 2, title: "List Trails", description: "See which trails exist.", hint: "Type 'aws cloudtrail describe-trails'.", intel: "Look for IsMultiRegionTrail setting." },
-      { number: 3, title: "Check Trail Status", description: "Verify trails are actively logging.", hint: "Type 'aws cloudtrail get-trail-status'.", intel: "A trail can exist but be disabled." },
-      { number: 4, title: "Enable Multi-Region", description: "Configure trail to cover all regions.", hint: "Type 'aws cloudtrail enable-all-regions'.", intel: "One multi-region trail is more efficient than regional trails." }
+      { number: 1, title: "Scan for Privilege Issues", description: "Identify overly permissive IAM policies attached to service roles.", hint: "Type 'scan' to analyze IAM configurations.", intel: "CIS AWS 1.16: Ensure IAM policies are attached only to groups or roles. MITRE ATT&CK T1078.004: Attackers target overly permissive cloud accounts." },
+      { number: 2, title: "Analyze Role Permissions", description: "Review the current permissions attached to the application service role.", hint: "Type 'aws iam analyze-role-permissions app-service-role'.", intel: "Use AWS IAM Access Analyzer to identify unused permissions. Most applications need less than 10% of the permissions they're granted." },
+      { number: 3, title: "Review Actual Usage", description: "Check CloudTrail to see which API calls the role actually makes.", hint: "Type 'aws iam get-service-last-accessed app-service-role'.", intel: "IAM Access Analyzer can generate policies based on actual usage patterns from CloudTrail logs." },
+      { number: 4, title: "Implement Least Privilege", description: "Replace overly permissive policies with scoped-down policies based on actual needs.", hint: "Type 'aws iam implement-least-privilege app-service-role'.", intel: "Always use resource-level permissions where possible. Use conditions to restrict by VPC, IP, or time." }
     ],
     resources: [
-      { type: "cloudtrail", name: "partial-trail", config: { multiRegion: false, regions: ["us-east-1"] }, isVulnerable: true, status: "partial" }
+      { type: "iam_role", name: "app-service-role", config: { policies: ["AdministratorAccess"], lastAccessed: "s3:GetObject, dynamodb:PutItem" }, isVulnerable: true, status: "overly-permissive" },
+      { type: "iam_role", name: "lambda-execution-role", config: { policies: ["AdministratorAccess"] }, isVulnerable: true, status: "overly-permissive" }
     ],
-    fixCommands: ["aws cloudtrail enable-all-regions"]
+    fixCommands: ["aws iam implement-least-privilege app-service-role"],
+    successMessage: "Least privilege implemented! Service roles now have only the permissions they actually need. Blast radius significantly reduced."
   },
   {
-    title: "S3 Block Public Access",
-    description: "Account-level S3 Block Public Access is disabled, allowing buckets to be made public. Enable account-wide protection.",
-    briefing: "ACCOUNT EXPOSURE: S3 Block Public Access is off at the account level. Any bucket can be made public accidentally.",
-    scenario: "One misconfigured bucket policy away from a data breach. Time to enable the safety net.",
+    title: "CloudTrail Comprehensive Logging",
+    description: "CloudTrail is partially configured with gaps in logging coverage. Implement comprehensive audit logging with data events and log file validation.",
+    briefing: "VISIBILITY GAP: CloudTrail only logs management events in us-east-1. Attackers could read S3 data, invoke Lambda functions, or operate in other regions completely undetected.",
+    scenario: "An insider is exfiltrating customer data from S3. You try to investigate but realize CloudTrail doesn't capture S3 data events. You're flying blind.",
     difficulty: "Beginner",
     category: "Cloud Security Engineer",
     estimatedTime: "5-10 minutes",
-    initialState: { s3Account: ["public-access-settings"] },
+    initialState: { cloudtrail: ["partial-trail"], s3: ["cloudtrail-logs-bucket"] },
     steps: [
-      { number: 1, title: "Check Account Settings", description: "Review S3 account-level settings.", hint: "Type 'scan' to identify configuration.", intel: "Account-level settings override bucket-level settings." },
-      { number: 2, title: "Review Current Config", description: "See current Block Public Access status.", hint: "Type 'aws s3 get-public-access-block'.", intel: "All four settings should be enabled." },
-      { number: 3, title: "Identify Public Buckets", description: "Find any currently public buckets.", hint: "Type 'aws s3 list-public-buckets'.", intel: "Fix these before enabling block to avoid breaking apps." },
-      { number: 4, title: "Enable Block Public Access", description: "Turn on account-level protection.", hint: "Type 'aws s3 enable-account-block-public-access'.", intel: "This is a one-time setting that protects all future buckets." }
+      { number: 1, title: "Audit Logging Coverage", description: "Scan for gaps in CloudTrail configuration across all regions and event types.", hint: "Type 'scan' to identify logging gaps.", intel: "CIS AWS 3.1-3.4: CloudTrail should be enabled in all regions with log validation and S3 bucket logging." },
+      { number: 2, title: "Review Trail Configuration", description: "Examine the current CloudTrail settings to understand what's being logged.", hint: "Type 'aws cloudtrail describe-trails'.", intel: "A complete trail needs: multi-region, data events for S3/Lambda, management events, log file validation, and encrypted logs." },
+      { number: 3, title: "Check Data Event Coverage", description: "Verify if S3 and Lambda data events are being captured for forensic investigations.", hint: "Type 'aws cloudtrail get-event-selectors'.", intel: "Data events show who accessed what data. Essential for insider threat detection and data breach investigations." },
+      { number: 4, title: "Enable Comprehensive Logging", description: "Configure complete CloudTrail coverage with all necessary event types and validation.", hint: "Type 'aws cloudtrail enable-comprehensive-logging'.", intel: "Enable CloudTrail Insights for anomaly detection on unusual API activity patterns." }
     ],
     resources: [
-      { type: "s3_account", name: "public-access-settings", config: { blockPublicAccess: false }, isVulnerable: true, status: "unprotected" }
+      { type: "cloudtrail", name: "partial-trail", config: { multiRegion: false, dataEvents: false, logValidation: false, encrypted: false }, isVulnerable: true, status: "incomplete" },
+      { type: "s3", name: "cloudtrail-logs-bucket", config: { encryption: "none", versioning: false }, isVulnerable: true, status: "unprotected" }
     ],
-    fixCommands: ["aws s3 enable-account-block-public-access"]
+    fixCommands: ["aws cloudtrail enable-comprehensive-logging"],
+    successMessage: "Comprehensive logging enabled! CloudTrail now captures all management events, S3/Lambda data events, with log validation and encryption. You have full visibility for security investigations."
   },
   {
-    title: "Default VPC Security Review",
-    description: "The default VPC is in use with default security groups. Implement proper network segmentation.",
-    briefing: "DEFAULT INFRASTRUCTURE: Production workloads are running in the default VPC. This violates security best practices.",
-    scenario: "The default VPC was designed for convenience, not security. Time to implement proper network architecture.",
+    title: "MFA Enforcement for Privileged Access",
+    description: "Administrative users and root account lack MFA protection. Enforce multi-factor authentication for all privileged access paths.",
+    briefing: "AUTHENTICATION GAP: 5 IAM users with admin privileges have no MFA enabled. One phished password away from full account compromise.",
+    scenario: "Your cloud administrator received a convincing phishing email. They entered their password on a fake AWS login page. Without MFA, the attacker now has full admin access.",
     difficulty: "Beginner",
     category: "Cloud Security Engineer",
     estimatedTime: "5-10 minutes",
-    initialState: { vpc: ["default-vpc"] },
+    initialState: { users: ["cloud-admin", "devops-lead", "security-admin"], root: ["root-account"] },
     steps: [
-      { number: 1, title: "Identify Default Resources", description: "Find resources using default VPC.", hint: "Type 'scan' to analyze.", intel: "CIS AWS 5.3: Ensure the default security group restricts all traffic." },
-      { number: 2, title: "Check Default VPC", description: "Review default VPC configuration.", hint: "Type 'aws ec2 describe-default-vpc'.", intel: "Default VPCs have internet gateways and public subnets." },
-      { number: 3, title: "Review Default Security Group", description: "Check the default SG rules.", hint: "Type 'aws ec2 describe-default-security-group'.", intel: "Default SGs allow all traffic between members." },
-      { number: 4, title: "Restrict Default Security Group", description: "Remove all rules from default SG.", hint: "Type 'aws ec2 restrict-default-security-group'.", intel: "Never use the default SG - create purpose-specific groups." }
+      { number: 1, title: "Identify MFA Gaps", description: "Scan for privileged users and roles without MFA protection.", hint: "Type 'scan' to analyze authentication configuration.", intel: "CIS AWS 1.5-1.6: Ensure MFA is enabled for root and all IAM users with console access. MITRE ATT&CK T1078: Valid accounts are a top attack vector." },
+      { number: 2, title: "Review Privileged Users", description: "List all users with administrative permissions and their MFA status.", hint: "Type 'aws iam list-privileged-users-mfa'.", intel: "Focus on users with admin policies, IAM full access, or ability to modify security controls." },
+      { number: 3, title: "Check Root Account", description: "Verify root account MFA and access key status.", hint: "Type 'aws iam get-root-account-summary'.", intel: "Root should have hardware MFA, no access keys, and be used only for tasks that require it." },
+      { number: 4, title: "Enforce MFA Policy", description: "Implement organization-wide MFA requirements for all administrative access.", hint: "Type 'aws iam enforce-mfa-policy'.", intel: "Use SCP to deny actions without MFA. Implement MFA for API calls to sensitive resources." }
     ],
     resources: [
-      { type: "vpc", name: "default-vpc", config: { isDefault: true, instanceCount: 5 }, isVulnerable: true, status: "default-in-use" }
+      { type: "iam_user", name: "cloud-admin", config: { mfaEnabled: false, adminAccess: true }, isVulnerable: true, status: "no-mfa" },
+      { type: "iam_user", name: "devops-lead", config: { mfaEnabled: false, adminAccess: true }, isVulnerable: true, status: "no-mfa" },
+      { type: "iam_user", name: "security-admin", config: { mfaEnabled: false, adminAccess: true }, isVulnerable: true, status: "no-mfa" },
+      { type: "root_account", name: "root-account", config: { mfaEnabled: false, accessKeys: 1 }, isVulnerable: true, status: "critical-risk" }
     ],
-    fixCommands: ["aws ec2 restrict-default-security-group"]
+    fixCommands: ["aws iam enforce-mfa-policy"],
+    successMessage: "MFA enforcement complete! All privileged users now require MFA for console and API access. Root account secured with hardware MFA and access keys removed."
   },
 
-  // INTERMEDIATE LABS (4)
+  // INTERMEDIATE LABS (4) - Multi-phase with verification
   {
-    title: "KMS Key Rotation Policy",
-    description: "Customer-managed KMS keys have automatic rotation disabled. Implement key rotation policies.",
-    briefing: "ENCRYPTION RISK: 8 KMS keys haven't been rotated in over a year. Compliance requires annual rotation.",
-    scenario: "If a key is compromised, you want to limit the blast radius. Rotation ensures old data becomes unreadable to attackers with old keys.",
+    title: "Multi-Tier Security Group Architecture",
+    description: "Implement a defense-in-depth security group architecture for a production three-tier application with proper ingress/egress controls, admin access restrictions, and monitoring.",
+    briefing: "NETWORK SECURITY OVERHAUL: Security groups are a mess - flat rules, 0.0.0.0/0 ingress, no egress filtering. An attacker who compromises any instance has unrestricted network access.",
+    scenario: "Your web servers accept traffic from anywhere on all ports. Database security groups allow SSH from the internet. There's no egress filtering to detect data exfiltration. Time to implement proper network security controls.",
     difficulty: "Intermediate",
     category: "Cloud Security Engineer",
     estimatedTime: "15-25 minutes",
-    initialState: { kmsKeys: ["prod-encryption-key", "backup-key"] },
+    initialState: { securityGroups: ["web-sg", "app-sg", "db-sg", "bastion-sg"], vpc: ["production-vpc"], instances: ["web-01", "web-02", "app-01", "db-01"] },
     steps: [
-      { number: 1, title: "Inventory KMS Keys", description: "List all customer-managed keys.", hint: "Type 'scan' to identify keys.", intel: "AWS-managed keys rotate automatically; customer keys don't by default." },
-      { number: 2, title: "Check Rotation Status", description: "See which keys have rotation enabled.", hint: "Type 'aws kms list-keys-rotation-status'.", intel: "CIS AWS 3.8: Ensure rotation for customer-created CMKs is enabled." },
-      { number: 3, title: "Review Key Usage", description: "Identify what each key encrypts.", hint: "Type 'aws kms describe-key-usage prod-encryption-key'.", intel: "Understanding usage helps prioritize rotation." },
-      { number: 4, title: "Check Key Age", description: "Find keys that haven't rotated.", hint: "Type 'aws kms get-key-age prod-encryption-key'.", intel: "Keys older than 365 days should be rotated." },
-      { number: 5, title: "Enable Automatic Rotation", description: "Turn on yearly rotation for all keys.", hint: "Type 'aws kms enable-key-rotation prod-encryption-key'.", intel: "Rotation creates new key material but keeps the same key ID." },
-      { number: 6, title: "Verify Rotation", description: "Confirm rotation is enabled.", hint: "Type 'aws kms verify-rotation-all'.", intel: "Rotation happens on the anniversary of key creation." }
+      { number: 1, title: "Audit Current Security Groups", description: "Scan all security groups to identify overly permissive rules and exposure.", hint: "Type 'scan' to analyze security group configurations.", intel: "CIS AWS 5.2-5.4: No security groups should allow unrestricted ingress to sensitive ports. MITRE ATT&CK T1190: Attackers exploit exposed services." },
+      { number: 2, title: "Map Application Traffic", description: "Understand legitimate traffic patterns between tiers to design proper rules.", hint: "Type 'aws ec2 analyze-traffic-patterns'.", intel: "Document: ALB to web (443), web to app (8080), app to db (5432), all tiers to monitoring (443 outbound)." },
+      { number: 3, title: "Design Security Group Hierarchy", description: "Plan the security group architecture with proper tier isolation.", hint: "Type 'aws ec2 plan-security-group-architecture'.", intel: "Use security group references instead of CIDR blocks where possible. SG-to-SG rules are more maintainable." },
+      { number: 4, title: "Implement Web Tier SG", description: "Configure web tier security group to only accept traffic from ALB.", hint: "Type 'aws ec2 configure-web-tier-sg'.", intel: "Web tier should only accept 443 from ALB security group. No direct SSH access - use Session Manager." },
+      { number: 5, title: "Implement App Tier SG", description: "Configure application tier to only accept traffic from web tier.", hint: "Type 'aws ec2 configure-app-tier-sg'.", intel: "App tier accepts traffic only from web SG on application port. Egress to DB SG on 5432 only." },
+      { number: 6, title: "Implement Data Tier SG", description: "Lock down database tier with strict ingress from app tier only.", hint: "Type 'aws ec2 configure-data-tier-sg'.", intel: "Database SG allows 5432 only from app SG. No internet egress. Consider using PrivateLink for AWS service access." },
+      { number: 7, title: "Configure Admin Access", description: "Set up secure administrative access through bastion or Session Manager.", hint: "Type 'aws ec2 configure-admin-access'.", intel: "Prefer SSM Session Manager over SSH bastion. If using bastion, restrict to corporate IP ranges only." },
+      { number: 8, title: "Verify Segmentation", description: "Test that traffic flows correctly and unauthorized paths are blocked.", hint: "Type 'aws ec2 verify-network-segmentation'.", intel: "Run connectivity tests from each tier to verify rules work as expected. Document any exceptions." }
     ],
     resources: [
-      { type: "kms_key", name: "prod-encryption-key", config: { rotationEnabled: false, ageMonths: 18 }, isVulnerable: true, status: "rotation-disabled" },
-      { type: "kms_key", name: "backup-key", config: { rotationEnabled: false, ageMonths: 24 }, isVulnerable: true, status: "rotation-disabled" }
+      { type: "security_group", name: "web-sg", config: { inbound: [{ port: "0-65535", source: "0.0.0.0/0" }], outbound: "unrestricted" }, isVulnerable: true, status: "permissive" },
+      { type: "security_group", name: "app-sg", config: { inbound: [{ port: "0-65535", source: "0.0.0.0/0" }], outbound: "unrestricted" }, isVulnerable: true, status: "permissive" },
+      { type: "security_group", name: "db-sg", config: { inbound: [{ port: 22, source: "0.0.0.0/0" }, { port: 5432, source: "0.0.0.0/0" }], outbound: "unrestricted" }, isVulnerable: true, status: "critical" },
+      { type: "vpc", name: "production-vpc", config: { flowLogs: false }, isVulnerable: true, status: "no-visibility" }
     ],
-    fixCommands: ["aws kms enable-key-rotation prod-encryption-key", "aws kms enable-key-rotation backup-key"]
+    fixCommands: ["aws ec2 configure-web-tier-sg", "aws ec2 configure-app-tier-sg", "aws ec2 configure-data-tier-sg", "aws ec2 configure-admin-access"],
+    successMessage: "Security group architecture implemented! Traffic now flows only through approved paths. Admin access restricted to Session Manager. Egress filtered to prevent data exfiltration."
   },
   {
-    title: "VPC Flow Logs Analysis",
-    description: "VPC Flow Logs are disabled, preventing network traffic analysis. Enable and configure flow logging.",
-    briefing: "NETWORK BLINDNESS: No VPC Flow Logs means no visibility into network connections. You can't detect lateral movement.",
-    scenario: "An attacker is inside your VPC. Without flow logs, you can't see what they're connecting to or exfiltrating.",
+    title: "Encryption and Key Management",
+    description: "Implement comprehensive data protection with KMS key management, encryption at rest for all data stores, encryption in transit, and key rotation policies.",
+    briefing: "DATA PROTECTION GAP: Customer data is stored unencrypted across S3, RDS, and EBS volumes. Key management is ad-hoc with no rotation. PCI and HIPAA compliance violations.",
+    scenario: "An auditor just found PII stored in plaintext S3 buckets and unencrypted RDS snapshots. Your company processes credit cards and health data. This is a compliance nightmare.",
     difficulty: "Intermediate",
     category: "Cloud Security Engineer",
     estimatedTime: "15-25 minutes",
-    initialState: { vpcs: ["production-vpc"] },
+    initialState: { kms: ["aws-managed-keys"], s3: ["customer-data", "app-logs"], rds: ["prod-database"], ebs: ["app-volumes"] },
     steps: [
-      { number: 1, title: "Check Flow Log Status", description: "Identify VPCs without flow logs.", hint: "Type 'scan' to analyze configuration.", intel: "CIS AWS 3.9: Ensure VPC flow logging is enabled in all VPCs." },
-      { number: 2, title: "List VPCs", description: "Review all VPC configurations.", hint: "Type 'aws ec2 describe-vpcs'.", intel: "Production VPCs should always have flow logs." },
-      { number: 3, title: "Check Existing Logs", description: "See if any flow logs exist.", hint: "Type 'aws ec2 describe-flow-logs'.", intel: "Flow logs can go to CloudWatch, S3, or both." },
-      { number: 4, title: "Create Log Group", description: "Set up CloudWatch log group for flows.", hint: "Type 'aws logs create-flow-log-group'.", intel: "Set appropriate retention to balance cost and forensics needs." },
-      { number: 5, title: "Enable Flow Logs", description: "Activate flow logging for the VPC.", hint: "Type 'aws ec2 enable-flow-logs production-vpc'.", intel: "Capture ALL traffic, not just REJECT for security analysis." },
-      { number: 6, title: "Verify Logging", description: "Confirm flow logs are capturing traffic.", hint: "Type 'aws ec2 verify-flow-logs production-vpc'.", intel: "Allow a few minutes for logs to appear." }
+      { number: 1, title: "Inventory Encryption Status", description: "Scan all data stores to identify unencrypted resources.", hint: "Type 'scan' to analyze encryption configuration.", intel: "PCI DSS 3.4: Render PAN unreadable. HIPAA: Encryption is an addressable safeguard. MITRE ATT&CK T1530: Data from cloud storage." },
+      { number: 2, title: "Design KMS Key Strategy", description: "Plan customer-managed KMS keys for different data classifications.", hint: "Type 'aws kms design-key-strategy'.", intel: "Use separate CMKs for different data types: PII, financial, logs. Enable automatic rotation. Define key policies carefully." },
+      { number: 3, title: "Create Data Classification Keys", description: "Create KMS keys for each data classification level.", hint: "Type 'aws kms create-classification-keys'.", intel: "Key aliases: alias/pii-data, alias/financial-data, alias/application-data. Grant encrypt/decrypt to appropriate roles only." },
+      { number: 4, title: "Enable S3 Encryption", description: "Encrypt all S3 buckets with appropriate KMS keys.", hint: "Type 'aws s3 enable-kms-encryption customer-data'.", intel: "Use bucket default encryption with CMK. Enable bucket keys to reduce KMS API costs. Re-encrypt existing objects." },
+      { number: 5, title: "Enable RDS Encryption", description: "Ensure database encryption at rest with KMS.", hint: "Type 'aws rds enable-encryption prod-database'.", intel: "RDS encryption must be enabled at creation. For existing unencrypted DBs, take snapshot, copy with encryption, restore." },
+      { number: 6, title: "Enable EBS Encryption", description: "Encrypt all EBS volumes and enable default encryption.", hint: "Type 'aws ec2 enable-ebs-encryption'.", intel: "Enable account-level default encryption so all new volumes are encrypted. Migrate existing unencrypted volumes." },
+      { number: 7, title: "Configure Key Rotation", description: "Enable automatic annual rotation for all customer-managed keys.", hint: "Type 'aws kms enable-key-rotation-all'.", intel: "CIS AWS 3.8: Enable KMS CMK rotation. AWS rotates the backing key material annually while keeping the same key ID." },
+      { number: 8, title: "Verify Encryption Coverage", description: "Run compliance scan to verify all data stores are encrypted.", hint: "Type 'aws security verify-encryption-compliance'.", intel: "Generate compliance report for auditors. Document any exceptions with compensating controls." }
     ],
     resources: [
-      { type: "vpc", name: "production-vpc", config: { flowLogsEnabled: false }, isVulnerable: true, status: "no-logging" }
+      { type: "s3", name: "customer-data", config: { encryption: "none", dataType: "PII" }, isVulnerable: true, status: "unencrypted" },
+      { type: "s3", name: "app-logs", config: { encryption: "none", dataType: "logs" }, isVulnerable: true, status: "unencrypted" },
+      { type: "rds", name: "prod-database", config: { encrypted: false, dataType: "financial" }, isVulnerable: true, status: "unencrypted" },
+      { type: "ebs", name: "app-volumes", config: { encrypted: false, count: 12 }, isVulnerable: true, status: "unencrypted" }
     ],
-    fixCommands: ["aws ec2 enable-flow-logs production-vpc"]
+    fixCommands: ["aws kms create-classification-keys", "aws s3 enable-kms-encryption customer-data", "aws rds enable-encryption prod-database", "aws kms enable-key-rotation-all"],
+    successMessage: "Comprehensive encryption implemented! All data at rest encrypted with customer-managed keys. Key rotation enabled. Compliance requirements satisfied."
   },
   {
-    title: "GuardDuty Threat Detection",
-    description: "GuardDuty is not enabled, missing automated threat detection. Enable and configure GuardDuty.",
-    briefing: "NO AUTOMATED DETECTION: GuardDuty isn't running. You're relying entirely on manual threat hunting.",
-    scenario: "AWS's machine learning-powered threat detection is available - you just haven't turned it on.",
+    title: "SIEM Integration and Alert Tuning",
+    description: "Integrate AWS security logs with centralized SIEM, configure detection rules mapped to MITRE ATT&CK, and tune alerts to reduce false positives.",
+    briefing: "SOC BLINDSPOT: Security logs exist but aren't being analyzed. No SIEM integration means no correlation, no alerting, no detection. Attackers could dwell for months undetected.",
+    scenario: "Your security team doesn't know an attacker is in the environment. CloudTrail shows the reconnaissance. GuardDuty has findings. VPC Flow Logs show lateral movement. But nobody's watching.",
     difficulty: "Intermediate",
     category: "Cloud Security Engineer",
-    estimatedTime: "15-25 minutes",
-    initialState: { guardduty: ["detector-config"] },
+    estimatedTime: "20-30 minutes",
+    initialState: { logs: ["cloudtrail", "guardduty", "vpc-flowlogs"], siem: ["siem-config"], alerts: [] },
     steps: [
-      { number: 1, title: "Check GuardDuty Status", description: "See if GuardDuty is enabled.", hint: "Type 'scan' to analyze.", intel: "GuardDuty analyzes CloudTrail, VPC Flow Logs, and DNS logs." },
-      { number: 2, title: "List Detectors", description: "Check for existing detectors.", hint: "Type 'aws guardduty list-detectors'.", intel: "Each region needs its own detector." },
-      { number: 3, title: "Enable GuardDuty", description: "Activate GuardDuty in this region.", hint: "Type 'aws guardduty create-detector'.", intel: "GuardDuty starts learning your environment immediately." },
-      { number: 4, title: "Configure Data Sources", description: "Enable all threat detection sources.", hint: "Type 'aws guardduty configure-data-sources'.", intel: "S3 protection, EKS protection, and Malware protection are optional add-ons." },
-      { number: 5, title: "Set Up Notifications", description: "Configure alerts for findings.", hint: "Type 'aws guardduty configure-notifications'.", intel: "Use EventBridge to route findings to SNS or Lambda." },
-      { number: 6, title: "Review Sample Findings", description: "Generate sample findings to test.", hint: "Type 'aws guardduty generate-sample-findings'.", intel: "This helps validate your alerting pipeline." }
+      { number: 1, title: "Inventory Log Sources", description: "Identify all security-relevant log sources that should feed the SIEM.", hint: "Type 'scan' to analyze available log sources.", intel: "Essential sources: CloudTrail, VPC Flow Logs, GuardDuty, Config, WAF logs, application logs, DNS logs." },
+      { number: 2, title: "Configure Log Forwarding", description: "Set up centralized log aggregation for SIEM ingestion.", hint: "Type 'aws logs configure-siem-forwarding'.", intel: "Use CloudWatch Logs subscription filters or S3 event notifications. Consider Kinesis for real-time streaming." },
+      { number: 3, title: "Map MITRE ATT&CK Coverage", description: "Identify which attack techniques your current logging can detect.", hint: "Type 'siem analyze-attack-coverage'.", intel: "Map log sources to MITRE ATT&CK: CloudTrail for T1078 (Valid Accounts), Flow Logs for T1046 (Network Scanning)." },
+      { number: 4, title: "Create Detection Rules", description: "Build correlation rules for high-fidelity threat detection.", hint: "Type 'siem create-detection-rules'.", intel: "Start with high-confidence detections: impossible travel, console login without MFA, root account usage, resource deletion." },
+      { number: 5, title: "Configure Alert Severity", description: "Assign severity levels based on attack impact and confidence.", hint: "Type 'siem configure-alert-severity'.", intel: "CRITICAL: confirmed compromise. HIGH: likely attack. MEDIUM: suspicious activity. LOW: anomaly for investigation." },
+      { number: 6, title: "Set Up Alert Routing", description: "Configure notification channels for different severity levels.", hint: "Type 'siem configure-alert-routing'.", intel: "CRITICAL/HIGH: page on-call immediately. MEDIUM: ticket for next business day. LOW: weekly review." },
+      { number: 7, title: "Create Investigation Dashboards", description: "Build dashboards for security analyst workflows.", hint: "Type 'siem create-investigation-dashboards'.", intel: "Dashboards: Alert Overview, User Activity Timeline, Network Connections, Resource Changes, Geographic Anomalies." },
+      { number: 8, title: "Tune False Positives", description: "Review initial alerts and create tuning rules for known-good patterns.", hint: "Type 'siem tune-detection-rules'.", intel: "Document tuning decisions. Create allowlists for legitimate automation, known scanner IPs, expected admin activity patterns." }
     ],
     resources: [
-      { type: "guardduty", name: "detector-config", config: { enabled: false }, isVulnerable: true, status: "disabled" }
+      { type: "log_source", name: "cloudtrail", config: { enabled: true, siemIntegrated: false }, isVulnerable: false, status: "not-forwarded" },
+      { type: "log_source", name: "guardduty", config: { enabled: true, siemIntegrated: false }, isVulnerable: false, status: "not-forwarded" },
+      { type: "log_source", name: "vpc-flowlogs", config: { enabled: true, siemIntegrated: false }, isVulnerable: false, status: "not-forwarded" },
+      { type: "siem", name: "siem-config", config: { detectionRules: 0, dashboards: 0 }, isVulnerable: true, status: "not-configured" }
     ],
-    fixCommands: ["aws guardduty create-detector", "aws guardduty configure-notifications"]
+    fixCommands: ["aws logs configure-siem-forwarding", "siem create-detection-rules", "siem configure-alert-routing", "siem create-investigation-dashboards"],
+    successMessage: "SIEM integration complete! All security logs flowing to central SIEM with MITRE ATT&CK mapped detection rules. Alert routing configured for rapid response. Investigation dashboards ready."
   },
   {
-    title: "Secrets Manager Rotation",
-    description: "Database credentials in Secrets Manager haven't been rotated. Implement automatic rotation.",
-    briefing: "STALE SECRETS: Database passwords haven't changed in 6 months. If compromised, attackers have had long-term access.",
-    scenario: "Your database password has been the same since launch. How many ex-employees still have it written down?",
+    title: "Privilege Escalation Detection and Prevention",
+    description: "Implement controls to detect and prevent IAM privilege escalation attacks, including policy analysis, permission boundaries, and runtime monitoring.",
+    briefing: "PRIVILEGE ESCALATION RISK: IAM analysis reveals 12 escalation paths. A low-privilege attacker could become admin through iam:PassRole, policy attachment, or role assumption chains.",
+    scenario: "A developer account has iam:CreatePolicy and iam:AttachUserPolicy. They could create an admin policy and attach it to themselves. Your current controls wouldn't detect or prevent this.",
     difficulty: "Intermediate",
     category: "Cloud Security Engineer",
-    estimatedTime: "15-25 minutes",
-    initialState: { secrets: ["prod-db-credentials"] },
+    estimatedTime: "20-30 minutes",
+    initialState: { iam: ["developer-role", "cicd-role", "lambda-role"], policies: ["escalation-paths"], monitoring: ["cloudtrail"] },
     steps: [
-      { number: 1, title: "Inventory Secrets", description: "List all secrets and their rotation status.", hint: "Type 'scan' to analyze.", intel: "Secrets Manager can rotate RDS, Redshift, and DocumentDB credentials automatically." },
-      { number: 2, title: "List Secrets", description: "See all secrets in Secrets Manager.", hint: "Type 'aws secretsmanager list-secrets'.", intel: "Check LastRotatedDate for each secret." },
-      { number: 3, title: "Check Rotation Config", description: "Review rotation settings for DB credentials.", hint: "Type 'aws secretsmanager get-rotation-config prod-db-credentials'.", intel: "No rotation Lambda means no automatic rotation." },
-      { number: 4, title: "Create Rotation Lambda", description: "Set up the rotation function.", hint: "Type 'aws secretsmanager create-rotation-lambda prod-db-credentials'.", intel: "AWS provides rotation templates for common databases." },
-      { number: 5, title: "Enable Rotation", description: "Activate automatic rotation.", hint: "Type 'aws secretsmanager enable-rotation prod-db-credentials'.", intel: "Set rotation interval based on compliance requirements." },
-      { number: 6, title: "Test Rotation", description: "Trigger a manual rotation to verify.", hint: "Type 'aws secretsmanager rotate-secret prod-db-credentials'.", intel: "Verify applications reconnect successfully after rotation." }
+      { number: 1, title: "Identify Escalation Paths", description: "Analyze IAM to find all privilege escalation vectors.", hint: "Type 'scan' to analyze privilege escalation paths.", intel: "Common paths: iam:CreatePolicy+AttachPolicy, iam:PassRole+lambda:CreateFunction, iam:CreateAccessKey on admin users." },
+      { number: 2, title: "Map Dangerous Permissions", description: "List all principals with IAM modification capabilities.", hint: "Type 'aws iam analyze-escalation-risk'.", intel: "Focus on: iam:*, lambda:CreateFunction+PassRole, ec2:RunInstances+PassRole, glue:CreateDevEndpoint+PassRole." },
+      { number: 3, title: "Create Permission Boundaries", description: "Implement permission boundaries to cap maximum permissions.", hint: "Type 'aws iam create-permission-boundaries'.", intel: "Permission boundaries limit what delegated admins can grant. Even if they create admin policies, the boundary caps effective permissions." },
+      { number: 4, title: "Apply Boundaries to Roles", description: "Attach permission boundaries to all human and service roles.", hint: "Type 'aws iam apply-permission-boundaries'.", intel: "Boundary should deny: iam:CreateUser, iam:AttachUserPolicy, iam:PutRolePolicy on privileged resources." },
+      { number: 5, title: "Create Escalation Detection Rules", description: "Build CloudTrail-based detection for escalation attempts.", hint: "Type 'aws cloudtrail create-escalation-detections'.", intel: "Alert on: CreatePolicy with admin permissions, AttachRolePolicy to privileged roles, AssumeRole to admin roles from unexpected sources." },
+      { number: 6, title: "Implement SCPs", description: "Add organization-level guardrails to prevent escalation.", hint: "Type 'aws organizations create-escalation-scp'.", intel: "SCP to deny: modification of admin roles, deletion of security resources, disabling security services." },
+      { number: 7, title: "Test Detection", description: "Simulate escalation attempts to verify detection works.", hint: "Type 'aws iam simulate-escalation-attack'.", intel: "Test each escalation path identified. Verify alerts fire and prevention controls block the attempt." },
+      { number: 8, title: "Document Controls", description: "Create runbook for responding to escalation alerts.", hint: "Type 'aws iam generate-escalation-runbook'.", intel: "Runbook: verify legitimacy, revoke access if malicious, preserve evidence, investigate scope of compromise." }
     ],
     resources: [
-      { type: "secret", name: "prod-db-credentials", config: { rotationEnabled: false, lastRotated: "180 days ago" }, isVulnerable: true, status: "stale" }
+      { type: "iam_role", name: "developer-role", config: { escalationRisk: "high", permissions: ["iam:CreatePolicy", "iam:AttachUserPolicy"] }, isVulnerable: true, status: "risky" },
+      { type: "iam_role", name: "cicd-role", config: { escalationRisk: "high", permissions: ["iam:PassRole", "lambda:CreateFunction"] }, isVulnerable: true, status: "risky" },
+      { type: "iam_role", name: "lambda-role", config: { escalationRisk: "medium", permissions: ["sts:AssumeRole"] }, isVulnerable: true, status: "moderate" },
+      { type: "detection", name: "escalation-paths", config: { pathsIdentified: 12, monitored: 0 }, isVulnerable: true, status: "unmonitored" }
     ],
-    fixCommands: ["aws secretsmanager enable-rotation prod-db-credentials", "aws secretsmanager rotate-secret prod-db-credentials"]
+    fixCommands: ["aws iam create-permission-boundaries", "aws iam apply-permission-boundaries", "aws cloudtrail create-escalation-detections", "aws organizations create-escalation-scp"],
+    successMessage: "Privilege escalation controls implemented! Permission boundaries cap maximum permissions, SCPs block dangerous actions, detection rules alert on attempts. 12 escalation paths closed."
   },
 
-  // ADVANCED LABS (4)
+  // ADVANCED LABS (4) - Complex multi-resource scenarios with forensics
   {
-    title: "Multi-Account Security Architecture",
-    description: "Implement AWS Organizations with SCPs for centralized security governance across multiple accounts.",
-    briefing: "ACCOUNT SPRAWL: 15 AWS accounts with inconsistent security controls. Implement centralized governance.",
-    scenario: "Each team has their own AWS account with their own rules. It's the Wild West. Time to bring order.",
+    title: "Production Security Architecture Assessment",
+    description: "Conduct a comprehensive security assessment of a production cloud environment, identifying vulnerabilities across network, IAM, data protection, and logging. Generate professional findings report with remediation priorities.",
+    briefing: "EXECUTIVE MANDATE: The board wants a full security assessment before the IPO. Evaluate the production environment against CIS benchmarks, identify risks, and create a prioritized remediation roadmap.",
+    scenario: "Your company is preparing for an IPO. Auditors and investors will scrutinize your security posture. You need to find every vulnerability, assess business impact, and create a remediation plan that the CISO can present to the board.",
     difficulty: "Advanced",
     category: "Cloud Security Engineer",
     estimatedTime: "35-50 minutes",
-    initialState: { organization: ["org-root"] },
+    initialState: { 
+      vpc: ["production-vpc", "management-vpc"], 
+      iam: ["admin-users", "service-roles", "policies"],
+      data: ["customer-db", "logs-bucket", "backup-bucket"],
+      logging: ["cloudtrail", "config", "guardduty"],
+      network: ["security-groups", "nacls", "waf"]
+    },
     steps: [
-      { number: 1, title: "Assess Current State", description: "Review organization structure.", hint: "Type 'scan' to analyze.", intel: "Map accounts to business units and security tiers." },
-      { number: 2, title: "Review Organization", description: "Check existing OU structure.", hint: "Type 'aws organizations describe-organization'.", intel: "Well-designed OUs enable targeted SCPs." },
-      { number: 3, title: "Design OU Structure", description: "Plan organizational units for security.", hint: "Type 'aws organizations list-organizational-units'.", intel: "Separate Production, Development, and Sandbox OUs." },
-      { number: 4, title: "Create Security OU", description: "Set up dedicated security account.", hint: "Type 'aws organizations create-security-ou'.", intel: "Security account holds logs, GuardDuty master, etc." },
-      { number: 5, title: "Design SCP Strategy", description: "Plan preventive controls.", hint: "Type 'aws organizations plan-scps'.", intel: "SCPs are guardrails that can't be overridden." },
-      { number: 6, title: "Create Baseline SCP", description: "Implement foundational restrictions.", hint: "Type 'aws organizations create-baseline-scp'.", intel: "Deny regions, deny disabling CloudTrail, etc." },
-      { number: 7, title: "Apply to Production", description: "Attach SCP to production OU.", hint: "Type 'aws organizations attach-scp production-ou'.", intel: "Test in sandbox first to avoid breaking production." },
-      { number: 8, title: "Enable Trusted Access", description: "Set up cross-account services.", hint: "Type 'aws organizations enable-trusted-access'.", intel: "Enable for Config, CloudTrail, GuardDuty, Security Hub." },
-      { number: 9, title: "Configure Delegated Admin", description: "Delegate security services.", hint: "Type 'aws organizations configure-delegated-admin'.", intel: "Security team manages security services." },
-      { number: 10, title: "Test SCPs", description: "Verify controls work as expected.", hint: "Type 'aws organizations test-scps'.", intel: "Try prohibited actions from member accounts." },
-      { number: 11, title: "Document Architecture", description: "Generate organization documentation.", hint: "Type 'aws organizations generate-documentation'.", intel: "Include SCP rationale and OU purpose." }
+      { number: 1, title: "Initialize Assessment", description: "Run comprehensive security scan across all resource types.", hint: "Type 'scan' to perform full environment assessment.", intel: "CIS AWS Benchmark provides 200+ controls. Focus on Level 1 (essential) and Level 2 (defense-in-depth) controls." },
+      { number: 2, title: "Assess IAM Security", description: "Evaluate identity and access management configuration.", hint: "Type 'aws iam assess-security-posture'.", intel: "Check: root account usage, MFA coverage, password policy, access key age, overly permissive policies, unused credentials." },
+      { number: 3, title: "Assess Network Security", description: "Analyze network architecture and segmentation.", hint: "Type 'aws ec2 assess-network-security'.", intel: "Check: security group rules, NACL configuration, VPC peering risks, public IP exposure, flow log coverage." },
+      { number: 4, title: "Assess Data Protection", description: "Evaluate encryption and data classification controls.", hint: "Type 'aws assess-data-protection'.", intel: "Check: S3 bucket policies, RDS encryption, EBS encryption, KMS key management, backup security." },
+      { number: 5, title: "Assess Logging Coverage", description: "Verify comprehensive security monitoring.", hint: "Type 'aws assess-logging-coverage'.", intel: "Check: CloudTrail multi-region, data events, Config recording, GuardDuty enabled, log integrity validation." },
+      { number: 6, title: "Assess Compliance Status", description: "Check against regulatory frameworks.", hint: "Type 'aws securityhub assess-compliance'.", intel: "Check: CIS AWS Benchmark, PCI-DSS (if processing cards), HIPAA (if health data), SOC 2 controls." },
+      { number: 7, title: "Calculate Risk Scores", description: "Assign risk scores based on likelihood and impact.", hint: "Type 'security calculate-risk-scores'.", intel: "Risk = Likelihood x Impact. Consider: exploitability, asset criticality, compensating controls, detection capability." },
+      { number: 8, title: "Generate Threat Model", description: "Create threat model for the environment.", hint: "Type 'security generate-threat-model'.", intel: "Map attack paths using STRIDE or MITRE ATT&CK. Identify crown jewels and critical paths to them." },
+      { number: 9, title: "Prioritize Findings", description: "Create remediation roadmap based on risk.", hint: "Type 'security prioritize-remediation'.", intel: "Quick wins first, then high-risk items. Consider: business disruption, resource requirements, dependencies." },
+      { number: 10, title: "Remediate Critical Issues", description: "Fix the highest priority vulnerabilities.", hint: "Type 'security remediate-critical'.", intel: "Focus on: public exposure, admin access without MFA, unencrypted sensitive data, disabled logging." },
+      { number: 11, title: "Generate Executive Report", description: "Create professional assessment report for leadership.", hint: "Type 'security generate-assessment-report'.", intel: "Include: executive summary, risk heatmap, finding details, remediation status, compliance gaps, recommendations." }
     ],
     resources: [
-      { type: "organization", name: "org-root", config: { accounts: 15, scps: 0 }, isVulnerable: true, status: "ungoverned" }
+      { type: "environment", name: "production-vpc", config: { securityScore: 42, criticalFindings: 8, highFindings: 23 }, isVulnerable: true, status: "at-risk" },
+      { type: "iam", name: "admin-users", config: { mfaCoverage: "60%", accessKeyAge: "180 days" }, isVulnerable: true, status: "gaps" },
+      { type: "data", name: "customer-db", config: { encrypted: false, publiclyAccessible: true }, isVulnerable: true, status: "exposed" },
+      { type: "logging", name: "cloudtrail", config: { multiRegion: false, dataEvents: false }, isVulnerable: true, status: "incomplete" }
     ],
-    fixCommands: ["aws organizations create-baseline-scp", "aws organizations attach-scp production-ou", "aws organizations configure-delegated-admin"]
+    fixCommands: ["security remediate-critical", "security generate-assessment-report"],
+    successMessage: "Security assessment complete! 42 findings identified, 8 critical issues remediated. Executive report generated with remediation roadmap. Security score improved from 42 to 78."
   },
   {
-    title: "Security Hub Centralization",
-    description: "Implement AWS Security Hub for centralized security findings aggregation and compliance monitoring.",
-    briefing: "FRAGMENTED VISIBILITY: Security findings scattered across GuardDuty, Inspector, Macie, and third-party tools. Centralize everything.",
-    scenario: "Your security team checks 5 different dashboards. Critical findings get lost in the noise. Time for a single pane of glass.",
-    difficulty: "Advanced",
-    category: "Cloud Security Engineer",
-    estimatedTime: "35-50 minutes",
-    initialState: { securityHub: ["hub-config"] },
-    steps: [
-      { number: 1, title: "Assess Current Tools", description: "Inventory security services in use.", hint: "Type 'scan' to analyze.", intel: "Security Hub aggregates from 50+ AWS and third-party sources." },
-      { number: 2, title: "Enable Security Hub", description: "Activate Security Hub in the region.", hint: "Type 'aws securityhub enable'.", intel: "Enable in all regions for complete visibility." },
-      { number: 3, title: "Enable Standards", description: "Activate compliance standards.", hint: "Type 'aws securityhub enable-standards cis,pci,aws-foundational'.", intel: "Standards provide continuous compliance checking." },
-      { number: 4, title: "Configure Integrations", description: "Connect GuardDuty, Inspector, etc.", hint: "Type 'aws securityhub configure-integrations'.", intel: "Most AWS services integrate automatically when enabled." },
-      { number: 5, title: "Set Up Cross-Account", description: "Aggregate findings from member accounts.", hint: "Type 'aws securityhub configure-aggregation'.", intel: "Designate a security account as the aggregator." },
-      { number: 6, title: "Create Custom Actions", description: "Set up automated response actions.", hint: "Type 'aws securityhub create-custom-actions'.", intel: "Custom actions can trigger Lambda for auto-remediation." },
-      { number: 7, title: "Configure Insights", description: "Create finding aggregation insights.", hint: "Type 'aws securityhub create-insights'.", intel: "Insights help identify patterns across findings." },
-      { number: 8, title: "Set Up Alerting", description: "Configure notifications for critical findings.", hint: "Type 'aws securityhub configure-alerts'.", intel: "Route CRITICAL and HIGH findings to on-call." },
-      { number: 9, title: "Review Baseline", description: "Check initial compliance posture.", hint: "Type 'aws securityhub get-compliance-summary'.", intel: "Expect many findings on first run - prioritize." },
-      { number: 10, title: "Create Remediation Plan", description: "Prioritize findings for fix.", hint: "Type 'aws securityhub generate-remediation-plan'.", intel: "Focus on CRITICAL findings first." },
-      { number: 11, title: "Document Setup", description: "Generate Security Hub documentation.", hint: "Type 'aws securityhub generate-documentation'.", intel: "Include runbooks for common finding types." }
-    ],
-    resources: [
-      { type: "security_hub", name: "hub-config", config: { enabled: false, standards: 0 }, isVulnerable: true, status: "not-configured" }
-    ],
-    fixCommands: ["aws securityhub enable", "aws securityhub enable-standards cis,pci,aws-foundational", "aws securityhub configure-aggregation"]
-  },
-  {
-    title: "Infrastructure as Code Security",
-    description: "Implement security scanning for CloudFormation and Terraform templates to catch misconfigurations before deployment.",
-    briefing: "SHIFT LEFT: Security issues are found in production. Implement IaC scanning to catch problems before deployment.",
-    scenario: "Every week, a developer deploys a public S3 bucket. Time to catch these in the PR, not production.",
-    difficulty: "Advanced",
-    category: "Cloud Security Engineer",
-    estimatedTime: "35-50 minutes",
-    initialState: { pipeline: ["ci-cd-pipeline"] },
-    steps: [
-      { number: 1, title: "Audit Current State", description: "Review existing IaC practices.", hint: "Type 'scan' to analyze.", intel: "What percentage of infrastructure is defined as code?" },
-      { number: 2, title: "Inventory Templates", description: "Find all CloudFormation/Terraform.", hint: "Type 'aws cloudformation list-stacks'.", intel: "Include modules and nested stacks." },
-      { number: 3, title: "Select Scanner", description: "Choose IaC security scanner.", hint: "Type 'security configure-iac-scanner'.", intel: "Options: cfn-guard, cfn-nag, checkov, tfsec." },
-      { number: 4, title: "Create Policy Set", description: "Define security policies to check.", hint: "Type 'security create-iac-policies'.", intel: "Start with CIS benchmarks and custom org policies." },
-      { number: 5, title: "Test Scanning", description: "Run scanner on existing templates.", hint: "Type 'security scan-templates'.", intel: "Expect many findings - baseline the noise." },
-      { number: 6, title: "Integrate with CI/CD", description: "Add scanning to deployment pipeline.", hint: "Type 'security integrate-ci-cd'.", intel: "Fail builds on HIGH and CRITICAL findings." },
-      { number: 7, title: "Configure Exceptions", description: "Set up policy exceptions for edge cases.", hint: "Type 'security configure-exceptions'.", intel: "Exceptions should require approval and have expiry." },
-      { number: 8, title: "Set Up Reporting", description: "Configure finding reports.", hint: "Type 'security configure-iac-reporting'.", intel: "Track finding trends over time." },
-      { number: 9, title: "Enable Drift Detection", description: "Detect manual changes to IaC resources.", hint: "Type 'aws cloudformation enable-drift-detection'.", intel: "Drift indicates configuration that bypassed IaC." },
-      { number: 10, title: "Train Developers", description: "Create developer guidance.", hint: "Type 'security generate-developer-docs'.", intel: "Include examples of secure patterns." },
-      { number: 11, title: "Measure Improvement", description: "Track security debt reduction.", hint: "Type 'security generate-iac-metrics'.", intel: "Show ROI of shift-left investment." }
-    ],
-    resources: [
-      { type: "pipeline", name: "ci-cd-pipeline", config: { securityScanning: false }, isVulnerable: true, status: "no-scanning" }
-    ],
-    fixCommands: ["security configure-iac-scanner", "security integrate-ci-cd", "security generate-iac-metrics"]
-  },
-  {
-    title: "Cloud Security Incident Response",
-    description: "Build and test a cloud-native incident response capability with automated containment and forensics.",
-    briefing: "IR MATURITY: No cloud-specific incident response plan. When breached, you need automated containment and forensics capability.",
-    scenario: "An attacker is in your environment. Do you have automated containment? Can you preserve evidence? Build the capability now.",
+    title: "Cloud Attack Simulation and Response",
+    description: "Simulate a realistic cloud attack scenario including initial access through exposed credentials, privilege escalation, lateral movement, and data exfiltration. Detect, contain, and investigate the attack.",
+    briefing: "PURPLE TEAM EXERCISE: Simulate a real attack to test your detection and response capabilities. An attacker obtained leaked credentials and is attempting to exfiltrate customer data.",
+    scenario: "AWS access keys were accidentally committed to a public GitHub repo. An attacker found them. They're now in your environment performing reconnaissance, escalating privileges, and moving toward your customer database. Can you detect and stop them?",
     difficulty: "Advanced",
     category: "Cloud Security Engineer",
     estimatedTime: "40-55 minutes",
-    initialState: { irCapability: ["incident-response-setup"] },
+    initialState: { 
+      attack: ["compromised-credentials", "reconnaissance", "privilege-escalation", "lateral-movement", "exfiltration"],
+      detection: ["cloudtrail", "guardduty", "siem"],
+      response: ["containment-lambda", "forensics-bucket"]
+    },
     steps: [
-      { number: 1, title: "Assess IR Readiness", description: "Evaluate current incident response capability.", hint: "Type 'scan' to analyze.", intel: "NIST CSF RS.RP: Response processes and procedures." },
-      { number: 2, title: "Create IR Account", description: "Set up dedicated forensics account.", hint: "Type 'aws organizations create-ir-account'.", intel: "Isolate forensics from production for integrity." },
-      { number: 3, title: "Configure Log Aggregation", description: "Centralize logs for investigation.", hint: "Type 'aws logs configure-central-logging'.", intel: "Include CloudTrail, VPC Flow Logs, and application logs." },
-      { number: 4, title: "Create Containment Actions", description: "Build automated containment Lambda.", hint: "Type 'aws lambda create-containment-functions'.", intel: "Isolate EC2, revoke keys, snapshot for forensics." },
-      { number: 5, title: "Configure Forensics Bucket", description: "Set up immutable evidence storage.", hint: "Type 'aws s3 create-forensics-bucket'.", intel: "Enable object lock and versioning for evidence integrity." },
-      { number: 6, title: "Create IR Runbooks", description: "Build step-by-step response procedures.", hint: "Type 'aws ssm create-ir-runbooks'.", intel: "Runbooks in SSM enable automation." },
-      { number: 7, title: "Set Up Alerting Pipeline", description: "Configure rapid IR notification.", hint: "Type 'aws events configure-ir-alerts'.", intel: "Critical findings should page immediately." },
-      { number: 8, title: "Create Forensics AMI", description: "Build forensics investigation instance.", hint: "Type 'aws ec2 create-forensics-ami'.", intel: "Pre-install tools like Volatility, aws-cli, etc." },
-      { number: 9, title: "Test Containment", description: "Simulate incident and test response.", hint: "Type 'aws ir simulate-incident'.", intel: "Tabletop exercises reveal gaps." },
-      { number: 10, title: "Measure MTTD/MTTR", description: "Establish response time metrics.", hint: "Type 'aws ir measure-response-times'.", intel: "Mean Time to Detect and Respond are key metrics." },
-      { number: 11, title: "Document IR Plan", description: "Generate comprehensive IR documentation.", hint: "Type 'aws ir generate-documentation'.", intel: "Include contacts, escalation, and legal considerations." }
+      { number: 1, title: "Detect Initial Access", description: "Identify signs of compromised credential usage in logs.", hint: "Type 'scan' to analyze recent security events.", intel: "MITRE ATT&CK T1078.004: Cloud accounts. Look for: unusual source IPs, failed then successful auth, new user agents." },
+      { number: 2, title: "Analyze Attack Timeline", description: "Build a timeline of attacker activity from logs.", hint: "Type 'aws cloudtrail analyze-attack-timeline'.", intel: "Focus on: GetCallerIdentity (whoami), DescribeInstances (recon), ListBuckets (targeting), CreateAccessKey (persistence)." },
+      { number: 3, title: "Identify Privilege Escalation", description: "Detect attempts to gain higher privileges.", hint: "Type 'aws iam detect-privilege-escalation'.", intel: "Look for: AttachUserPolicy, CreatePolicyVersion, PassRole to admin role, AssumeRole to privileged role." },
+      { number: 4, title: "Map Lateral Movement", description: "Trace attacker movement between resources.", hint: "Type 'aws ec2 analyze-lateral-movement'.", intel: "VPC Flow Logs show connections. Look for: unusual instance-to-instance traffic, SSM session abuse, EC2 Instance Connect." },
+      { number: 5, title: "Identify Data Access", description: "Determine what data the attacker accessed.", hint: "Type 'aws s3 analyze-data-access'.", intel: "S3 data events show object-level access. Look for: bulk downloads, unusual bucket access patterns, cross-region access." },
+      { number: 6, title: "Execute Containment", description: "Isolate compromised resources and revoke attacker access.", hint: "Type 'aws ir execute-containment'.", intel: "Containment: disable compromised credentials, isolate EC2 instances, block attacker IPs, snapshot for forensics." },
+      { number: 7, title: "Preserve Evidence", description: "Collect forensic evidence before remediation.", hint: "Type 'aws ir collect-forensic-evidence'.", intel: "Collect: CloudTrail logs, VPC Flow Logs, EC2 memory dump, EBS snapshots, IAM credential reports." },
+      { number: 8, title: "Eradicate Persistence", description: "Remove attacker persistence mechanisms.", hint: "Type 'aws ir eradicate-persistence'.", intel: "Check for: new IAM users, new access keys, modified Lambda functions, new EC2 instances, changed security groups." },
+      { number: 9, title: "Assess Data Impact", description: "Determine scope of data exposure.", hint: "Type 'aws ir assess-data-impact'.", intel: "List all objects accessed. Classify data types. Determine if PII/PHI/PCI data was accessed. Prepare breach notification if required." },
+      { number: 10, title: "Improve Defenses", description: "Implement controls to prevent recurrence.", hint: "Type 'aws ir implement-improvements'.", intel: "Add: credential scanning in CI/CD, MFA for CLI access, permission boundaries, enhanced monitoring for sensitive APIs." },
+      { number: 11, title: "Generate Incident Report", description: "Document the incident for stakeholders and lessons learned.", hint: "Type 'aws ir generate-incident-report'.", intel: "Include: timeline, impact assessment, containment actions, root cause, lessons learned, improvement recommendations." }
     ],
     resources: [
-      { type: "ir_capability", name: "incident-response-setup", config: { automatedContainment: false, forensicsReady: false }, isVulnerable: true, status: "immature" }
+      { type: "attack", name: "compromised-credentials", config: { source: "github-leak", accessLevel: "developer" }, isVulnerable: true, status: "active-attack" },
+      { type: "attack_phase", name: "reconnaissance", config: { apisUsed: ["DescribeInstances", "ListBuckets", "GetCallerIdentity"] }, isVulnerable: false, status: "completed" },
+      { type: "attack_phase", name: "privilege-escalation", config: { technique: "PassRole to admin Lambda" }, isVulnerable: false, status: "in-progress" },
+      { type: "detection", name: "guardduty", config: { findings: 5, acknowledged: 0 }, isVulnerable: false, status: "alerting" }
     ],
-    fixCommands: ["aws lambda create-containment-functions", "aws ssm create-ir-runbooks", "aws ir generate-documentation"]
+    fixCommands: ["aws ir execute-containment", "aws ir eradicate-persistence", "aws ir implement-improvements", "aws ir generate-incident-report"],
+    successMessage: "Attack contained and eradicated! Attacker access revoked, persistence removed, evidence preserved. Incident report generated. Defense improvements implemented to prevent recurrence."
+  },
+  {
+    title: "Automated Incident Response Pipeline",
+    description: "Build a cloud-native automated incident response capability with Lambda-based containment, Step Functions workflows, evidence preservation, and integration with ticketing systems.",
+    briefing: "IR AUTOMATION: Manual incident response takes hours. Build automated containment that triggers in seconds when GuardDuty detects a threat.",
+    scenario: "It's 3 AM. GuardDuty detects an EC2 instance communicating with a known C2 server. Your on-call engineer is asleep. By the time anyone responds manually, the attacker has exfiltrated data and moved laterally. Time to automate.",
+    difficulty: "Advanced",
+    category: "Cloud Security Engineer",
+    estimatedTime: "40-55 minutes",
+    initialState: { 
+      guardduty: ["findings"],
+      lambda: ["containment-functions"],
+      stepfunctions: ["ir-workflow"],
+      eventbridge: ["ir-rules"],
+      s3: ["forensics-bucket"]
+    },
+    steps: [
+      { number: 1, title: "Design IR Workflow", description: "Map out the automated incident response workflow.", hint: "Type 'scan' to analyze current IR capability.", intel: "Workflow: Detect -> Triage -> Contain -> Notify -> Investigate -> Remediate -> Report. Different paths for different finding types." },
+      { number: 2, title: "Create Containment Functions", description: "Build Lambda functions for automated containment actions.", hint: "Type 'aws lambda create-containment-functions'.", intel: "Functions needed: isolate-ec2 (quarantine SG), revoke-credentials, snapshot-for-forensics, block-ip-address." },
+      { number: 3, title: "Create Investigation Functions", description: "Build functions to gather forensic context.", hint: "Type 'aws lambda create-investigation-functions'.", intel: "Functions: get-instance-metadata, get-cloudtrail-activity, get-vpc-flowlogs, get-user-activity, enrich-with-threatintel." },
+      { number: 4, title: "Build Step Functions Workflow", description: "Create state machine for IR orchestration.", hint: "Type 'aws stepfunctions create-ir-workflow'.", intel: "Use parallel states for containment + notification. Use choice states for severity-based routing. Include human approval for destructive actions." },
+      { number: 5, title: "Configure EventBridge Rules", description: "Set up event-driven triggers from GuardDuty.", hint: "Type 'aws events create-ir-triggers'.", intel: "Route by finding type: EC2 findings -> instance containment, IAM findings -> credential revocation, S3 findings -> bucket lockdown." },
+      { number: 6, title: "Create Forensics Pipeline", description: "Set up evidence collection and preservation.", hint: "Type 'aws ir create-forensics-pipeline'.", intel: "S3 bucket with object lock. Automatic collection of logs, snapshots, metadata. Chain of custody documentation." },
+      { number: 7, title: "Configure Notifications", description: "Set up multi-channel alerting for incidents.", hint: "Type 'aws ir configure-notifications'.", intel: "SNS for email/SMS, Slack webhook for ChatOps, PagerDuty for on-call escalation, ServiceNow for ticket creation." },
+      { number: 8, title: "Create Approval Workflows", description: "Add human approval gates for destructive actions.", hint: "Type 'aws stepfunctions add-approval-gates'.", intel: "Require approval for: instance termination, user deletion, production changes. Timeout and escalate if no response." },
+      { number: 9, title: "Test with Simulated Incidents", description: "Generate test findings to validate the pipeline.", hint: "Type 'aws guardduty generate-sample-findings'.", intel: "Test each finding type. Verify containment works. Check notification delivery. Time the response." },
+      { number: 10, title: "Measure and Tune", description: "Establish metrics and tune response times.", hint: "Type 'aws ir measure-response-metrics'.", intel: "Track: Mean Time to Detect, Mean Time to Contain, False positive rate. Target: contain within 5 minutes of detection." },
+      { number: 11, title: "Document Runbooks", description: "Create runbooks for manual escalation paths.", hint: "Type 'aws ir generate-runbooks'.", intel: "Runbooks for: automated containment failures, unknown finding types, false positive handling, post-incident review." }
+    ],
+    resources: [
+      { type: "ir_automation", name: "current-state", config: { automatedContainment: false, mttc: "4 hours" }, isVulnerable: true, status: "manual" },
+      { type: "guardduty", name: "findings", config: { findingsPerDay: 25, autoResponse: 0 }, isVulnerable: false, status: "alerting-only" },
+      { type: "lambda", name: "containment-functions", config: { count: 0 }, isVulnerable: true, status: "not-implemented" },
+      { type: "stepfunctions", name: "ir-workflow", config: { exists: false }, isVulnerable: true, status: "not-implemented" }
+    ],
+    fixCommands: ["aws lambda create-containment-functions", "aws stepfunctions create-ir-workflow", "aws events create-ir-triggers", "aws ir generate-runbooks"],
+    successMessage: "Automated IR pipeline deployed! GuardDuty findings now trigger automatic containment within seconds. Mean Time to Contain reduced from 4 hours to 2 minutes. 24/7 automated response capability."
+  },
+  {
+    title: "Enterprise Cloud Security Architecture",
+    description: "Design and implement a comprehensive enterprise cloud security architecture with multi-account governance, centralized security services, compliance automation, and security operations center integration.",
+    briefing: "ENTERPRISE SECURITY: The company is scaling from 5 to 50 AWS accounts. Design a security architecture that scales with the business while maintaining consistent security controls and visibility.",
+    scenario: "Each business unit wants their own AWS accounts. Without proper governance, you'll have 50 different security configurations, no central visibility, and compliance chaos. Build an architecture that enables business agility while ensuring security.",
+    difficulty: "Advanced",
+    category: "Cloud Security Engineer",
+    estimatedTime: "45-60 minutes",
+    initialState: { 
+      organization: ["org-root", "5-accounts"],
+      security: ["no-central-services"],
+      compliance: ["manual-audits"],
+      soc: ["limited-visibility"]
+    },
+    steps: [
+      { number: 1, title: "Design Organization Structure", description: "Plan the AWS Organizations hierarchy for security and governance.", hint: "Type 'scan' to analyze current organization.", intel: "Recommended OUs: Security, Infrastructure, Workloads/Prod, Workloads/Dev, Sandbox. Each OU gets tailored SCPs." },
+      { number: 2, title: "Create Security Account", description: "Set up dedicated security tooling account.", hint: "Type 'aws organizations create-security-account'.", intel: "Security account hosts: GuardDuty admin, Security Hub aggregator, CloudTrail org trail, Config aggregator, forensics tools." },
+      { number: 3, title: "Create Log Archive Account", description: "Set up immutable log storage account.", hint: "Type 'aws organizations create-log-archive-account'.", intel: "Log archive: no human access, immutable storage, 7-year retention for compliance. All accounts stream logs here." },
+      { number: 4, title: "Implement SCPs", description: "Create Service Control Policies for guardrails.", hint: "Type 'aws organizations implement-scps'.", intel: "SCPs: deny region restriction bypass, deny security service disablement, deny root access, deny leaving organization." },
+      { number: 5, title: "Deploy GuardDuty Organization", description: "Enable GuardDuty across all accounts.", hint: "Type 'aws guardduty enable-organization'.", intel: "Security account as delegated admin. Auto-enable for new accounts. Configure S3 and EKS protection." },
+      { number: 6, title: "Deploy Security Hub Organization", description: "Enable Security Hub with compliance standards.", hint: "Type 'aws securityhub enable-organization'.", intel: "Enable CIS AWS Benchmark and AWS Foundational Security. Aggregate findings to security account." },
+      { number: 7, title: "Configure Org CloudTrail", description: "Set up organization-wide CloudTrail.", hint: "Type 'aws cloudtrail enable-organization-trail'.", intel: "Single trail for all accounts. Data events for S3 and Lambda. Logs to log archive account with KMS encryption." },
+      { number: 8, title: "Deploy Config Organization", description: "Enable AWS Config across all accounts.", hint: "Type 'aws config enable-organization'.", intel: "Aggregate to security account. Deploy conformance packs for compliance. Auto-remediation for critical rules." },
+      { number: 9, title: "Implement Network Security", description: "Deploy centralized network security controls.", hint: "Type 'aws network implement-central-security'.", intel: "Options: Network Firewall in inspection VPC, Transit Gateway for segmentation, centralized egress with NAT Gateway." },
+      { number: 10, title: "Configure SOC Integration", description: "Connect all security services to SOC.", hint: "Type 'aws security configure-soc-integration'.", intel: "Stream findings to SIEM. Configure alert routing. Create investigation playbooks. Enable cross-account investigation." },
+      { number: 11, title: "Generate Architecture Documentation", description: "Create comprehensive architecture documentation.", hint: "Type 'aws security generate-architecture-docs'.", intel: "Include: architecture diagrams, data flow diagrams, SCP documentation, runbooks, compliance mapping." }
+    ],
+    resources: [
+      { type: "organization", name: "org-root", config: { accounts: 5, securityAccount: false, scps: 0 }, isVulnerable: true, status: "ungoverned" },
+      { type: "security_services", name: "no-central-services", config: { guardduty: "per-account", securityhub: "not-enabled", config: "per-account" }, isVulnerable: true, status: "fragmented" },
+      { type: "compliance", name: "manual-audits", config: { automated: false, frequency: "quarterly" }, isVulnerable: true, status: "manual" },
+      { type: "soc", name: "limited-visibility", config: { accountsCovered: 2, automatedResponse: false }, isVulnerable: true, status: "partial" }
+    ],
+    fixCommands: ["aws organizations create-security-account", "aws organizations implement-scps", "aws guardduty enable-organization", "aws securityhub enable-organization", "aws security generate-architecture-docs"],
+    successMessage: "Enterprise security architecture deployed! Centralized security services, organization-wide visibility, automated compliance, and SOC integration. Ready to scale from 5 to 50+ accounts securely."
   }
 ];
 
