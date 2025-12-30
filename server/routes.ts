@@ -1155,7 +1155,10 @@ Commands:
   }
   else if (lowerCmd.startsWith("siem create-rule ")) {
     const ruleName = lowerCmd.replace("siem create-rule ", "").trim();
-    output = `=== Creating Detection Rule: ${ruleName} ===
+    const siemRes = resources.find(r => (r.type === 'siem' || r.type === 'siem_rules' || r.type === 'siem_alert' || r.type === 'siem_alerts') && r.isVulnerable);
+    if (siemRes) {
+      await storage.updateResource(siemRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Creating Detection Rule: ${ruleName} ===
 
 [OK] Rule template initialized
 [OK] Setting trigger conditions...
@@ -1179,7 +1182,18 @@ Actions:
   - Log to audit trail
 
 Rule is now monitoring for matches.`;
-    success = true;
+      success = true;
+      const remaining = resources.filter(r => r.id !== siemRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Detection rule "${ruleName}" created and active.`;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("siem test-rule ")) {
     const ruleName = lowerCmd.replace("siem test-rule ", "").trim().split(" ")[0];
@@ -1241,7 +1255,10 @@ LOW:
     success = true;
   }
   else if (lowerCmd.startsWith("siem fix-severity ") || lowerCmd === "siem configure-alert-severity") {
-    output = `=== Severity Configuration Updated ===
+    const alertRes = resources.find(r => (r.type === 'alert_config' || r.type === 'siem_alert' || r.type === 'siem_alerts' || r.type === 'siem') && r.isVulnerable);
+    if (alertRes) {
+      await storage.updateResource(alertRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Severity Configuration Updated ===
 
 [OK] Critical alerts: PagerDuty notification enabled
 [OK] High alerts: 1-hour SLA enforced
@@ -1249,7 +1266,18 @@ LOW:
 [OK] Notification channels verified
 
 Severity matrix aligned with incident response playbook.`;
-    success = true;
+      success = true;
+      const remaining = resources.filter(r => r.id !== alertRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Severity configuration updated.`;
+      success = true;
+    }
   }
   else if (lowerCmd === "siem configure-alert-routing" || lowerCmd.startsWith("siem configure-alert-routing ")) {
     output = `=== Alert Routing Configuration ===
@@ -1855,7 +1883,8 @@ Alert classification recorded for ML model training.`;
   }
   else if (lowerCmd.startsWith("siem add-source ")) {
     const sourceName = lowerCmd.replace("siem add-source ", "").trim();
-    const siemRes = resources.find(r => r.type === 'siem_config' || r.type === 'siem_alert');
+    const siemRes = resources.find(r => (r.type === 'siem_config' || r.type === 'siem_alert' || r.type === 'log_source') && r.name.includes(sourceName.split('-')[0])) 
+      || resources.find(r => r.type === 'siem_config' || r.type === 'siem_alert' || r.type === 'log_source');
     if (siemRes && siemRes.isVulnerable) {
       await storage.updateResource(siemRes.id, { isVulnerable: false, status: 'configured' });
       output = `[SUCCESS] Log source "${sourceName}" integrated with SIEM
@@ -4629,6 +4658,16 @@ Use specific commands to filter.`;
     success = true;
   }
   else if (lowerCmd.startsWith("logs set-retention ")) {
+    const logRes = resources.find(r => (r.type === 'logs' || r.type === 'log_source' || r.type === 'siem') && r.isVulnerable);
+    if (logRes) {
+      await storage.updateResource(logRes.id, { isVulnerable: false, status: 'secured' });
+      const remaining = resources.filter(r => r.id !== logRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    }
     output = `=== Log Retention Updated ===
 
 [OK] Hot storage: 90 days
@@ -4670,6 +4709,446 @@ Permissions:
 
 Risk: HIGH - Needs least privilege`;
     success = true;
+  }
+  // ============= DASHBOARD COMMANDS =============
+  else if (lowerCmd.startsWith("dashboard add-widget ") || lowerCmd.startsWith("dashboard create-widget ")) {
+    const widgetName = lowerCmd.replace("dashboard add-widget ", "").replace("dashboard create-widget ", "").trim();
+    const dashRes = resources.find(r => r.type === 'dashboard' && r.isVulnerable);
+    if (dashRes) {
+      await storage.updateResource(dashRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Widget Added: ${widgetName} ===
+
+[OK] Widget created successfully
+[OK] Data source connected
+[OK] Visualization configured
+[OK] Added to dashboard
+
+Widget is now live and updating in real-time.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== dashRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Widget "${widgetName}" added to dashboard.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("dashboard open ") || lowerCmd.startsWith("dashboard list-widgets")) {
+    output = `=== SOC Dashboard ===
+
+Active Widgets:
+  [1] Alert Queue - Real-time alerts
+  [2] Threat Map - Geographic view
+  
+Add widgets with 'dashboard add-widget <name>'`;
+    success = true;
+  }
+  // ============= SIEM CORRELATION COMMANDS =============
+  else if (lowerCmd.startsWith("siem create-correlation ") || lowerCmd.startsWith("siem add-chain-event ") || lowerCmd.startsWith("siem set-window ")) {
+    const corrRes = resources.find(r => (r.type === 'correlation_engine' || r.type === 'siem' || r.type === 'siem_rules') && r.isVulnerable);
+    if (corrRes) {
+      await storage.updateResource(corrRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Correlation Rule Updated ===
+
+[OK] Correlation chain configured
+[OK] Events linked
+[OK] Time window set
+[OK] Detection active
+
+Correlated detection now monitoring.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== corrRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Correlation rule updated.`;
+      success = true;
+    }
+  }
+  // ============= THREAT INTEL COMMANDS =============
+  else if (lowerCmd.startsWith("threat-intel configure ") || lowerCmd.startsWith("threat-intel enable-matching ")) {
+    const tiRes = resources.find(r => (r.type === 'threat_intel' || r.type === 'threat_feed') && r.isVulnerable);
+    if (tiRes) {
+      await storage.updateResource(tiRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Threat Intelligence Configured ===
+
+[OK] Feed connected
+[OK] IOC matching enabled
+[OK] Alerts configured
+[OK] Integration active
+
+Threat intel now protecting your environment.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== tiRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Threat intelligence configured.`;
+      success = true;
+    }
+  }
+  // ============= SOAR COMMANDS WITH RESOURCE UPDATES =============
+  else if (lowerCmd.startsWith("soar create-playbook ") || lowerCmd.startsWith("soar activate ")) {
+    const soarRes = resources.find(r => (r.type === 'soar' || r.type === 'playbook') && r.isVulnerable);
+    if (soarRes) {
+      await storage.updateResource(soarRes.id, { isVulnerable: false, status: 'secured' });
+      const action = lowerCmd.includes("create") ? "created" : "activated";
+      output = `=== SOAR Playbook ${action.charAt(0).toUpperCase() + action.slice(1)} ===
+
+[OK] Playbook ${action}
+[OK] Triggers configured
+[OK] Automation active
+
+SOAR automation now responding to alerts.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== soarRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] SOAR playbook operation complete.`;
+      success = true;
+    }
+  }
+  // ============= DETECTION COMMANDS =============
+  else if (lowerCmd.startsWith("detection create-pipeline ") || lowerCmd.startsWith("detection verify-pipeline")) {
+    const detRes = resources.find(r => (r.type === 'detection_pipeline' || r.type === 'detection' || r.type === 'detection_rule') && r.isVulnerable);
+    if (detRes) {
+      await storage.updateResource(detRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Detection Pipeline Configured ===
+
+[OK] Pipeline created
+[OK] Rules deployed
+[OK] Monitoring active
+
+Detection-as-code pipeline operational.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== detRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Detection pipeline configured.`;
+      success = true;
+    }
+  }
+  // ============= PURPLE TEAM COMMANDS =============
+  else if (lowerCmd.startsWith("purple-team deploy ") || lowerCmd.startsWith("purple-team generate-report")) {
+    const ptRes = resources.find(r => (r.type === 'adversary_sim' || r.type === 'purple_team') && r.isVulnerable);
+    if (ptRes) {
+      await storage.updateResource(ptRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Purple Team Exercise Complete ===
+
+[OK] Adversary simulation deployed
+[OK] Detection gaps identified
+[OK] Report generated
+
+Purple team engagement documented.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== ptRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Purple team operation complete.`;
+      success = true;
+    }
+  }
+  // ============= SIEM MULTI-TENANT COMMANDS =============
+  else if (lowerCmd.startsWith("siem configure-isolation ") || lowerCmd.startsWith("siem onboard-tenant ")) {
+    const mtRes = resources.find(r => (r.type === 'siem_cluster' || r.type === 'siem') && r.isVulnerable);
+    if (mtRes) {
+      await storage.updateResource(mtRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Multi-Tenant SIEM Configured ===
+
+[OK] Tenant isolation enabled
+[OK] Index separation configured
+[OK] RBAC applied
+
+Multi-tenant security enforced.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== mtRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Multi-tenant configuration applied.`;
+      success = true;
+    }
+  }
+  // ============= HUNT FRAMEWORK WITH RESOURCE UPDATES =============
+  else if (lowerCmd === "hunt-framework initialize" || lowerCmd.startsWith("hunt-framework schedule ")) {
+    const huntRes = resources.find(r => (r.type === 'hunt_platform' || r.type === 'hunt_workspace') && r.isVulnerable);
+    if (huntRes) {
+      await storage.updateResource(huntRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Threat Hunt Framework Configured ===
+
+[OK] Hunt workspace initialized
+[OK] Schedule configured
+[OK] Automation active
+
+Proactive threat hunting enabled.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== huntRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Hunt framework configured.`;
+      success = true;
+    }
+  }
+  // ============= SIEM TUNING COMMANDS =============
+  else if (lowerCmd.startsWith("siem create-tuning-proposal ") || lowerCmd.startsWith("siem deploy-tuning ")) {
+    const tuneRes = resources.find(r => (r.type === 'siem_rules' || r.type === 'siem_alert' || r.type === 'siem_alerts') && r.isVulnerable);
+    if (tuneRes) {
+      await storage.updateResource(tuneRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Alert Tuning Applied ===
+
+[OK] Tuning proposal created
+[OK] Rule updated
+[OK] False positive rate reduced
+
+Alert quality improved.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== tuneRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Alert tuning deployed.`;
+      success = true;
+    }
+  }
+  // ============= IR PLAYBOOK COMMANDS =============
+  else if (lowerCmd.startsWith("ir execute-playbook ") || lowerCmd.startsWith("ir generate-incident-report ") || lowerCmd.startsWith("ir contain-exfiltration ") || lowerCmd.startsWith("ir generate-executive-report ") || lowerCmd.startsWith("ir generate-comprehensive-report")) {
+    const irRes = resources.find(r => (r.type === 'incident' || r.type === 'ransomware_incident' || r.type === 'data_exfiltration' || r.type === 'attack') && r.isVulnerable);
+    if (irRes) {
+      await storage.updateResource(irRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Incident Response Complete ===
+
+[OK] Playbook executed
+[OK] Containment achieved
+[OK] Report generated
+
+Incident successfully managed.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== irRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Incident response action complete.`;
+      success = true;
+    }
+  }
+  // ============= SECURITY INVESTIGATION COMMANDS =============
+  else if (lowerCmd.startsWith("security generate-investigation-summary ") || lowerCmd.startsWith("security generate-finding-report ") || lowerCmd.startsWith("security map-to-attack ") || lowerCmd.startsWith("security generate-incident-report ") || lowerCmd.startsWith("security recommend-containment ") || lowerCmd.startsWith("security remediate-critical") || lowerCmd.startsWith("security generate-assessment-report")) {
+    const secRes = resources.find(r => r.isVulnerable);
+    if (secRes) {
+      await storage.updateResource(secRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Security Action Complete ===
+
+[OK] Investigation completed
+[OK] Findings documented
+[OK] Recommendations generated
+
+Security posture improved.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== secRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Security action complete.`;
+      success = true;
+    }
+  }
+  // ============= CROSS-CLOUD COMMANDS =============
+  else if (lowerCmd.startsWith("cross-cloud revoke-federation") || lowerCmd.startsWith("azure ransomware ") || lowerCmd.startsWith("gcp ransomware ") || lowerCmd.startsWith("notify-law-enforcement")) {
+    const cloudRes = resources.find(r => (r.type === 'azure_ransomware' || r.type === 'gcp_ransomware' || r.type === 'federation') && r.isVulnerable);
+    if (cloudRes) {
+      await storage.updateResource(cloudRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Cross-Cloud Action Complete ===
+
+[OK] Multi-cloud containment executed
+[OK] Federation revoked
+[OK] Systems isolated
+
+Cross-cloud response successful.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== cloudRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Cross-cloud action complete.`;
+      success = true;
+    }
+  }
+  // ============= SIEM DETECTION CREATION =============
+  else if (lowerCmd === "siem create-detection-rules" || lowerCmd.startsWith("siem create-detection-rules")) {
+    const detRes = resources.find(r => (r.type === 'siem' || r.type === 'siem_rules' || r.type === 'detection_rule') && r.isVulnerable);
+    if (detRes) {
+      await storage.updateResource(detRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Detection Rules Created ===
+
+[OK] Rules deployed to SIEM
+[OK] Alerts configured
+[OK] Monitoring active
+
+Detection coverage improved.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== detRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Detection rules created.`;
+      success = true;
+    }
+  }
+  // ============= HUNT CREATE DETECTIONS =============
+  else if (lowerCmd === "hunt create-detections" || lowerCmd === "hunt generate-report") {
+    const huntRes = resources.find(r => (r.type === 'hunt_workspace' || r.type === 'hunt_platform' || r.type === 'detection') && r.isVulnerable);
+    if (huntRes) {
+      await storage.updateResource(huntRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Hunt Findings Processed ===
+
+[OK] Detections created from findings
+[OK] Report generated
+[OK] Knowledge captured
+
+Hunt cycle complete.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== huntRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Hunt operation complete.`;
+      success = true;
+    }
+  }
+  // ============= AWS LOGS CONFIGURE =============
+  else if (lowerCmd === "aws logs configure-siem-forwarding" || lowerCmd.startsWith("aws logs configure")) {
+    const logRes = resources.find(r => (r.type === 'cloudtrail' || r.type === 'cloudwatch' || r.type === 'logs') && r.isVulnerable);
+    if (logRes) {
+      await storage.updateResource(logRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== SIEM Log Forwarding Configured ===
+
+[OK] CloudTrail forwarding enabled
+[OK] VPC Flow Logs connected
+[OK] CloudWatch integration active
+
+All logs now streaming to SIEM.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== logRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Log forwarding configured.`;
+      success = true;
+    }
+  }
+  // ============= SIEM INVESTIGATION DASHBOARDS =============
+  else if (lowerCmd === "siem create-investigation-dashboards") {
+    const dashRes = resources.find(r => (r.type === 'siem' || r.type === 'dashboard') && r.isVulnerable);
+    if (dashRes) {
+      await storage.updateResource(dashRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Investigation Dashboards Created ===
+
+[OK] Timeline view configured
+[OK] Entity analysis enabled
+[OK] IOC correlation active
+
+Investigation toolkit ready.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== dashRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Investigation dashboards created.`;
+      success = true;
+    }
+  }
+  // ============= SIEM VALIDATE AND TRIAGE =============
+  else if (lowerCmd.startsWith("siem validate-alert ") || lowerCmd === "siem generate-triage-report") {
+    const alertRes = resources.find(r => (r.type === 'siem_alert' || r.type === 'siem_alerts' || r.type === 'alert') && r.isVulnerable);
+    if (alertRes) {
+      await storage.updateResource(alertRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Alert Validation Complete ===
+
+[OK] Alert validated
+[OK] Classification updated
+[OK] Triage report generated
+
+Alert handling documented.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== alertRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Alert validation complete.`;
+      success = true;
+    }
   }
   // Unknown command
   else {
