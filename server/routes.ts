@@ -5139,6 +5139,636 @@ Alert handling documented.`;
       success = true;
     }
   }
+  // ============= EC2 MULTI-TIER SECURITY COMMANDS =============
+  else if (lowerCmd === "aws ec2 analyze-traffic-patterns" || lowerCmd.startsWith("aws ec2 analyze-traffic")) {
+    output = `=== Traffic Pattern Analysis ===
+
+[SCAN] Analyzing VPC Flow Logs...
+
+Traffic Patterns Identified:
+  Web Tier (port 443): 45K requests/hour from ALB
+  App Tier (port 8080): 12K requests/hour from web tier
+  Data Tier (port 5432): 3K queries/hour from app tier
+  
+Anomalies Detected:
+  [!] Direct internet traffic to app tier (bypassing web)
+  [!] SSH traffic from unknown IPs to all tiers
+  [!] Database port exposed to web tier
+
+Recommended: Implement tier isolation.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws ec2 plan-security-group-architecture" || lowerCmd.startsWith("aws ec2 plan-security-group")) {
+    output = `=== Security Group Architecture Plan ===
+
+Proposed Multi-Tier Design:
+  
+  [INTERNET] --> [ALB-SG] --> [WEB-SG] --> [APP-SG] --> [DB-SG]
+                    |            |            |            |
+                   443         8080         8080         5432
+                 (public)    (ALB only)  (web only)   (app only)
+
+Security Group Rules:
+  alb-sg:     Ingress 443 from 0.0.0.0/0
+  web-sg:     Ingress 8080 from alb-sg only
+  app-sg:     Ingress 8080 from web-sg only
+  db-sg:      Ingress 5432 from app-sg only
+  admin-sg:   Ingress 22 from bastion-sg only
+
+Plan ready for implementation.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws ec2 configure-web-tier-sg" || lowerCmd.startsWith("aws ec2 configure-web-tier")) {
+    const sgRes = resources.find(r => (r.type === 'security_group' || r.type === 'securityGroup' || r.name?.includes('web')) && r.isVulnerable);
+    if (sgRes) {
+      await storage.updateResource(sgRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Web Tier Security Group Configured ===
+
+[OK] Removed 0.0.0.0/0 ingress rules
+[OK] Added ingress from ALB security group only
+[OK] Restricted to port 8080
+[OK] Egress limited to app tier
+
+Web tier now accepts traffic only from load balancer.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== sgRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Web tier security group configured.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws ec2 configure-app-tier-sg" || lowerCmd.startsWith("aws ec2 configure-app-tier")) {
+    const sgRes = resources.find(r => (r.type === 'security_group' || r.type === 'securityGroup' || r.name?.includes('app')) && r.isVulnerable);
+    if (sgRes) {
+      await storage.updateResource(sgRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== App Tier Security Group Configured ===
+
+[OK] Ingress restricted to web tier only
+[OK] Port 8080 for application traffic
+[OK] Egress limited to database tier
+[OK] No direct internet access
+
+App tier isolated from direct internet exposure.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== sgRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] App tier security group configured.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws ec2 configure-data-tier-sg" || lowerCmd.startsWith("aws ec2 configure-data-tier")) {
+    const sgRes = resources.find(r => (r.type === 'security_group' || r.type === 'securityGroup' || r.name?.includes('db') || r.name?.includes('data')) && r.isVulnerable);
+    if (sgRes) {
+      await storage.updateResource(sgRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Data Tier Security Group Configured ===
+
+[OK] Ingress restricted to app tier only
+[OK] Port 5432 for PostgreSQL
+[OK] No SSH access from internet
+[OK] Egress blocked (no internet)
+
+Database tier fully isolated from external access.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== sgRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Data tier security group configured.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws ec2 configure-admin-access" || lowerCmd.startsWith("aws ec2 configure-admin")) {
+    const sgRes = resources.find(r => (r.type === 'security_group' || r.type === 'bastion' || r.name?.includes('admin') || r.name?.includes('bastion')) && r.isVulnerable);
+    if (sgRes) {
+      await storage.updateResource(sgRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Admin Access Configured ===
+
+[OK] SSH removed from all tier security groups
+[OK] Session Manager enabled for all instances
+[OK] Bastion host removed (using SSM)
+[OK] Admin access now audited via CloudTrail
+
+Zero-trust admin access implemented.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== sgRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Admin access configured securely.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws ec2 verify-network-segmentation" || lowerCmd.startsWith("aws ec2 verify-network")) {
+    output = `=== Network Segmentation Verification ===
+
+Testing tier isolation...
+
+[PASS] Web tier cannot reach database directly
+[PASS] App tier cannot reach internet
+[PASS] Database tier has no egress
+[PASS] SSH blocked from internet to all tiers
+[PASS] Only ALB can reach web tier
+
+All segmentation rules verified.
+Defense-in-depth architecture confirmed.`;
+    success = true;
+  }
+  // ============= IAM SECURITY COMMANDS =============
+  else if (lowerCmd.startsWith("aws iam list-privileged-users") || lowerCmd === "aws iam list-privileged-users-mfa") {
+    output = `=== Privileged Users MFA Status ===
+
+User                    Role              MFA Status
+---------------------------------------------------
+cloud-admin            Administrator      [!] DISABLED
+devops-lead            PowerUser          [!] DISABLED
+security-admin         SecurityAudit      [OK] ENABLED
+data-engineer          DataAccess         [!] DISABLED
+finance-admin          BillingAccess      [OK] ENABLED
+
+3 privileged users without MFA protection!
+Recommend: Enable MFA for all admin accounts.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam get-root-account-summary" || lowerCmd.startsWith("aws iam get-root-account")) {
+    output = `=== Root Account Security Summary ===
+
+[!] CRITICAL FINDINGS:
+
+MFA Status:          NOT ENABLED
+Access Keys:         1 ACTIVE KEY FOUND (created 847 days ago)
+Last Console Login:  3 days ago
+Last API Activity:   12 hours ago
+
+Root account has:
+  - No MFA protection
+  - Active programmatic access keys
+  - Recent activity (should be dormant)
+
+RISK: CRITICAL
+Immediate action required!`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam enforce-mfa-policy" || lowerCmd.startsWith("aws iam enforce-mfa")) {
+    const iamRes = resources.find(r => (r.type === 'iam' || r.type === 'root' || r.type === 'users' || r.name?.includes('admin') || r.name?.includes('root')) && r.isVulnerable);
+    if (iamRes) {
+      await storage.updateResource(iamRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== MFA Policy Enforced ===
+
+[OK] SCP deployed: DenyActionsWithoutMFA
+[OK] Root MFA: Hardware token registered
+[OK] Root access keys: Deleted
+[OK] Admin users: MFA required for console
+[OK] API access: MFA required for sensitive operations
+
+All privileged access now requires MFA.
+Credential theft attacks neutralized.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== iamRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] MFA policy enforced organization-wide.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws iam analyze-escalation") || lowerCmd === "aws iam analyze-escalation-risk") {
+    output = `=== Privilege Escalation Risk Analysis ===
+
+12 Escalation Paths Identified:
+
+HIGH RISK:
+  [1] developer-role can iam:CreatePolicy + iam:AttachUserPolicy
+  [2] cicd-role can iam:PassRole to admin roles
+  [3] lambda-role can sts:AssumeRole without conditions
+
+MEDIUM RISK:
+  [4-8] Various role chaining vulnerabilities
+
+LOW RISK:
+  [9-12] Limited scope escalation paths
+
+Recommendation: Implement permission boundaries.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam create-permission-boundaries" || lowerCmd.startsWith("aws iam create-permission-bound")) {
+    output = `=== Permission Boundaries Created ===
+
+[OK] DeveloperBoundary: Blocks iam:*, sts:AssumeRole to admin
+[OK] CICDBoundary: Limits PassRole to approved roles only
+[OK] LambdaBoundary: Restricts to specific services
+
+Boundaries ready for attachment.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam apply-permission-boundaries" || lowerCmd.startsWith("aws iam apply-permission-bound")) {
+    const iamRes = resources.find(r => (r.type === 'iam' || r.type === 'policies' || r.type === 'escalation-paths') && r.isVulnerable);
+    if (iamRes) {
+      await storage.updateResource(iamRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Permission Boundaries Applied ===
+
+[OK] DeveloperBoundary attached to developer-role
+[OK] CICDBoundary attached to cicd-role
+[OK] LambdaBoundary attached to lambda-role
+
+All roles now capped by permission boundaries.
+Privilege escalation paths blocked.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== iamRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Permission boundaries applied.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail create-escalation-detections") || lowerCmd === "aws cloudtrail create-escalation-detections") {
+    output = `=== Escalation Detection Rules Created ===
+
+[OK] Rule: IAM Policy Creation by non-admin
+[OK] Rule: Role assumption to privileged roles
+[OK] Rule: Permission boundary removal attempts
+[OK] Rule: SCP modification attempts
+
+Alerts configured to SOC queue.
+Escalation attempts will be detected in real-time.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws organizations create-escalation-scp" || lowerCmd.startsWith("aws organizations create-escalation")) {
+    output = `=== Escalation Prevention SCPs Created ===
+
+[OK] SCP: DenyPermissionBoundaryRemoval
+[OK] SCP: DenyCreateAdminPolicies
+[OK] SCP: RequireMFAForIAMChanges
+
+SCPs attached to all OUs.
+Organization-level guardrails active.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam simulate-escalation") || lowerCmd === "aws iam simulate-escalation-attack") {
+    output = `=== Escalation Attack Simulation ===
+
+Testing blocked paths...
+
+[BLOCKED] developer-role: CreatePolicy -> Permission boundary denied
+[BLOCKED] cicd-role: PassRole to admin -> SCP denied
+[BLOCKED] lambda-role: AssumeRole to admin -> Condition failed
+
+[ALERT] 3 escalation attempt alerts generated
+[ALERT] SOC notified within 2 seconds
+
+All escalation paths confirmed blocked!`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam generate-escalation-runbook") || lowerCmd === "aws iam generate-escalation-runbook") {
+    output = `=== Escalation Response Runbook Generated ===
+
+Runbook: privilege-escalation-response.md
+
+Sections:
+  1. Alert Triage Criteria
+  2. Investigation Steps
+  3. Containment Procedures
+  4. Evidence Collection
+  5. Remediation Actions
+  6. Post-Incident Review
+
+Runbook saved and linked to detection rules.`;
+    success = true;
+  }
+  // ============= AWS IR COMMANDS =============
+  else if (lowerCmd === "aws ir execute-containment" || lowerCmd.startsWith("aws ir execute-contain")) {
+    const irRes = resources.find(r => r.isVulnerable);
+    if (irRes) {
+      await storage.updateResource(irRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Containment Executed ===
+
+[OK] Compromised credentials revoked
+[OK] Affected instances isolated
+[OK] Network access blocked
+[OK] Session tokens invalidated
+
+Threat contained. Proceeding to eradication.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== irRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Containment actions executed.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws ir eradicate-persistence" || lowerCmd.startsWith("aws ir eradicate")) {
+    const irRes = resources.find(r => r.isVulnerable);
+    if (irRes) {
+      await storage.updateResource(irRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Persistence Eradicated ===
+
+[OK] Unauthorized IAM users deleted
+[OK] Backdoor Lambda functions removed
+[OK] Malicious EventBridge rules deleted
+[OK] Rogue SSH keys removed
+
+All persistence mechanisms eliminated.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== irRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Persistence mechanisms eradicated.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws ir implement-improvements" || lowerCmd.startsWith("aws ir implement-improve")) {
+    const irRes = resources.find(r => r.isVulnerable);
+    if (irRes) {
+      await storage.updateResource(irRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Security Improvements Implemented ===
+
+[OK] MFA enforced for all privileged access
+[OK] Permission boundaries applied
+[OK] Enhanced monitoring deployed
+[OK] Incident response playbooks updated
+
+Lessons learned incorporated.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== irRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Security improvements implemented.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws ir generate-incident-report" || lowerCmd.startsWith("aws ir generate-incident")) {
+    const irRes = resources.find(r => r.isVulnerable);
+    if (irRes) {
+      await storage.updateResource(irRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Incident Report Generated ===
+
+Report: incident-report-${new Date().toISOString().split('T')[0]}.pdf
+
+Executive Summary:
+  - Incident Type: Unauthorized Access
+  - Duration: 4 hours
+  - Impact: Contained before data exfiltration
+  - Root Cause: Compromised credentials
+  
+Recommendations included.
+Report ready for stakeholder review.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== irRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Incident report generated.`;
+      success = true;
+    }
+  }
+  // ============= ACCESS ANALYZER COMMANDS =============
+  else if (lowerCmd === "aws access-analyzer remediate-public" || lowerCmd.startsWith("aws access-analyzer remediate-public")) {
+    const aaRes = resources.find(r => (r.type === 'access_analyzer' || r.type === 's3' || r.type === 'public') && r.isVulnerable);
+    if (aaRes) {
+      await storage.updateResource(aaRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Public Access Remediated ===
+
+[OK] S3 public ACLs removed
+[OK] Block Public Access enabled
+[OK] Lambda function policies restricted
+[OK] SNS topic policies updated
+
+No more publicly accessible resources.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== aaRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Public access remediated.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws access-analyzer remediate-cross-account" || lowerCmd.startsWith("aws access-analyzer remediate-cross")) {
+    const aaRes = resources.find(r => (r.type === 'access_analyzer' || r.type === 'cross_account') && r.isVulnerable);
+    if (aaRes) {
+      await storage.updateResource(aaRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Cross-Account Access Remediated ===
+
+[OK] Unknown account access removed
+[OK] Trusted accounts verified
+[OK] Conditions added to trust policies
+[OK] External ID requirements enforced
+
+Cross-account access now properly controlled.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== aaRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Cross-account access remediated.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws access-analyzer enable-monitoring" || lowerCmd.startsWith("aws access-analyzer enable-monitor")) {
+    const aaRes = resources.find(r => (r.type === 'access_analyzer' || r.type === 'monitoring') && r.isVulnerable);
+    if (aaRes) {
+      await storage.updateResource(aaRes.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Access Analyzer Monitoring Enabled ===
+
+[OK] Continuous monitoring active
+[OK] New finding alerts configured
+[OK] Weekly reports scheduled
+[OK] Integration with Security Hub
+
+Access permissions continuously monitored.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== aaRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Access Analyzer monitoring enabled.`;
+      success = true;
+    }
+  }
+  // ============= SIEM ADDITIONAL COMMANDS =============
+  else if (lowerCmd === "siem analyze-attack-coverage" || lowerCmd.startsWith("siem analyze-attack")) {
+    output = `=== MITRE ATT&CK Coverage Analysis ===
+
+Current Detection Coverage:
+
+Initial Access:      ████████░░ 80%
+Execution:           ██████░░░░ 60%
+Persistence:         ████████░░ 80%
+Privilege Esc:       ██████░░░░ 60%
+Defense Evasion:     ████░░░░░░ 40%
+Credential Access:   ████████░░ 80%
+Discovery:           ██████░░░░ 60%
+Lateral Movement:    ████░░░░░░ 40%
+Collection:          ████████░░ 80%
+Exfiltration:        ████████░░ 80%
+Impact:              ██████░░░░ 60%
+
+Gaps identified in Defense Evasion and Lateral Movement.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem tune-detection-rules" || lowerCmd.startsWith("siem tune-detection")) {
+    output = `=== Detection Rules Tuned ===
+
+[OK] False positive patterns identified
+[OK] Baseline thresholds adjusted
+[OK] Known-good patterns whitelisted
+[OK] Alert severity recalibrated
+
+Alert quality improved by 40%.
+False positive rate reduced from 35% to 8%.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem design-tenant-schema" || lowerCmd.startsWith("siem design-tenant")) {
+    output = `=== Tenant Schema Designed ===
+
+Multi-Tenant Architecture:
+
+Index Pattern: logs-{tenant_id}-{date}
+  
+Isolation Level: Index-per-tenant
+  - Separate indices per customer
+  - RBAC enforced at index level
+  - No cross-tenant queries possible
+
+Schema includes:
+  - Tenant metadata fields
+  - Normalized log format
+  - Tenant-specific enrichment
+
+Schema ready for implementation.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem configure-rbac tenant-roles" || lowerCmd.startsWith("siem configure-rbac")) {
+    output = `=== Tenant RBAC Configured ===
+
+[OK] Role: tenant_a_analyst (read logs-tenant_a-*)
+[OK] Role: tenant_b_analyst (read logs-tenant_b-*)
+[OK] Role: mssp_admin (read all, no PII)
+
+Access controls verified.
+Cross-tenant access blocked.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem create-tenant-dashboards" || lowerCmd.startsWith("siem create-tenant-dash")) {
+    output = `=== Tenant Dashboards Created ===
+
+[OK] Dashboard: tenant_a_security_overview
+[OK] Dashboard: tenant_b_security_overview
+[OK] Widget: Alert trends (per tenant)
+[OK] Widget: Top threats (per tenant)
+
+Each tenant sees only their data.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem configure-rate-limits" || lowerCmd.startsWith("siem configure-rate")) {
+    output = `=== Rate Limits Configured ===
+
+[OK] Ingestion rate: 10GB/day per tenant
+[OK] Query rate: 100 queries/minute per user
+[OK] Dashboard refresh: 30 second minimum
+[OK] Burst allowance: 2x for 5 minutes
+
+Noisy neighbor prevention active.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem test-isolation ")) {
+    output = `=== Tenant Isolation Test ===
+
+[PASS] Tenant A cannot query Tenant B indices
+[PASS] Tenant B cannot see Tenant A alerts
+[PASS] Cross-tenant API calls blocked
+[PASS] Dashboard filtering enforced
+
+Data isolation verified.`;
+    success = true;
+  }
+  // ============= GENERIC RESOURCE UPDATE HANDLER =============
+  else if (lowerCmd.startsWith("aws ") || lowerCmd.startsWith("siem ") || lowerCmd.startsWith("soar ") || lowerCmd.startsWith("hunt ") || lowerCmd.startsWith("ir ") || lowerCmd.startsWith("security ") || lowerCmd.startsWith("threat-intel ") || lowerCmd.startsWith("detection ") || lowerCmd.startsWith("purple-team ") || lowerCmd.startsWith("dashboard ") || lowerCmd.startsWith("logs ")) {
+    // Generic handler for any remaining commands - check if it might be a fix command
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable && (lowerCmd.includes("fix") || lowerCmd.includes("remediate") || lowerCmd.includes("secure") || lowerCmd.includes("enable") || lowerCmd.includes("configure") || lowerCmd.includes("create") || lowerCmd.includes("deploy") || lowerCmd.includes("apply") || lowerCmd.includes("enforce") || lowerCmd.includes("implement") || lowerCmd.includes("execute") || lowerCmd.includes("generate-report") || lowerCmd.includes("activate"))) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Command Executed Successfully ===
+
+[OK] ${cmd}
+
+Action completed. Security posture improved.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      // It's a read/analysis command
+      output = `=== ${cmd} ===
+
+Command executed. Review the output above for findings.
+Use appropriate remediation commands to fix issues.`;
+      success = true;
+    }
+  }
   // Unknown command
   else {
     output = `Command not found: ${command}. Type 'help' for available commands.`;
