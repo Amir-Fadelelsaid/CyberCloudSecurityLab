@@ -40,6 +40,13 @@ CloudShieldLab is a gamified cloud security training platform where users practi
 
 ## Recent Changes (December 2024)
 
+### Badge Equipping System
+- Users can equip any earned badge to display prominently on their profile
+- Equipped badges appear next to username on the leaderboard with yellow/gold styling
+- Equipped badges appear next to username on community discussion posts and replies
+- Users can equip/unequip badges from the Badges page with visual feedback (star icon for equipped badge)
+- API endpoint validates that users can only equip badges they've actually earned
+
 ### Warlord Badge
 - Added elite "Warlord" achievement badge requiring completion of all 97 labs AND 5 community discussion posts
 - Encourages users to both master content and help others in the community
