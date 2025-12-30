@@ -186,6 +186,8 @@ const processCommand = async (command: string, labId: number, userId: string) =>
   scan                       Run security scan
   
   SOC Commands:
+  siem list-sources          List integrated log sources
+  siem add-source <source>   Add log source to SIEM
   siem alerts                List SIEM alerts queue
   siem triage <alert-id>     Investigate an alert
   siem enrich <alert-id>     Get threat intel enrichment
@@ -273,6 +275,27 @@ const processCommand = async (command: string, labId: number, userId: string) =>
       ).join('\n');
     } else {
       output = "Scan complete. No vulnerabilities found. System secure.";
+    }
+  }
+  else if (lowerCmd === "scan verify" || lowerCmd === "verify") {
+    const vulnerabilities = resources.filter(r => r.isVulnerable);
+    if (vulnerabilities.length > 0) {
+      output = `=== Security Verification ===
+
+Status: INCOMPLETE
+Remaining Issues: ${vulnerabilities.length}
+
+${vulnerabilities.map(v => `[!] ${v.type.toUpperCase()}: ${v.name} - requires remediation`).join('\n')}
+
+Run 'help' to see available remediation commands.`;
+    } else {
+      output = `=== Security Verification ===
+
+Status: VERIFIED
+All Resources: COMPLIANT
+
+Security controls validated successfully.`;
+      success = true;
     }
   }
   // S3 Commands
@@ -1079,6 +1102,30 @@ Your progress has been recorded.`;
   }
   // ============= SOC SIMULATION COMMANDS =============
   // SIEM Commands
+  else if (lowerCmd === "siem list-sources" || lowerCmd === "siem list source" || lowerCmd === "siem sources") {
+    output = `=== Integrated Log Sources ===
+
+CONNECTED:
+  [OK] CloudTrail         - AWS API activity logs
+  [OK] GuardDuty          - Threat detection findings
+  [OK] VPC Flow Logs      - Network traffic metadata
+  [OK] AWS Config         - Resource configuration changes
+
+NOT INTEGRATED:
+  [!] Firewall Logs       - Perimeter traffic not visible
+  [!] Endpoint Logs       - Host-based detection limited
+  [!] Application Logs    - Business logic events missing
+
+Coverage Analysis:
+  Cloud API Activity:    100%
+  Network Visibility:     60%
+  Endpoint Visibility:    20%
+  Application Layer:       0%
+
+[!] RECOMMENDATION: Add missing log sources to improve detection coverage.
+    Use 'siem add-source <source-name>' to integrate.`;
+    success = true;
+  }
   else if (lowerCmd === "siem list-alerts" || lowerCmd === "siem alerts") {
     output = `=== SIEM Alert Queue ===
     
