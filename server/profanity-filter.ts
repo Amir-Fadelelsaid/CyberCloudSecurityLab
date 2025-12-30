@@ -1,13 +1,13 @@
 const profaneWords = [
-  "fuck", "shit", "ass", "bitch", "damn", "crap", "dick", "cock", "pussy", "bastard",
+  "fuck", "shit", "bitch", "damn", "crap", "dick", "cock", "pussy", "bastard",
   "whore", "slut", "fag", "nigger", "nigga", "retard", "cunt", "twat", "bollocks",
   "wanker", "prick", "arsehole", "asshole", "motherfucker", "bullshit", "horseshit",
   "dumbass", "jackass", "dipshit", "shithead", "fuckface", "dickhead", "douchebag",
-  "scumbag", "piss", "pissed", "goddamn", "hell", "bloody", "bugger", "sod",
-  "tosser", "knob", "bellend", "minger", "slag", "git", "pillock", "plonker",
-  "nonce", "chav", "numpty", "muppet", "spaz", "spastic", "mongo", "downie",
+  "scumbag", "piss", "pissed", "goddamn", "bloody", "bugger",
+  "tosser", "knob", "bellend", "minger", "slag", "pillock", "plonker",
+  "nonce", "chav", "spaz", "spastic", "mongo", "downie",
   "kike", "chink", "gook", "wetback", "beaner", "spic", "cracker", "honky",
-  "tranny", "shemale", "dyke", "lesbo", "homo", "queer", "faggot",
+  "tranny", "shemale", "dyke", "lesbo", "faggot",
   "kill yourself", "kys", "go die", "neck yourself", "hang yourself"
 ];
 
@@ -57,7 +57,7 @@ export function checkProfanity(content: string): ProfanityCheckResult {
   
   for (const word of words) {
     for (const profane of profaneWords) {
-      if (word.includes(profane) || profane.split(' ').every(p => normalized.includes(p))) {
+      if (!profane.includes(' ') && word === profane) {
         return { 
           isClean: false, 
           violation: "profanity", 
