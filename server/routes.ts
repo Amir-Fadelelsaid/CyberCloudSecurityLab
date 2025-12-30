@@ -4129,6 +4129,548 @@ No Matches:
 Recommend immediate investigation.`;
     success = true;
   }
+  // ============= INCIDENT RESPONSE (IR) COMMANDS =============
+  else if (lowerCmd.startsWith("aws ir ") || lowerCmd === "aws ir contain-ransomware ransomware-active" || lowerCmd === "aws ir create-war-room" || lowerCmd === "aws ir eradicate-persistence" || lowerCmd === "aws ir execute-containment" || lowerCmd === "aws ir generate-incident-report" || lowerCmd === "aws ir generate-runbooks" || lowerCmd === "aws ir implement-improvements" || lowerCmd.startsWith("aws ir revoke-all-credentials")) {
+    output = `=== Incident Response Executed ===
+
+[OK] War room established
+[OK] Containment measures deployed
+[OK] Credentials revoked
+[OK] Persistence mechanisms removed
+[OK] Forensic evidence preserved
+[OK] Incident report generated
+
+IR playbook execution complete.
+All affected systems isolated and secured.`;
+    success = true;
+  }
+  // ============= RANSOMWARE COMMANDS =============
+  else if (lowerCmd.startsWith("aws ransomware ") || lowerCmd === "aws ransomware isolate-all-encrypted") {
+    output = `=== Ransomware Containment ===
+
+[OK] Encrypted systems identified
+[OK] Network isolation applied
+[OK] Backup status verified
+[OK] Recovery plan initiated
+[OK] Law enforcement notified
+
+All encrypted systems quarantined.
+Clean backups available for restore.`;
+    success = true;
+  }
+  // ============= STS COMMANDS =============
+  else if (lowerCmd === "aws sts revoke-all-sessions" || lowerCmd.startsWith("aws sts revoke")) {
+    output = `=== STS Sessions Revoked ===
+
+[OK] All active sessions invalidated
+[OK] Temporary credentials expired
+[OK] Role assumptions terminated
+[OK] Federation tokens revoked
+
+All STS sessions have been terminated.
+Users must re-authenticate.`;
+    success = true;
+  }
+  // ============= GLACIER COMMANDS =============
+  else if (lowerCmd.startsWith("aws glacier ")) {
+    output = `=== Glacier Vault Updated ===
+
+[OK] Vault access policy modified
+[OK] Unauthorized access removed
+[OK] Vault lock applied
+[OK] Audit logging enabled
+
+Data archive security enhanced.`;
+    success = true;
+  }
+  // ============= EFS COMMANDS =============
+  else if (lowerCmd.startsWith("aws efs ")) {
+    output = `=== EFS Configuration Updated ===
+
+[OK] Mount target security verified
+[OK] Access points configured
+[OK] Encryption enforced
+[OK] Unauthorized mounts removed
+
+EFS file system secured.`;
+    success = true;
+  }
+  // ============= BACKUP COMMANDS =============
+  else if (lowerCmd.startsWith("aws backup ")) {
+    output = `=== AWS Backup Restored ===
+
+[OK] Immutable backup identified
+[OK] Restore job initiated
+[OK] Point-in-time recovery: Available
+[OK] Clean data restored
+
+Backup restore completed successfully.`;
+    success = true;
+  }
+  // ============= RDS COMMANDS =============
+  else if (lowerCmd.startsWith("aws rds enable-encryption ")) {
+    output = `=== RDS Encryption Enabled ===
+
+[OK] Snapshot created
+[OK] Encrypted copy initiated
+[OK] New instance launched
+[OK] DNS endpoint updated
+
+Database encryption migration complete.`;
+    success = true;
+  }
+  // ============= DATASYNC COMMANDS =============
+  else if (lowerCmd.startsWith("aws datasync stop-job ") || lowerCmd.startsWith("aws datasync stop-task ")) {
+    output = `=== DataSync Task Stopped ===
+
+[OK] Sync task terminated
+[OK] Data transfer halted
+[OK] Exfiltration blocked
+[OK] Audit trail captured
+
+Unauthorized data movement stopped.`;
+    success = true;
+  }
+  // ============= LAMBDA DELETE COMMANDS =============
+  else if (lowerCmd.startsWith("aws lambda delete-function ") || lowerCmd.startsWith("aws lambda delete-layer ") || lowerCmd.startsWith("aws lambda create-containment")) {
+    output = `=== Lambda Function Removed ===
+
+[OK] Malicious function identified
+[OK] Invocations terminated
+[OK] Function deleted
+[OK] IAM role detached
+[OK] CloudWatch logs preserved
+
+Persistence mechanism eliminated.`;
+    success = true;
+  }
+  // ============= KMS ADVANCED COMMANDS =============
+  else if (lowerCmd.startsWith("aws kms cancel-deletion ")) {
+    output = `=== KMS Key Deletion Cancelled ===
+
+[OK] Key: kms-prod-encryption
+[OK] Status: Enabled
+[OK] Deletion cancelled
+[OK] Key available for use
+
+Critical encryption key preserved.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws kms create-classification-keys" || lowerCmd === "aws kms enable-key-rotation-all") {
+    output = `=== KMS Keys Configured ===
+
+[OK] Classification keys created
+[OK] Key rotation enabled
+[OK] Key policies hardened
+[OK] Alias mappings updated
+
+Encryption key management enhanced.`;
+    success = true;
+  }
+  // ============= SSM ADVANCED COMMANDS =============
+  else if (lowerCmd.startsWith("aws ssm terminate-session ") || lowerCmd === "aws ssm terminate ssm-session-xyz") {
+    output = `=== SSM Session Terminated ===
+
+[OK] Covert session identified
+[OK] Session terminated
+[OK] Access revoked
+[OK] Audit logged
+
+Unauthorized SSM session eliminated.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws ssm list-sessions") {
+    output = `=== Active SSM Sessions ===
+
+Session ID           Target          User
+-----------          ------          ----
+ssm-session-001     i-0abc123       admin
+ssm-session-xyz     i-0def456       UNKNOWN [!]
+ssm-session-003     i-0ghi789       devops
+
+[!] WARNING: Suspicious session detected`;
+    success = true;
+  }
+  // ============= ORGANIZATIONS ADVANCED COMMANDS =============
+  else if (lowerCmd.startsWith("aws organizations apply-scp ") || lowerCmd.startsWith("aws organizations create-escalation-scp") || lowerCmd === "aws organizations create-security-account" || lowerCmd.startsWith("aws organizations enable-scps ") || lowerCmd === "aws organizations configure-scps" || lowerCmd === "aws organizations implement-scps") {
+    output = `=== Organization SCPs Applied ===
+
+[OK] Service Control Policies created
+[OK] Guardrails enforced across OUs
+[OK] External trust denied by default
+[OK] Privileged actions restricted
+[OK] Audit trail enabled
+
+Organization-wide security controls active.`;
+    success = true;
+  }
+  // ============= IAM ADVANCED COMMANDS =============
+  else if (lowerCmd.startsWith("aws iam add-federation-conditions") || lowerCmd.startsWith("aws iam break-role-chain ")) {
+    output = `=== IAM Federation Fixed ===
+
+[OK] Federation conditions added
+[OK] Role chain broken
+[OK] Trust policies hardened
+[OK] Session duration limited
+
+Privilege escalation paths eliminated.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam cleanup-inactive-users") || lowerCmd.startsWith("aws iam cleanup-service-roles")) {
+    output = `=== IAM Cleanup Complete ===
+
+[OK] Inactive users disabled: 5
+[OK] Stale roles removed: 3
+[OK] Unused policies deleted: 8
+[OK] Access keys rotated: 12
+
+Identity hygiene improved.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam delete-role ") || lowerCmd.startsWith("aws iam delete-access-key ")) {
+    const target = lowerCmd.split(" ").pop();
+    output = `=== IAM Resource Deleted: ${target} ===
+
+[OK] Resource identified as malicious
+[OK] Permissions revoked
+[OK] Resource deleted
+[OK] Audit trail preserved
+
+Backdoor access eliminated.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam disable-user ")) {
+    const user = lowerCmd.replace("aws iam disable-user ", "").trim();
+    output = `=== User Disabled: ${user} ===
+
+[OK] Console access revoked
+[OK] API access revoked
+[OK] MFA deregistered
+[OK] Sessions terminated
+
+User account locked.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam enable-root-mfa" || lowerCmd === "aws iam secure-root") {
+    output = `=== Root Account Secured ===
+
+[OK] MFA enabled (virtual device)
+[OK] Access keys deleted
+[OK] Password rotated
+[OK] Contact info verified
+
+Root account now protected.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam fix-role-trust ") || lowerCmd === "aws iam fix-trust-policies") {
+    output = `=== Trust Policies Fixed ===
+
+[OK] External principals removed
+[OK] Condition keys added
+[OK] MFA required for assume
+[OK] Session duration limited
+
+Trust relationships hardened.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam implement-least-privilege" || lowerCmd.startsWith("aws iam implement-least-privilege ")) {
+    output = `=== Least Privilege Implemented ===
+
+[OK] Permissions analyzed
+[OK] Unused permissions removed
+[OK] Service-specific policies created
+[OK] Access boundaries set
+
+All roles now follow least privilege.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam remove-persistence" || lowerCmd.startsWith("aws iam revoke-keys ") || lowerCmd.startsWith("aws iam revoke-trust ")) {
+    output = `=== Persistence Removed ===
+
+[OK] Backdoor keys revoked
+[OK] Unauthorized trust removed
+[OK] Persistence mechanisms eliminated
+[OK] Access audit complete
+
+All persistence indicators cleared.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam rotate-access-key ") || lowerCmd.startsWith("aws iam rotate-service-credentials ") || lowerCmd.startsWith("aws iam rotate-saml-certificate ")) {
+    output = `=== Credentials Rotated ===
+
+[OK] Old credentials invalidated
+[OK] New credentials generated
+[OK] Services updated
+[OK] Validation complete
+
+Credential rotation successful.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam terminate-all-federated-sessions") {
+    output = `=== Federated Sessions Terminated ===
+
+[OK] All SAML sessions revoked
+[OK] All OIDC sessions revoked
+[OK] Federation cache cleared
+[OK] Re-authentication required
+
+All federated access terminated.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam update-trust-policy ") || lowerCmd.startsWith("aws iam fix-policy ") || lowerCmd.startsWith("aws iam revert-policy ")) {
+    output = `=== IAM Policy Updated ===
+
+[OK] Policy analyzed
+[OK] Overly permissive rules removed
+[OK] New policy version active
+[OK] Changes logged
+
+Policy now follows security best practices.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam generate-hygiene-report" || lowerCmd === "aws iam generate-zero-trust-report") {
+    output = `=== IAM Report Generated ===
+
+Report: iam-hygiene-${new Date().toISOString().split('T')[0]}.pdf
+
+Summary:
+  Users analyzed: 45
+  Roles analyzed: 23
+  Issues found: 12
+  Remediated: 8
+
+Exported to security reports.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam restrict-user ") || lowerCmd === "aws iam reduce-session-duration" || lowerCmd === "aws iam enable-identity-monitoring" || lowerCmd === "aws iam implement-permission-boundaries") {
+    output = `=== IAM Security Enhanced ===
+
+[OK] User restrictions applied
+[OK] Session durations reduced
+[OK] Identity monitoring enabled
+[OK] Permission boundaries enforced
+
+IAM security posture improved.`;
+    success = true;
+  }
+  // ============= EC2 ADDITIONAL COMMANDS =============
+  else if (lowerCmd.startsWith("aws ec2 block-exfil-destination ") || lowerCmd.startsWith("aws ec2 block-outbound ")) {
+    output = `=== Egress Blocked ===
+
+[OK] Malicious destination blocked
+[OK] NACL rules updated
+[OK] Security group modified
+[OK] Traffic stopped
+
+Data exfiltration prevented.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 deregister-ami ")) {
+    output = `=== Malicious AMI Removed ===
+
+[OK] AMI deregistered
+[OK] Snapshots flagged for review
+[OK] Launch permissions revoked
+[OK] Audit logged
+
+Compromised image eliminated.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 isolate-vpc ") || lowerCmd.startsWith("aws ec2 remove-tgw-attachment ")) {
+    output = `=== VPC Isolated ===
+
+[OK] Transit gateway detached
+[OK] Peering connections removed
+[OK] Internet access blocked
+[OK] VPN tunnels terminated
+
+Compromised VPC quarantined.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 restore-route-table ") || lowerCmd.startsWith("aws ec2 terminate-mining-instances ") || lowerCmd.startsWith("aws ec2 terminate-tunnel ")) {
+    output = `=== EC2 Security Action Complete ===
+
+[OK] Route tables restored
+[OK] Malicious instances terminated
+[OK] Covert tunnels closed
+[OK] Network integrity verified
+
+Infrastructure secured.`;
+    success = true;
+  }
+  // ============= CLOUDTRAIL ADDITIONAL COMMANDS =============
+  else if (lowerCmd === "aws cloudtrail enable-data-events" || lowerCmd.startsWith("aws cloudtrail enable challenge-trail") || lowerCmd.startsWith("aws cloudtrail analyze-saml-anomalies")) {
+    output = `=== CloudTrail Configuration Updated ===
+
+[OK] Data events enabled
+[OK] SAML anomalies analyzed
+[OK] Trail configured
+[OK] Logging verified
+
+Full visibility achieved.`;
+    success = true;
+  }
+  // ============= SIEM ADVANCED COMMANDS =============
+  else if (lowerCmd.startsWith("siem create-behavioral-rule ") || lowerCmd.startsWith("siem enable-ueba ")) {
+    output = `=== UEBA/Behavioral Analysis Enabled ===
+
+[OK] Behavioral baseline established
+[OK] Anomaly detection active
+[OK] User risk scores calculated
+[OK] Insider threat monitoring enabled
+
+Behavioral analytics now active.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem correlate-logs ")) {
+    output = `=== Log Correlation Complete ===
+
+Correlated Events: 47
+
+Attack Chain Detected:
+  1. Unusual login (CloudTrail)
+  2. Policy enumeration (CloudTrail)
+  3. Outbound data (VPC Flow)
+  4. Process spawn (CloudWatch)
+
+Confidence: 94%
+Verdict: TRUE POSITIVE`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem create-investigation-dashboards") || lowerCmd === "siem generate-triage-report") {
+    output = `=== Investigation Dashboard Created ===
+
+[OK] Timeline view configured
+[OK] Entity analysis panels added
+[OK] IOC correlation enabled
+[OK] Export functionality ready
+
+Dashboard available for investigation.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem fix-severity ")) {
+    output = `=== Alert Severity Fixed ===
+
+[OK] Critical alerts re-prioritized
+[OK] Severity mapping updated
+[OK] Thresholds adjusted
+[OK] Notification rules updated
+
+Alert quality improved.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem validate-alert ")) {
+    output = `=== Alert Validated ===
+
+Alert: api-anomaly-02
+Validation: TRUE POSITIVE
+
+Evidence:
+  - Unusual API patterns confirmed
+  - New source IP verified
+  - Off-hours activity detected
+
+Escalating to incident response.`;
+    success = true;
+  }
+  // ============= HUNT FRAMEWORK COMMANDS =============
+  else if (lowerCmd === "hunt-framework initialize" || lowerCmd === "hunt-platform" || lowerCmd === "hunt_platform" || lowerCmd === "hunt-workspace" || lowerCmd === "hunt_workspace") {
+    output = `=== Threat Hunt Framework Initialized ===
+
+[OK] Hunt workspace created
+[OK] Data sources connected
+[OK] Query templates loaded
+[OK] IOC feeds synced
+[OK] MITRE ATT&CK mapping ready
+
+Hunt platform operational.
+Ready for hypothesis-driven hunting.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("hunt-framework schedule ")) {
+    output = `=== Hunt Scheduled ===
+
+[OK] Hunt job scheduled
+[OK] Frequency: Daily at 02:00 UTC
+[OK] Data retention: 90 days
+[OK] Alert on findings: Enabled
+
+Automated hunting active.`;
+    success = true;
+  }
+  // ============= CORRELATE COMMANDS =============
+  else if (lowerCmd === "correlate" || lowerCmd.startsWith("correlate-") || lowerCmd === "correlated-activity" || lowerCmd === "correlated-events" || lowerCmd === "correlated-timeline") {
+    output = `=== Event Correlation Complete ===
+
+Timeline Built: 47 events correlated
+
+Attack Phases Identified:
+  Phase 1: Initial Access (5 events)
+  Phase 2: Execution (8 events)
+  Phase 3: Persistence (6 events)
+  Phase 4: Exfiltration (12 events)
+
+Confidence Score: 89%
+MITRE ATT&CK techniques: 7 mapped`;
+    success = true;
+  }
+  // ============= LOGS COMMANDS =============
+  else if (lowerCmd === "logs" || lowerCmd === "logs-bucket" || lowerCmd === "network-logs" || lowerCmd === "network-metrics" || lowerCmd === "hunt-logs") {
+    output = `=== Log Analysis ===
+
+Sources Available:
+  [OK] CloudTrail: 1.2M events/day
+  [OK] VPC Flow Logs: 45M records/day
+  [OK] CloudWatch Logs: 500 streams
+  [OK] S3 Access Logs: 2.3M requests/day
+
+Query interface ready.
+Use specific commands to filter.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("logs set-retention ")) {
+    output = `=== Log Retention Updated ===
+
+[OK] Hot storage: 90 days
+[OK] Cold storage: 365 days
+[OK] Archive: 7 years
+[OK] Compliance: Met
+
+Log lifecycle policy applied.`;
+    success = true;
+  }
+  // ============= ASSESS COMMANDS =============
+  else if (lowerCmd === "aws assess-data-protection" || lowerCmd === "aws assess-logging-coverage") {
+    output = `=== Security Assessment Complete ===
+
+Data Protection: 92%
+  [OK] Encryption at rest: 95%
+  [OK] Encryption in transit: 100%
+  [!] Public access: 2 resources exposed
+
+Logging Coverage: 87%
+  [OK] CloudTrail: All regions
+  [!] VPC Flow Logs: 85% coverage
+  [OK] S3 Access Logs: 90%
+
+Recommendations in detailed report.`;
+    success = true;
+  }
+  // ============= DESCRIBE COMMANDS (GENERIC) =============
+  else if (lowerCmd.startsWith("aws describe-instance-role ")) {
+    output = `=== Instance Role Analysis ===
+
+Instance: analytics-server-01
+Role: AnalyticsRole
+
+Permissions:
+  [!] s3:* - Overly permissive
+  [!] ec2:* - Overly permissive
+  [OK] cloudwatch:PutMetricData
+
+Risk: HIGH - Needs least privilege`;
+    success = true;
+  }
   // Unknown command
   else {
     output = `Command not found: ${command}. Type 'help' for available commands.`;
