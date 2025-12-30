@@ -113,6 +113,8 @@ Earn certificates upon completing all labs in a category:
 | IAM Security | 16 labs |
 | Cloud Security Engineer | 13 labs |
 
+⚠️ These are certificates of completion and do not replace industry certifications.
+
 ### Dynamic Leveling System
 
 | Level | Title | Labs Required | Badge Unlocked |
