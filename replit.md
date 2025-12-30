@@ -44,11 +44,11 @@ Preferred communication style: Simple, everyday language.
 - **Resource State Management**: Labs have mutable resource states that change from "vulnerable" to "fixed" as users complete remediation steps
 - **Leveling System**: Dynamic user levels (Recruit to Elite Defender) based on completed lab count
 - **Badge System**: 23 unlockable badges across Level, Category, and Achievement types
-- **Beginner Learning Support** (Beginner labs only): 
-  - Intel boxes (blue) provide context about each step - explaining how actions affect the lab and why they matter
-  - Step completion feedback (trophy icon) explains what users accomplished after completing each step
-  - Learning objectives displayed in the Intel tab to set expectations
-  - Note: Intermediate, Advanced, and Challenge labs do NOT have intel boxes or completion feedback - they are designed for experienced users who should work independently
+- **Step Completion Feedback** (All Labs): 
+  - Beginner labs feature Intel boxes (blue contextual guidance) that explain concepts and MITRE ATT&CK techniques before action
+  - All labs (Beginner, Intermediate, Advanced, Challenge) include step completion feedback (trophy icon) that explains what was accomplished and why it matters for security
+  - Learning objectives displayed in the Intel tab to set expectations for Beginner labs
+  - Intermediate, Advanced, and Challenge labs have focused completion feedback on every step to reinforce learning
 
 ### Build System
 - **Development**: Vite dev server with HMR, proxies API requests to Express
