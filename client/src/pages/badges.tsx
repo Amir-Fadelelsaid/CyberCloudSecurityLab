@@ -3,15 +3,17 @@ import { motion } from "framer-motion";
 import { 
   Shield, Search, Wrench, Building2, Crown, Database, Network, Eye, 
   Activity, Cloud, Flame, Zap, Anchor, Target, Moon, Calendar, Trophy,
-  Lock, CheckCircle2
+  Lock, CheckCircle2, Star
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 type BadgeData = {
   id: number;
@@ -43,7 +45,21 @@ const iconMap: Record<string, any> = {
   Activity, Cloud, Flame, Zap, Anchor, Target, Moon, Calendar, Trophy
 };
 
-function BadgeCard({ badge, earned, earnedAt }: { badge: BadgeData; earned: boolean; earnedAt?: string }) {
+function BadgeCard({ 
+  badge, 
+  earned, 
+  earnedAt, 
+  isEquipped, 
+  onEquip, 
+  isPending 
+}: { 
+  badge: BadgeData; 
+  earned: boolean; 
+  earnedAt?: string;
+  isEquipped?: boolean;
+  onEquip?: (badgeId: number | null) => void;
+  isPending?: boolean;
+}) {
   const IconComponent = iconMap[badge.icon] || Shield;
   
   return (
@@ -53,8 +69,13 @@ function BadgeCard({ badge, earned, earnedAt }: { badge: BadgeData; earned: bool
       whileHover={earned ? { scale: 1.05 } : {}}
       transition={{ duration: 0.2 }}
     >
-      <Card className={`relative overflow-hidden ${earned ? 'border-primary/50' : 'border-muted opacity-50'}`}>
-        {earned && (
+      <Card className={`relative overflow-hidden ${isEquipped ? 'border-yellow-500 ring-1 ring-yellow-500/50' : earned ? 'border-primary/50' : 'border-muted opacity-50'}`}>
+        {isEquipped && (
+          <div className="absolute top-2 right-2">
+            <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+          </div>
+        )}
+        {!isEquipped && earned && (
           <div className="absolute top-2 right-2">
             <CheckCircle2 className="h-5 w-5 text-primary" />
           </div>
@@ -65,8 +86,8 @@ function BadgeCard({ badge, earned, earnedAt }: { badge: BadgeData; earned: bool
           </div>
         )}
         <CardContent className="p-4 flex flex-col items-center text-center">
-          <div className={`p-3 rounded-full mb-3 ${earned ? 'bg-primary/20' : 'bg-muted'}`}>
-            <IconComponent className={`h-8 w-8 ${earned ? 'text-primary' : 'text-muted-foreground'}`} />
+          <div className={`p-3 rounded-full mb-3 ${isEquipped ? 'bg-yellow-500/20' : earned ? 'bg-primary/20' : 'bg-muted'}`}>
+            <IconComponent className={`h-8 w-8 ${isEquipped ? 'text-yellow-500' : earned ? 'text-primary' : 'text-muted-foreground'}`} />
           </div>
           <h3 className={`font-semibold text-sm ${earned ? 'text-foreground' : 'text-muted-foreground'}`}>
             {badge.name}
@@ -89,14 +110,36 @@ function BadgeCard({ badge, earned, earnedAt }: { badge: BadgeData; earned: bool
               Earned {new Date(earnedAt).toLocaleDateString()}
             </p>
           )}
+          {earned && onEquip && (
+            <Button
+              variant={isEquipped ? "secondary" : "outline"}
+              size="sm"
+              className="mt-3 w-full text-xs"
+              onClick={() => onEquip(isEquipped ? null : badge.id)}
+              disabled={isPending}
+              data-testid={`button-equip-badge-${badge.id}`}
+            >
+              {isPending ? "..." : isEquipped ? "Unequip" : "Equip"}
+            </Button>
+          )}
         </CardContent>
       </Card>
     </motion.div>
   );
 }
 
+type UserProfile = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
+  profileImageUrl: string | null;
+  equippedBadgeId: number | null;
+};
+
 export default function BadgesPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
 
   const { data: allBadges, isLoading: badgesLoading } = useQuery<BadgeData[]>({
     queryKey: ["/api/badges"]
@@ -114,6 +157,12 @@ export default function BadgesPage() {
     staleTime: 0,
   });
 
+  const { data: profile, refetch: refetchProfile } = useQuery<UserProfile>({
+    queryKey: ["/api/user/profile"],
+    enabled: !!user,
+    staleTime: 0,
+  });
+
   const checkBadgesMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/badges/check", { method: "POST", credentials: "include" });
@@ -125,11 +174,32 @@ export default function BadgesPage() {
     }
   });
 
+  const equipBadgeMutation = useMutation({
+    mutationFn: async (badgeId: number | null) => {
+      return apiRequest("PATCH", "/api/user/equipped-badge", { badgeId });
+    },
+    onSuccess: (_, badgeId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      toast({
+        title: badgeId ? "Badge Equipped" : "Badge Unequipped",
+        description: badgeId ? "Your badge will now display on the leaderboard and in discussions." : "Badge removed from your profile.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update equipped badge.",
+        variant: "destructive",
+      });
+    }
+  });
+
   useEffect(() => {
     if (user) {
       checkBadgesMutation.mutate();
       refetchUserBadges();
       refetchLevel();
+      refetchProfile();
     }
   }, [user]);
 
@@ -210,6 +280,9 @@ export default function BadgesPage() {
               badge={badge} 
               earned={earnedBadgeIds.has(badge.id)}
               earnedAt={earnedBadgesMap.get(badge.id)?.earnedAt}
+              isEquipped={profile?.equippedBadgeId === badge.id}
+              onEquip={(badgeId) => equipBadgeMutation.mutate(badgeId)}
+              isPending={equipBadgeMutation.isPending}
             />
           ))}
         </div>
@@ -227,6 +300,9 @@ export default function BadgesPage() {
               badge={badge} 
               earned={earnedBadgeIds.has(badge.id)}
               earnedAt={earnedBadgesMap.get(badge.id)?.earnedAt}
+              isEquipped={profile?.equippedBadgeId === badge.id}
+              onEquip={(badgeId) => equipBadgeMutation.mutate(badgeId)}
+              isPending={equipBadgeMutation.isPending}
             />
           ))}
         </div>
@@ -244,6 +320,9 @@ export default function BadgesPage() {
               badge={badge} 
               earned={earnedBadgeIds.has(badge.id)}
               earnedAt={earnedBadgesMap.get(badge.id)?.earnedAt}
+              isEquipped={profile?.equippedBadgeId === badge.id}
+              onEquip={(badgeId) => equipBadgeMutation.mutate(badgeId)}
+              isPending={equipBadgeMutation.isPending}
             />
           ))}
         </div>

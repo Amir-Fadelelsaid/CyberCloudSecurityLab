@@ -11,6 +11,7 @@ export type LeaderboardEntry = {
   firstName: string | null;
   lastName: string | null;
   displayName: string | null;
+  equippedBadgeId: number | null;
   profileImageUrl: string | null;
   completedLabs: number;
   level: number;
@@ -241,11 +242,12 @@ export class DatabaseStorage implements IStorage {
         lastName: users.lastName,
         displayName: users.displayName,
         profileImageUrl: users.profileImageUrl,
+        equippedBadgeId: users.equippedBadgeId,
         completedLabs: sql<number>`COALESCE(COUNT(CASE WHEN ${userProgress.completed} = true THEN 1 END), 0)::int`
       })
       .from(users)
       .leftJoin(userProgress, eq(users.id, userProgress.userId))
-      .groupBy(users.id)
+      .groupBy(users.id, users.equippedBadgeId)
       .orderBy(desc(sql`COUNT(CASE WHEN ${userProgress.completed} = true THEN 1 END)`));
 
     const calculateLevelInfo = (completed: number) => {
@@ -265,6 +267,7 @@ export class DatabaseStorage implements IStorage {
         firstName: row.firstName,
         lastName: row.lastName,
         displayName: row.displayName,
+        equippedBadgeId: row.equippedBadgeId,
         profileImageUrl: row.profileImageUrl,
         completedLabs: row.completedLabs,
         level: levelInfo.level,

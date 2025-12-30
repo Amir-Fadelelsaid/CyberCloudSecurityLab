@@ -20,7 +20,23 @@ import {
   Users, 
   BookOpen,
   Reply,
-  Shield
+  Shield,
+  Search,
+  Wrench,
+  Building2,
+  Crown,
+  Database,
+  Network,
+  Eye,
+  Activity,
+  Cloud,
+  Flame,
+  Zap,
+  Anchor,
+  Target,
+  Moon,
+  Calendar,
+  Trophy
 } from "lucide-react";
 
 type User = {
@@ -29,6 +45,18 @@ type User = {
   lastName: string | null;
   displayName: string | null;
   profileImageUrl: string | null;
+  equippedBadgeId: number | null;
+};
+
+type BadgeData = {
+  id: number;
+  name: string;
+  icon: string;
+};
+
+const iconMap: Record<string, any> = {
+  Shield, Search, Wrench, Building2, Crown, Database, Network, Eye,
+  Activity, Cloud, Flame, Zap, Anchor, Target, Moon, Calendar, Trophy
 };
 
 type DiscussionPost = {
@@ -66,6 +94,15 @@ export function CommunityDiscussion() {
   const { data: codeOfConduct } = useQuery<{ content: string }>({
     queryKey: ["/api/discussions/code-of-conduct"],
   });
+
+  const { data: allBadges } = useQuery<BadgeData[]>({
+    queryKey: ["/api/badges"],
+  });
+
+  const getBadgeInfo = (badgeId: number | null) => {
+    if (!badgeId || !allBadges) return null;
+    return allBadges.find(b => b.id === badgeId);
+  };
 
   const createPostMutation = useMutation({
     mutationFn: async (data: { content: string; parentId?: number }) => {
@@ -255,6 +292,17 @@ export function CommunityDiscussion() {
                             {post.category || "general"}
                           </Badge>
                         )}
+                        {(() => {
+                          const badgeInfo = getBadgeInfo(post.user.equippedBadgeId);
+                          if (!badgeInfo) return null;
+                          const IconComponent = iconMap[badgeInfo.icon] || Shield;
+                          return (
+                            <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 gap-1 text-xs">
+                              <IconComponent className="w-3 h-3" />
+                              {badgeInfo.name}
+                            </Badge>
+                          );
+                        })()}
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                         </span>
@@ -341,6 +389,17 @@ export function CommunityDiscussion() {
                                       Creator
                                     </Badge>
                                   )}
+                                  {(() => {
+                                    const badgeInfo = getBadgeInfo(reply.user.equippedBadgeId);
+                                    if (!badgeInfo) return null;
+                                    const IconComponent = iconMap[badgeInfo.icon] || Shield;
+                                    return (
+                                      <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 gap-0.5 text-[10px] px-1.5 py-0">
+                                        <IconComponent className="w-2.5 h-2.5" />
+                                        {badgeInfo.name}
+                                      </Badge>
+                                    );
+                                  })()}
                                   <span className="text-xs text-muted-foreground">
                                     {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
                                   </span>

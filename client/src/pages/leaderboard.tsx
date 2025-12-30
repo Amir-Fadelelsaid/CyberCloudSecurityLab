@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Award, Users, Zap, TrendingUp, Crown, Shield, Target } from "lucide-react";
+import { Trophy, Medal, Award, Users, Zap, TrendingUp, Crown, Shield, Target, Star, Search, Wrench, Building2, Database, Network, Eye, Activity, Cloud, Flame, Anchor, Moon, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -13,10 +13,22 @@ type LeaderboardEntry = {
   firstName: string | null;
   lastName: string | null;
   displayName: string | null;
+  equippedBadgeId: number | null;
   profileImageUrl: string | null;
   completedLabs: number;
   level: number;
   levelTitle: string;
+};
+
+type BadgeData = {
+  id: number;
+  name: string;
+  icon: string;
+};
+
+const iconMap: Record<string, any> = {
+  Shield, Search, Wrench, Building2, Crown, Database, Network, Eye,
+  Activity, Cloud, Flame, Zap, Anchor, Target, Moon, Calendar, Trophy
 };
 
 const getDisplayName = (entry: LeaderboardEntry) => {
@@ -33,6 +45,15 @@ export default function Leaderboard() {
   const { data: initialData, isLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard"],
   });
+
+  const { data: allBadges } = useQuery<BadgeData[]>({
+    queryKey: ["/api/badges"],
+  });
+
+  const getBadgeInfo = (badgeId: number | null) => {
+    if (!badgeId || !allBadges) return null;
+    return allBadges.find(b => b.id === badgeId);
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -231,6 +252,17 @@ export default function Leaderboard() {
                         You
                       </Badge>
                     )}
+                    {(() => {
+                      const badgeInfo = getBadgeInfo(entry.equippedBadgeId);
+                      if (!badgeInfo) return null;
+                      const IconComponent = iconMap[badgeInfo.icon] || Shield;
+                      return (
+                        <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 gap-1 text-xs">
+                          <IconComponent className="w-3 h-3" />
+                          {badgeInfo.name}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   <p className="text-sm text-muted-foreground font-mono">
                     Level {entry.level}
