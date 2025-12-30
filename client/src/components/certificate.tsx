@@ -107,7 +107,7 @@ export const Certificate = forwardRef<HTMLDivElement, CertificateProps>(
             <div className="text-center">
               <div className="w-32 h-0.5 bg-white/50 mb-1" />
               <p className="text-sm font-bold text-white">Amir Fadelsaid</p>
-              <p className="text-xs text-muted-foreground">Founder & Lead Instructor</p>
+              <p className="text-xs text-muted-foreground">Founder & Developer</p>
               <p className="text-xs text-primary font-mono">CloudShieldLab</p>
             </div>
 

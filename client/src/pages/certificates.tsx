@@ -92,9 +92,14 @@ export default function CertificatesPage() {
     <div className="space-y-8 max-w-6xl mx-auto">
       <div>
         <h1 className="text-3xl font-display font-bold text-white mb-2">CERTIFICATES</h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           Earn certificates by completing all labs in a category. {earnedCategories.size}/{allCategories.length} earned.
         </p>
+        <div className="bg-muted/30 border border-border/50 rounded-md px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Disclaimer:</span> These are certificates of completion for finishing CloudShieldLab training labs. They are not industry certifications and do not replace professional credentials.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
