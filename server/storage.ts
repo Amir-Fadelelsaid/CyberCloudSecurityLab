@@ -52,6 +52,7 @@ export interface IStorage {
   
   // User profile
   updateUserDisplayName(userId: string, displayName: string): Promise<void>;
+  updateEquippedBadge(userId: string, badgeId: number | null): Promise<void>;
   getUser(userId: string): Promise<User | undefined>;
   
   // Certificates
@@ -275,6 +276,12 @@ export class DatabaseStorage implements IStorage {
   async updateUserDisplayName(userId: string, displayName: string): Promise<void> {
     await db.update(users)
       .set({ displayName, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async updateEquippedBadge(userId: string, badgeId: number | null): Promise<void> {
+    await db.update(users)
+      .set({ equippedBadgeId: badgeId, updatedAt: new Date() })
       .where(eq(users.id, userId));
   }
 

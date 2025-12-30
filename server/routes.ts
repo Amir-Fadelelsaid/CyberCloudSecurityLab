@@ -2349,6 +2349,34 @@ export async function registerRoutes(
     }
   });
 
+  // Equip or unequip a badge
+  app.patch("/api/user/equipped-badge", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { badgeId } = req.body;
+      
+      // badgeId can be null to unequip
+      if (badgeId !== null && typeof badgeId !== "number") {
+        return res.status(400).json({ message: "Badge ID must be a number or null" });
+      }
+      
+      // If equipping, verify the user has earned this badge
+      if (badgeId !== null) {
+        const hasBadge = await storage.hasBadge(userId, badgeId);
+        if (!hasBadge) {
+          return res.status(403).json({ message: "You haven't earned this badge yet" });
+        }
+      }
+      
+      await storage.updateEquippedBadge(userId, badgeId);
+      
+      res.json({ message: badgeId ? "Badge equipped" : "Badge unequipped", equippedBadgeId: badgeId });
+    } catch (error) {
+      console.error("Error updating equipped badge:", error);
+      res.status(500).json({ message: "Failed to update equipped badge" });
+    }
+  });
+
   // Get current user profile
   app.get("/api/user/profile", isAuthenticated, async (req: any, res) => {
     try {
@@ -2364,7 +2392,8 @@ export async function registerRoutes(
         firstName: user.firstName,
         lastName: user.lastName,
         displayName: user.displayName,
-        profileImageUrl: user.profileImageUrl
+        profileImageUrl: user.profileImageUrl,
+        equippedBadgeId: user.equippedBadgeId
       });
     } catch (error) {
       console.error("Error fetching user profile:", error);
