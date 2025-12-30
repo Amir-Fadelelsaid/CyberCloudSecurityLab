@@ -2,6 +2,8 @@
 
 Built to demonstrate real-world cloud security, SOC analysis, and incident response skills in a production-like environment.
 
+Note: Scenarios are simulations based on documented cloud security behaviors and industry frameworks. Detection logic and remediation steps are designed to reflect best practices and may vary by organization.
+
 ### Who CloudShieldLab Is Designed For
 
 - Aspiring SOC Analysts
