@@ -250,9 +250,11 @@ export function CommunityDiscussion() {
                             Creator
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs">
-                          {post.category || "general"}
-                        </Badge>
+                        {!isCreator(post.userId) && (
+                          <Badge variant="outline" className="text-xs">
+                            {post.category || "general"}
+                          </Badge>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                         </span>
