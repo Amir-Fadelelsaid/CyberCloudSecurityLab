@@ -1,7 +1,8 @@
 import { useLabs } from "@/hooks/use-labs";
+import { useProgress } from "@/hooks/use-progress";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Loader2, Search, Filter, Clock, ListChecks } from "lucide-react";
+import { Loader2, Search, Filter, Clock, ListChecks, CheckCircle2, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { clsx } from "clsx";
 
@@ -17,8 +18,13 @@ const SEARCH_KEYWORDS: Record<string, string[]> = {
 
 export default function LabsList() {
   const { data: labs, isLoading } = useLabs();
+  const { data: progress } = useProgress();
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
+
+  const isLabCompleted = (labId: number) => {
+    return progress?.some(p => p.labId === labId && p.completed) || false;
+  };
 
   const filteredLabs = labs?.filter(lab => {
     const matchesFilter = filter === 'All' || lab.difficulty === filter;
@@ -81,7 +87,9 @@ export default function LabsList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLabs?.map((lab, index) => (
+          {filteredLabs?.map((lab, index) => {
+            const completed = isLabCompleted(lab.id);
+            return (
             <motion.div
               key={lab.id}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -90,13 +98,27 @@ export default function LabsList() {
               whileHover={{ y: -8, scale: 1.02 }}
             >
               <Link href={`/labs/${lab.id}`} className="block h-full">
-                <div className="h-full relative overflow-hidden rounded-xl flex flex-col transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-primary/30">
+                <div className={clsx(
+                  "h-full relative overflow-hidden rounded-xl flex flex-col transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-primary/30",
+                  completed && "ring-2 ring-green-500/50"
+                )}>
+                  {/* Completed badge */}
+                  {completed && (
+                    <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-green-500/90 text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-green-500/30">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Completed
+                    </div>
+                  )}
+                  
                   {/* Animated gradient background */}
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="absolute inset-0 bg-card group-hover:bg-gradient-to-br group-hover:from-card group-hover:via-card/80 group-hover:to-accent/5 transition-all duration-300" />
                   
                   {/* Animated border glow */}
-                  <div className="absolute inset-0 rounded-xl border border-primary/30 group-hover:border-primary/60 transition-all duration-300" />
+                  <div className={clsx(
+                    "absolute inset-0 rounded-xl border transition-all duration-300",
+                    completed ? "border-green-500/40 group-hover:border-green-500/60" : "border-primary/30 group-hover:border-primary/60"
+                  )} />
                   <div className="absolute inset-0 rounded-xl border border-accent/20 group-hover:border-accent/40 transition-all duration-300 blur-sm opacity-0 group-hover:opacity-100" />
                   
                   {/* Category Stripe - Enhanced */}
@@ -157,20 +179,27 @@ export default function LabsList() {
 
                   <div className="relative z-10 mt-auto px-6 pb-6">
                     <motion.button 
-                      className="w-full py-3 rounded-lg bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/40 text-primary text-center text-xs font-mono font-bold group-hover:from-primary group-hover:to-accent group-hover:text-background transition-all uppercase tracking-wider shadow-lg"
+                      className={clsx(
+                        "w-full py-3 rounded-lg border text-center text-xs font-mono font-bold transition-all uppercase tracking-wider shadow-lg flex items-center justify-center gap-2",
+                        completed 
+                          ? "bg-gradient-to-r from-green-500/20 to-teal-500/20 border-green-500/40 text-green-400 group-hover:from-green-500 group-hover:to-teal-500 group-hover:text-background"
+                          : "bg-gradient-to-r from-primary/20 to-accent/20 border-primary/40 text-primary group-hover:from-primary group-hover:to-accent group-hover:text-background"
+                      )}
                       whileHover={{ 
-                        boxShadow: "0 0 25px rgba(0, 255, 128, 0.5)",
+                        boxShadow: completed ? "0 0 25px rgba(34, 197, 94, 0.5)" : "0 0 25px rgba(0, 255, 128, 0.5)",
                         scale: 1.05
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      Initialize Simulation
+                      {completed && <RotateCcw className="w-3.5 h-3.5" />}
+                      {completed ? "Redo Simulation" : "Initialize Simulation"}
                     </motion.button>
                   </div>
                 </div>
               </Link>
             </motion.div>
-          ))}
+          );
+          })}
           
           {filteredLabs?.length === 0 && (
              <div className="col-span-full text-center py-20 text-muted-foreground">
