@@ -2,9 +2,12 @@ import { useLabs } from "@/hooks/use-labs";
 import { useProgress } from "@/hooks/use-progress";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Loader2, Search, Filter, Clock, ListChecks, CheckCircle2, RotateCcw } from "lucide-react";
+import { Loader2, Search, Clock, ListChecks, CheckCircle2, X } from "lucide-react";
 import { useState } from "react";
 import { clsx } from "clsx";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { api } from "@shared/routes";
 
 const SEARCH_KEYWORDS: Record<string, string[]> = {
   "Cloud Security Analyst": ["soc", "analyst", "cloud", "security", "csa"],
@@ -24,6 +27,21 @@ export default function LabsList() {
 
   const isLabCompleted = (labId: number) => {
     return progress?.some(p => p.labId === labId && p.completed) || false;
+  };
+
+  const resetProgressMutation = useMutation({
+    mutationFn: async (labId: number) => {
+      await apiRequest("DELETE", `/api/progress/${labId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.progress.get.path] });
+    }
+  });
+
+  const handleResetProgress = (e: React.MouseEvent, labId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    resetProgressMutation.mutate(labId);
   };
 
   const filteredLabs = labs?.filter(lab => {
@@ -98,27 +116,13 @@ export default function LabsList() {
               whileHover={{ y: -8, scale: 1.02 }}
             >
               <Link href={`/labs/${lab.id}`} className="block h-full">
-                <div className={clsx(
-                  "h-full relative overflow-hidden rounded-xl flex flex-col transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-primary/30",
-                  completed && "ring-2 ring-green-500/50"
-                )}>
-                  {/* Completed badge */}
-                  {completed && (
-                    <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-green-500/90 text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-green-500/30">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Completed
-                    </div>
-                  )}
-                  
+                <div className="h-full relative overflow-hidden rounded-xl flex flex-col transition-all duration-300 group shadow-xl hover:shadow-2xl hover:shadow-primary/30">
                   {/* Animated gradient background */}
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="absolute inset-0 bg-card group-hover:bg-gradient-to-br group-hover:from-card group-hover:via-card/80 group-hover:to-accent/5 transition-all duration-300" />
                   
                   {/* Animated border glow */}
-                  <div className={clsx(
-                    "absolute inset-0 rounded-xl border transition-all duration-300",
-                    completed ? "border-green-500/40 group-hover:border-green-500/60" : "border-primary/30 group-hover:border-primary/60"
-                  )} />
+                  <div className="absolute inset-0 rounded-xl border border-primary/30 group-hover:border-primary/60 transition-all duration-300" />
                   <div className="absolute inset-0 rounded-xl border border-accent/20 group-hover:border-accent/40 transition-all duration-300 blur-sm opacity-0 group-hover:opacity-100" />
                   
                   {/* Category Stripe - Enhanced */}
@@ -177,22 +181,32 @@ export default function LabsList() {
                     )}
                   </div>
 
-                  <div className="relative z-10 mt-auto px-6 pb-6">
+                  <div className="relative z-10 mt-auto px-6 pb-6 space-y-2">
+                    {completed && (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-green-400 text-xs font-mono font-bold">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Completed
+                        </span>
+                        <button 
+                          onClick={(e) => handleResetProgress(e, lab.id)}
+                          className="flex items-center gap-1 text-muted-foreground hover:text-red-400 text-xs font-mono transition-colors"
+                          data-testid={`button-reset-${lab.id}`}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Remove
+                        </button>
+                      </div>
+                    )}
                     <motion.button 
-                      className={clsx(
-                        "w-full py-3 rounded-lg border text-center text-xs font-mono font-bold transition-all uppercase tracking-wider shadow-lg flex items-center justify-center gap-2",
-                        completed 
-                          ? "bg-gradient-to-r from-green-500/20 to-teal-500/20 border-green-500/40 text-green-400 group-hover:from-green-500 group-hover:to-teal-500 group-hover:text-background"
-                          : "bg-gradient-to-r from-primary/20 to-accent/20 border-primary/40 text-primary group-hover:from-primary group-hover:to-accent group-hover:text-background"
-                      )}
+                      className="w-full py-3 rounded-lg bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/40 text-primary text-center text-xs font-mono font-bold group-hover:from-primary group-hover:to-accent group-hover:text-background transition-all uppercase tracking-wider shadow-lg"
                       whileHover={{ 
-                        boxShadow: completed ? "0 0 25px rgba(34, 197, 94, 0.5)" : "0 0 25px rgba(0, 255, 128, 0.5)",
+                        boxShadow: "0 0 25px rgba(0, 255, 128, 0.5)",
                         scale: 1.05
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      {completed && <RotateCcw className="w-3.5 h-3.5" />}
-                      {completed ? "Redo Simulation" : "Initialize Simulation"}
+                      Initialize Simulation
                     </motion.button>
                   </div>
                 </div>

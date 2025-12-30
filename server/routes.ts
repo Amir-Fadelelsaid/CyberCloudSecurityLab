@@ -2237,6 +2237,21 @@ export async function registerRoutes(
     res.json(progress);
   });
 
+  app.delete("/api/progress/:labId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const labId = parseInt(req.params.labId);
+      if (isNaN(labId)) {
+        return res.status(400).json({ message: "Invalid lab ID" });
+      }
+      await storage.resetLabProgress(userId, labId);
+      res.json({ success: true, message: "Lab progress reset successfully" });
+    } catch (error) {
+      console.error("Error resetting lab progress:", error);
+      res.status(500).json({ message: "Failed to reset lab progress" });
+    }
+  });
+
   // Badges
   app.get("/api/badges", isAuthenticated, async (req, res) => {
     const badges = await storage.getBadges();

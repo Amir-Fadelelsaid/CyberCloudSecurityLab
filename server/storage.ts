@@ -34,6 +34,7 @@ export interface IStorage {
   // Progress
   getUserProgress(userId: string): Promise<(UserProgress & { lab: Lab })[]>;
   updateProgress(userId: string, labId: number, completed: boolean): Promise<UserProgress>;
+  resetLabProgress(userId: string, labId: number): Promise<void>;
   
   // Logs
   logCommand(userId: string, labId: number, command: string, output: string, isCorrect: boolean): Promise<void>;
@@ -166,6 +167,11 @@ export class DatabaseStorage implements IStorage {
       'Challenge': 100
     };
     return scores[difficulty] || 10;
+  }
+
+  async resetLabProgress(userId: string, labId: number): Promise<void> {
+    await db.delete(userProgress)
+      .where(and(eq(userProgress.userId, userId), eq(userProgress.labId, labId)));
   }
 
   async logCommand(userId: string, labId: number, command: string, output: string, isCorrect: boolean): Promise<void> {
