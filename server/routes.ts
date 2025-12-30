@@ -4577,17 +4577,6 @@ Verdict: TRUE POSITIVE`;
 Dashboard available for investigation.`;
     success = true;
   }
-  else if (lowerCmd.startsWith("siem fix-severity ")) {
-    output = `=== Alert Severity Fixed ===
-
-[OK] Critical alerts re-prioritized
-[OK] Severity mapping updated
-[OK] Thresholds adjusted
-[OK] Notification rules updated
-
-Alert quality improved.`;
-    success = true;
-  }
   else if (lowerCmd.startsWith("siem validate-alert ")) {
     output = `=== Alert Validated ===
 
