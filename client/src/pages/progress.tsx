@@ -16,8 +16,7 @@ import {
   User,
   Pencil,
   Check,
-  X,
-  Users
+  X
 } from "lucide-react";
 import { useProgress } from "@/hooks/use-progress";
 import { useLabs } from "@/hooks/use-labs";
@@ -28,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CommunityDiscussion } from "@/components/community-discussion";
 
 type LevelInfo = {
   level: number;
@@ -546,20 +544,6 @@ export default function MyProgress() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
-
-      {/* Community Discussion Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="mt-8"
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <Users className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-semibold">Community Discussion</h2>
-        </div>
-        <CommunityDiscussion />
       </motion.div>
     </div>
   );

@@ -4,6 +4,17 @@
 
 CloudShieldLab is a gamified cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations. The application provides 97 interactive labs across 7 categories covering Storage Security (12 labs including 1 expert Challenge), Network Security (17 labs including 1 expert Challenge), SOC Operations (12 labs including 1 expert Challenge), SOC Engineer (13 labs including 1 expert Challenge), Cloud Security Analyst (14 labs including 2 expert Challenges), IAM Security (16 labs including 1 expert Challenge with Identity Graph visualization), and Cloud Security Engineer (13 labs including 1 expert Challenge) scenarios. Users learn through hands-on practice with simulated AWS CLI commands and receive real-time feedback mapped to security frameworks like MITRE ATT&CK and CIS Controls.
 
+## Recent Changes (December 2024)
+
+### Community Discussion Feature
+- Added dedicated Community page accessible from sidebar navigation
+- Users can post questions, share insights, and reply to discussions
+- Profanity filter with 70+ blocked words/phrases and leet speak detection
+- Code of conduct enforcement before posting
+- Real-time updates with 30-second polling
+- Threaded replies with collapsible reply forms
+- Users can delete their own posts
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -36,6 +47,7 @@ Preferred communication style: Simple, everyday language.
   - `userProgress` - Tracks completed labs and scores
   - `terminalLogs` - Command history for learning analytics
   - `badges` and `userBadges` - Achievement and leveling system
+  - `discussionPosts` - Community discussion posts with parent-child threading
 
 ### Key Design Patterns
 - **Shared Types**: Schema definitions in `shared/` folder used by both client and server

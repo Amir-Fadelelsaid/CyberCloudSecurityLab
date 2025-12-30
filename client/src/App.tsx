@@ -17,6 +17,7 @@ import Badges from "@/pages/badges";
 import Leaderboard from "@/pages/leaderboard";
 import MyProgress from "@/pages/progress";
 import Certificates from "@/pages/certificates";
+import Community from "@/pages/community";
 import NotFound from "@/pages/not-found";
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
@@ -81,6 +82,9 @@ function Router() {
       
       {/* Certificates page */}
       <Route path="/certificates" component={() => <PrivateRoute component={Certificates} />} />
+      
+      {/* Community page */}
+      <Route path="/community" component={() => <PrivateRoute component={Community} />} />
       
       {/* Public hiring manager page */}
       <Route path="/hiring" component={HiringManager} />
