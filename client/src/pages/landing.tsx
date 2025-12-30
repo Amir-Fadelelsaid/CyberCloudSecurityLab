@@ -99,7 +99,7 @@ export default function Landing() {
             {[
               { value: "97", label: "Labs" },
               { value: "7", label: "Categories" },
-              { value: "19", label: "Badges" },
+              { value: "22", label: "Badges" },
               { value: "7", label: "Certificates" },
             ].map((stat, i) => (
               <div key={i} className="text-center">

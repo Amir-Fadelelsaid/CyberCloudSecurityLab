@@ -146,6 +146,27 @@ export const achievementBadges: BadgeDefinition[] = [
     requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 1 })
   },
   {
+    name: "Threat Hunter",
+    description: "Complete 3 Challenge labs and prove your APT detection skills",
+    icon: "Crosshair",
+    category: "Achievement",
+    requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 3 })
+  },
+  {
+    name: "Red Team Rival",
+    description: "Complete 6 Challenge labs and match adversary tactics",
+    icon: "Swords",
+    category: "Achievement",
+    requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 6 })
+  },
+  {
+    name: "APT Slayer",
+    description: "Complete all 11 Challenge labs and dominate elite scenarios",
+    icon: "Skull",
+    category: "Achievement",
+    requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 11 })
+  },
+  {
     name: "Perfect Week",
     description: "Complete 7 labs in 7 days",
     icon: "Calendar",

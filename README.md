@@ -99,11 +99,11 @@ Earn certificates upon completing all labs in a category:
 | 4 | Architect | 51+ labs | Architect Badge |
 | 5 | Elite Defender | All 97 labs | Elite Defender Badge |
 
-### 19 Unlockable Badges
+### 22 Unlockable Badges
 
 - **5 Level Badges**: Operator, Analyst, Engineer, Architect, Elite Defender
 - **7 Category Mastery Badges**: Storage Guardian, Network Sentinel, SOC Commander, SIEM Master, Cloud Protector, IAM Enforcer, Security Architect
-- **7 Achievement Badges**: First Blood, Speed Runner, Deep Diver, Expert Hunter, Lone Wolf, Perfect Week, Completionist
+- **10 Achievement Badges**: First Blood, Speed Runner, Deep Diver, Expert Hunter, Lone Wolf, Threat Hunter, Red Team Rival, APT Slayer, Perfect Week, Completionist
 
 ### Difficulty-Based Learning Path
 
