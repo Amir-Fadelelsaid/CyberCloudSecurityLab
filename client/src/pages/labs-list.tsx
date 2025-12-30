@@ -147,10 +147,10 @@ export default function LabsList() {
                         {String(lab.estimatedTime)}
                       </span>
                     )}
-                    {lab.steps && Array.isArray(lab.steps) && lab.steps.length > 0 && (
+                    {lab.steps && Array.isArray(lab.steps) && (lab.steps as Array<unknown>).length > 0 && (
                       <span className="flex items-center gap-1" data-testid={`text-steps-${lab.id}`}>
                         <ListChecks className="w-3 h-3" />
-                        {(lab.steps as unknown[]).length} steps
+                        {String((lab.steps as Array<unknown>).length)} steps
                       </span>
                     )}
                   </div>
