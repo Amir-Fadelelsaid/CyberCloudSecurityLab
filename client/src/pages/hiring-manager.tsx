@@ -83,12 +83,12 @@ export default function HiringManager() {
           <div className="grid md:grid-cols-4 lg:grid-cols-7 gap-3">
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Database className="w-4 h-4 text-teal-400" />
-                  Storage
+                  Storage Security
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center">
                 <p className="text-2xl font-bold text-white">11</p>
                 <p className="text-xs text-muted-foreground">S3, encryption</p>
               </CardContent>
@@ -96,12 +96,12 @@ export default function HiringManager() {
 
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Network className="w-4 h-4 text-blue-400" />
-                  Network
+                  Network Security
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center">
                 <p className="text-2xl font-bold text-white">16</p>
                 <p className="text-xs text-muted-foreground">VPC, SGs, WAF</p>
               </CardContent>
@@ -109,12 +109,12 @@ export default function HiringManager() {
 
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Eye className="w-4 h-4 text-violet-400" />
-                  SOC Ops
+                  SOC Operations
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center">
                 <p className="text-2xl font-bold text-white">11</p>
                 <p className="text-xs text-muted-foreground">CloudTrail, alerts</p>
               </CardContent>
@@ -122,12 +122,12 @@ export default function HiringManager() {
 
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Activity className="w-4 h-4 text-orange-400" />
                   SOC Engineer
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center">
                 <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">SIEM, SOAR</p>
               </CardContent>
@@ -135,12 +135,12 @@ export default function HiringManager() {
 
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Cloud className="w-4 h-4 text-cyan-400" />
-                  Cloud Analyst
+                  Cloud Security Analyst
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center">
                 <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">CSPM, compliance</p>
               </CardContent>
@@ -148,12 +148,12 @@ export default function HiringManager() {
 
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Users className="w-4 h-4 text-yellow-400" />
                   IAM Security
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center">
                 <p className="text-2xl font-bold text-white">15</p>
                 <p className="text-xs text-muted-foreground">Roles, policies, MFA</p>
               </CardContent>
@@ -161,12 +161,12 @@ export default function HiringManager() {
 
             <Card className="bg-card/50 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-sm">
+                <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Shield className="w-4 h-4 text-rose-400" />
-                  Cloud SecEng
+                  Cloud Security Engineer
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center">
                 <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">Security Hub, IaC</p>
               </CardContent>
