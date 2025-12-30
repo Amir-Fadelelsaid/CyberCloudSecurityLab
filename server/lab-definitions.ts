@@ -1826,6 +1826,57 @@ export const iamSecurityLabs: LabDefinition[] = [
       { type: "iam_architecture", name: "current-iam-state", config: { zeroTrustScore: 35 }, isVulnerable: true, status: "traditional" }
     ],
     fixCommands: ["aws iam enforce-mfa-all-users", "aws iam implement-least-privilege", "aws organizations configure-scps", "aws iam generate-zero-trust-report"]
+  },
+  // ADVANCED LAB - Enterprise Identity Ecosystem
+  {
+    title: "Enterprise Identity Security Investigation",
+    description: "Investigate a complex identity environment with federated access, service accounts, cross-account roles, and privilege escalation paths. Detect misconfigurations, analyze trust relationships, and remediate identity-based attack vectors.",
+    briefing: "IDENTITY CRISIS: Security Operations flagged anomalous behavior in your identity infrastructure. A service account assumed an admin role it shouldn't have access to. Multiple trust policies appear misconfigured. Your identity graph shows unexpected privilege escalation paths. Investigate the full scope and secure the identity perimeter.",
+    scenario: "Your enterprise runs a hybrid identity architecture: Okta SSO federates into AWS IAM, service accounts power CI/CD pipelines, cross-account roles enable shared services, and contractors have time-limited access. Last night, CloudTrail showed a service account escalating to AdministratorAccess through a broken trust chain. The attack surface is massive - you need to map the identity ecosystem, find all escalation paths, and lock them down before real attackers exploit them.",
+    difficulty: "Advanced",
+    category: "IAM Security",
+    estimatedTime: "45-60 minutes",
+    initialState: { 
+      identityProvider: ["okta-federation"],
+      users: ["admin-sarah", "developer-mike", "contractor-alex"],
+      serviceAccounts: ["cicd-deployer", "backup-automation", "monitoring-agent"],
+      roles: ["AdminRole", "DeveloperRole", "ReadOnlyRole", "CrossAccountRole", "EmergencyBreakGlass"],
+      groups: ["Administrators", "Developers", "Contractors", "ServiceAccounts"],
+      policies: ["AdminPolicy", "DeveloperPolicy", "CrossAccountTrust"]
+    },
+    steps: [
+      { number: 1, title: "Initialize Identity Audit", description: "Scan the identity infrastructure to understand the scope of the investigation.", hint: "Type 'scan' to analyze identity configuration.", intel: "MITRE ATT&CK T1078.004: Cloud Accounts. Attackers target identity misconfigurations for privilege escalation. Map all principals, roles, and trust relationships." },
+      { number: 2, title: "Map Identity Providers", description: "Review federated identity configuration and SAML/OIDC trust relationships.", hint: "Type 'aws iam list-identity-providers'.", intel: "Federation misconfigurations can allow any user from the IdP to assume powerful roles. Check the trust policy conditions." },
+      { number: 3, title: "Analyze User Permissions", description: "Review human user permissions and identify over-privileged accounts.", hint: "Type 'aws iam analyze-user-permissions'.", intel: "Focus on: direct policy attachments, group memberships, role assumption permissions. Users should access AWS through roles, not direct permissions." },
+      { number: 4, title: "Audit Service Accounts", description: "Examine service account permissions and credential lifecycle.", hint: "Type 'aws iam audit-service-accounts'.", intel: "Service accounts often accumulate permissions over time. Check for: unused permissions, long-lived credentials, overly broad trust policies." },
+      { number: 5, title: "Trace Role Assumption Paths", description: "Build a graph of all role assumption paths to identify privilege escalation routes.", hint: "Type 'aws iam trace-role-chains'.", intel: "Role chaining can create unexpected privilege escalation: ServiceAccount -> DeveloperRole -> AdminRole. Each link in the chain must be intentional." },
+      { number: 6, title: "Identify Trust Policy Issues", description: "Analyze trust policies for overly permissive principal definitions.", hint: "Type 'aws iam analyze-trust-policies'.", intel: "Watch for: Principal: *, missing conditions, wildcards in ARNs, trust to unknown accounts. T1098: Attackers modify trust policies for persistence." },
+      { number: 7, title: "Check Conditional Access", description: "Review IAM conditions for MFA requirements, IP restrictions, and time-based access.", hint: "Type 'aws iam check-conditional-access'.", intel: "Without conditions, any actor with credentials can act from anywhere. Implement: MFA requirements, source IP restrictions, time-based access for contractors." },
+      { number: 8, title: "Detect Privilege Escalation Paths", description: "Use IAM analysis to find all paths from low-privilege to admin access.", hint: "Type 'aws iam find-escalation-paths'.", intel: "Common paths: iam:PassRole + Lambda/EC2, iam:CreatePolicyVersion, sts:AssumeRole chains, iam:AttachUserPolicy. T1548: Abuse Elevation Control." },
+      { number: 9, title: "Review Credential Report", description: "Analyze the credential report for lifecycle issues: old keys, unused accounts, missing MFA.", hint: "Type 'aws iam get-credential-report'.", intel: "CIS AWS 1.12: Disable credentials unused for 90+ days. Orphaned accounts are backdoors waiting to be exploited." },
+      { number: 10, title: "Fix Trust Policy Misconfigurations", description: "Remediate the broken trust policies that enabled the privilege escalation.", hint: "Type 'aws iam fix-trust-policies'.", intel: "Add conditions: aws:PrincipalTag, aws:SourceArn, aws:RequestedRegion. Remove overly broad principals. Require MFA for sensitive role assumptions." },
+      { number: 11, title: "Implement Permission Boundaries", description: "Apply permission boundaries to limit the maximum permissions users and roles can have.", hint: "Type 'aws iam implement-permission-boundaries'.", intel: "Permission boundaries prevent privilege escalation even if policies are misconfigured. Essential for delegated administration." },
+      { number: 12, title: "Enable Identity Monitoring", description: "Configure CloudTrail, GuardDuty, and IAM Access Analyzer for continuous identity monitoring.", hint: "Type 'aws iam enable-identity-monitoring'.", intel: "Monitor: unusual role assumptions, credential access from new IPs, permission changes, cross-account activity." },
+      { number: 13, title: "Generate Identity Security Report", description: "Document findings, remediations, and recommendations for the security team.", hint: "Type 'aws iam generate-security-report'.", intel: "Include: privilege escalation paths fixed, trust policies remediated, conditional access implemented, monitoring enabled." }
+    ],
+    resources: [
+      { type: "identity_provider", name: "okta-federation", config: { type: "SAML", users: 150, mfaEnforced: false, roleMapping: "dynamic" }, isVulnerable: false, status: "federated" },
+      { type: "iam_user", name: "admin-sarah", config: { groups: ["Administrators"], mfaEnabled: true, lastActivity: "2 hours ago", directPolicies: 0 }, isVulnerable: false, status: "compliant" },
+      { type: "iam_user", name: "developer-mike", config: { groups: ["Developers"], mfaEnabled: true, lastActivity: "1 day ago", directPolicies: 2 }, isVulnerable: true, status: "direct-policy-attached" },
+      { type: "iam_user", name: "contractor-alex", config: { groups: ["Contractors"], mfaEnabled: false, lastActivity: "45 days ago", accessExpiry: "expired" }, isVulnerable: true, status: "stale-contractor" },
+      { type: "service_account", name: "cicd-deployer", config: { keyAge: 180, lastUsed: "1 hour ago", permissions: ["ec2:*", "s3:*", "iam:PassRole"], canAssumeRoles: ["DeveloperRole"] }, isVulnerable: true, status: "overly-permissive" },
+      { type: "service_account", name: "backup-automation", config: { keyAge: 365, lastUsed: "90 days ago", permissions: ["s3:*"], canAssumeRoles: [] }, isVulnerable: true, status: "unused-credentials" },
+      { type: "service_account", name: "monitoring-agent", config: { keyAge: 30, lastUsed: "5 minutes ago", permissions: ["cloudwatch:Get*", "logs:Get*"], canAssumeRoles: [] }, isVulnerable: false, status: "compliant" },
+      { type: "iam_role", name: "AdminRole", config: { trustPolicy: "okta-federation", conditions: [], permissions: "AdministratorAccess" }, isVulnerable: true, status: "no-conditions" },
+      { type: "iam_role", name: "DeveloperRole", config: { trustPolicy: ["cicd-deployer", "developer-mike"], conditions: [], permissions: "PowerUserAccess", canAssumeAdmin: true }, isVulnerable: true, status: "escalation-path" },
+      { type: "iam_role", name: "CrossAccountRole", config: { trustPolicy: "arn:aws:iam::*:root", conditions: [], permissions: "ReadOnlyAccess" }, isVulnerable: true, status: "wildcard-trust" },
+      { type: "iam_group", name: "Administrators", config: { users: 2, policies: ["AdminPolicy"], mfaRequired: true }, isVulnerable: false, status: "compliant" },
+      { type: "iam_group", name: "Developers", config: { users: 15, policies: ["DeveloperPolicy"], mfaRequired: true }, isVulnerable: false, status: "compliant" },
+      { type: "iam_group", name: "Contractors", config: { users: 5, policies: ["ContractorPolicy"], mfaRequired: false, accessExpiry: "enabled" }, isVulnerable: true, status: "no-mfa" },
+      { type: "permission_boundary", name: "developer-boundary", config: { applied: false, maxPermissions: "PowerUserAccess" }, isVulnerable: true, status: "not-implemented" }
+    ],
+    fixCommands: ["aws iam fix-trust-policies", "aws iam implement-permission-boundaries", "aws iam enable-identity-monitoring", "aws iam generate-security-report"],
+    successMessage: "Identity ecosystem secured! Privilege escalation paths eliminated through trust policy remediation and permission boundaries. Stale contractor access revoked. MFA enforced for all role assumptions. Continuous monitoring enabled. Your identity perimeter is now defensible."
   }
 ];
 

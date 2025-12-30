@@ -1745,6 +1745,307 @@ Credentials revoked: ${resources.find(r => r.type === 'iam_user')?.isVulnerable 
   else if (lowerCmd === "aws ec2 describe-route-tables --vpn" || lowerCmd === "aws ec2 describe-route-tables --nat") {
     output = `=== Route Tables ===\n\nrtb-private-1:\n  Destination: 0.0.0.0/0\n  Target: nat-prod-01\n  Status: active\n  \nrtb-private-2:\n  Destination: 0.0.0.0/0\n  Target: nat-prod-01\n  Status: active (suboptimal - cross-AZ)\n\n[!] Both private subnets routing through single NAT Gateway`;
   }
+  // IAM Identity Investigation Commands
+  else if (lowerCmd === "aws iam list-identity-providers") {
+    const providers = resources.filter(r => r.type === 'identity_provider');
+    if (providers.length > 0) {
+      output = `=== Federated Identity Providers ===\n\n` + providers.map(p => {
+        const config = p.config as any;
+        return `Provider: ${p.name}\n  Type: ${config.type || 'SAML'}\n  Users: ${config.users || 0}\n  MFA Enforced: ${config.mfaEnforced ? 'Yes' : 'No'}\n  Status: ${p.status}`;
+      }).join('\n\n');
+    } else {
+      output = "No federated identity providers configured.";
+    }
+  }
+  else if (lowerCmd === "aws iam analyze-user-permissions") {
+    const users = resources.filter(r => r.type === 'iam_user');
+    if (users.length > 0) {
+      output = `=== User Permission Analysis ===\n\n` + users.map(u => {
+        const config = u.config as any;
+        const issues = [];
+        if (config.directPolicies > 0) issues.push("Direct policies attached (use groups instead)");
+        if (!config.mfaEnabled) issues.push("MFA not enabled");
+        if (config.lastActivity?.includes('days')) issues.push("Inactive account");
+        return `User: ${u.name}\n  Groups: ${(config.groups || []).join(', ')}\n  MFA: ${config.mfaEnabled ? 'Enabled' : 'DISABLED'}\n  Last Activity: ${config.lastActivity || 'Unknown'}\n  Direct Policies: ${config.directPolicies || 0}\n  Status: ${u.isVulnerable ? '[!] ISSUES FOUND' : 'Compliant'}\n  ${issues.length > 0 ? 'Issues: ' + issues.join(', ') : ''}`;
+      }).join('\n\n');
+    } else {
+      output = "No IAM users found.";
+    }
+  }
+  else if (lowerCmd === "aws iam audit-service-accounts") {
+    const serviceAccounts = resources.filter(r => r.type === 'service_account');
+    if (serviceAccounts.length > 0) {
+      output = `=== Service Account Audit ===\n\n` + serviceAccounts.map(sa => {
+        const config = sa.config as any;
+        const issues = [];
+        if (config.keyAge > 90) issues.push(`Key age ${config.keyAge} days exceeds 90-day rotation policy`);
+        if (config.lastUsed?.includes('90')) issues.push("Credential unused for 90+ days");
+        if ((config.permissions || []).some((p: string) => p.includes('*'))) issues.push("Wildcard permissions detected");
+        return `Service Account: ${sa.name}\n  Key Age: ${config.keyAge || 0} days\n  Last Used: ${config.lastUsed || 'Unknown'}\n  Permissions: ${(config.permissions || []).join(', ')}\n  Can Assume Roles: ${(config.canAssumeRoles || []).join(', ') || 'None'}\n  Status: ${sa.isVulnerable ? '[!] AT RISK' : 'Compliant'}\n  ${issues.length > 0 ? 'Issues: ' + issues.join('; ') : ''}`;
+      }).join('\n\n');
+    } else {
+      output = "No service accounts found.";
+    }
+  }
+  else if (lowerCmd === "aws iam trace-role-chains") {
+    const roles = resources.filter(r => r.type === 'iam_role');
+    const serviceAccounts = resources.filter(r => r.type === 'service_account');
+    output = `=== Role Assumption Chain Analysis ===\n\nIdentified Privilege Escalation Paths:\n\n`;
+    
+    const escalationPaths: string[] = [];
+    roles.forEach(role => {
+      const config = role.config as any;
+      if (config.canAssumeAdmin) {
+        escalationPaths.push(`  [!] ${role.name} -> AdminRole (ESCALATION PATH)`);
+      }
+    });
+    serviceAccounts.forEach(sa => {
+      const config = sa.config as any;
+      if (config.canAssumeRoles && config.canAssumeRoles.length > 0) {
+        config.canAssumeRoles.forEach((r: string) => {
+          escalationPaths.push(`  ${sa.name} -> ${r}`);
+        });
+      }
+    });
+    
+    if (escalationPaths.length > 0) {
+      output += escalationPaths.join('\n');
+      output += `\n\n[!] WARNING: ${escalationPaths.filter(p => p.includes('ESCALATION')).length} privilege escalation path(s) detected!`;
+    } else {
+      output += "No role assumption chains detected.";
+    }
+  }
+  else if (lowerCmd === "aws iam analyze-trust-policies") {
+    const roles = resources.filter(r => r.type === 'iam_role');
+    output = `=== Trust Policy Analysis ===\n\n`;
+    
+    const issues: string[] = [];
+    roles.forEach(role => {
+      const config = role.config as any;
+      const trustPolicy = config.trustPolicy;
+      if (trustPolicy === '*' || (typeof trustPolicy === 'string' && trustPolicy.includes('*:root'))) {
+        issues.push(`[CRITICAL] ${role.name}: Wildcard trust allows ANY AWS account to assume this role`);
+      }
+      if (!config.conditions || config.conditions.length === 0) {
+        issues.push(`[HIGH] ${role.name}: No conditions on trust policy - missing MFA requirement, IP restriction, or source constraints`);
+      }
+    });
+    
+    if (issues.length > 0) {
+      output += issues.join('\n\n');
+      output += `\n\n=== MITRE ATT&CK: T1098 - Account Manipulation ===\nAttackers exploit overly permissive trust policies to assume roles and escalate privileges.`;
+    } else {
+      output += "All trust policies appear properly configured.";
+    }
+  }
+  else if (lowerCmd === "aws iam check-conditional-access") {
+    const roles = resources.filter(r => r.type === 'iam_role');
+    const groups = resources.filter(r => r.type === 'iam_group');
+    output = `=== Conditional Access Analysis ===\n\n`;
+    
+    const findings: string[] = [];
+    roles.forEach(role => {
+      const config = role.config as any;
+      if (!config.conditions || config.conditions.length === 0) {
+        findings.push(`[!] ${role.name}: No conditions configured\n    Recommended: Add aws:MultiFactorAuthPresent, aws:SourceIp, aws:RequestedRegion conditions`);
+      }
+    });
+    groups.forEach(group => {
+      const config = group.config as any;
+      if (!config.mfaRequired) {
+        findings.push(`[!] ${group.name}: MFA not required for group members`);
+      }
+    });
+    
+    if (findings.length > 0) {
+      output += findings.join('\n\n');
+    } else {
+      output += "Conditional access is properly configured.";
+    }
+  }
+  else if (lowerCmd === "aws iam find-escalation-paths") {
+    output = `=== Privilege Escalation Path Analysis ===\n
+Scanning for known IAM privilege escalation patterns...\n
+[!] ESCALATION PATH 1: cicd-deployer -> DeveloperRole -> AdminRole
+    Severity: CRITICAL
+    Attack Chain:
+    1. Attacker compromises cicd-deployer service account credentials
+    2. Uses sts:AssumeRole to become DeveloperRole
+    3. DeveloperRole has iam:PassRole + ec2:RunInstances
+    4. Creates EC2 with AdminRole instance profile
+    5. SSM into instance -> Full admin access
+    MITRE ATT&CK: T1548.002 - Abuse Elevation Control Mechanism
+
+[!] ESCALATION PATH 2: CrossAccountRole wildcard trust
+    Severity: HIGH
+    Attack Chain:
+    1. Any AWS account can assume CrossAccountRole
+    2. While ReadOnly, can enumerate sensitive resources
+    3. Reconnaissance for follow-on attacks
+    MITRE ATT&CK: T1078.004 - Valid Accounts: Cloud Accounts
+
+[!] ESCALATION PATH 3: developer-mike direct policy attachment
+    Severity: MEDIUM
+    Risk: Bypasses group-based policy management
+    Direct policies harder to audit and can grant unexpected permissions
+
+=== Summary ===
+3 privilege escalation paths identified
+2 CRITICAL, 1 HIGH, 0 MEDIUM severity issues`;
+  }
+  else if (lowerCmd === "aws iam get-credential-report") {
+    output = `=== IAM Credential Report ===\n
+Generated: ${new Date().toISOString()}\n
+User                    Password Last Used    Access Key 1 Age    MFA     Status
+---------------------------------------------------------------------------------------
+admin-sarah             2 hours ago          N/A                  Yes     COMPLIANT
+developer-mike          1 day ago            45 days              Yes     COMPLIANT
+contractor-alex         45 days ago          180 days             No      [!] STALE + NO MFA
+
+Service Account         Last Activity        Key Age              Status
+---------------------------------------------------------------------------------------
+cicd-deployer           1 hour ago           180 days             [!] KEY ROTATION OVERDUE
+backup-automation       90 days ago          365 days             [!] UNUSED + ANCIENT KEY
+monitoring-agent        5 minutes ago        30 days              COMPLIANT
+
+=== Findings ===
+[CRITICAL] 1 user without MFA (contractor-alex)
+[HIGH] 2 access keys older than 90 days
+[HIGH] 1 unused credential (backup-automation)
+[MEDIUM] 1 stale user account (contractor-alex - 45 days inactive)
+
+CIS AWS Benchmark 1.12: Disable credentials unused for 90+ days`;
+  }
+  else if (lowerCmd === "aws iam fix-trust-policies") {
+    const roles = resources.filter(r => r.type === 'iam_role' && r.isVulnerable);
+    if (roles.length > 0) {
+      for (const role of roles) {
+        await storage.updateResource(role.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `[SUCCESS] Trust policies remediated for ${roles.length} role(s)\n\nChanges Applied:\n`;
+      roles.forEach(role => {
+        output += `  - ${role.name}:\n    + Added aws:MultiFactorAuthPresent condition\n    + Restricted principals to known entities\n    + Added aws:SourceIp condition for corporate IPs\n`;
+      });
+      success = true;
+      const remaining = resources.filter(r => !roles.map(ro => ro.id).includes(r.id) && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n[MISSION COMPLETE] All identity vulnerabilities remediated!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = "No trust policy issues to fix.";
+    }
+  }
+  else if (lowerCmd === "aws iam implement-permission-boundaries") {
+    const boundaries = resources.filter(r => r.type === 'permission_boundary' && r.isVulnerable);
+    const users = resources.filter(r => r.type === 'iam_user' && r.isVulnerable);
+    const serviceAccounts = resources.filter(r => r.type === 'service_account' && r.isVulnerable);
+    
+    const toFix = [...boundaries, ...users, ...serviceAccounts];
+    if (toFix.length > 0) {
+      for (const resource of toFix) {
+        await storage.updateResource(resource.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `[SUCCESS] Permission boundaries implemented\n\nChanges Applied:\n  - Permission boundary policy created: developer-boundary\n  - Maximum permissions: PowerUserAccess (prevents IAM privilege escalation)\n  - Applied to all developer roles and service accounts\n  - Blocks: iam:CreateUser, iam:CreateRole, iam:AttachUserPolicy, iam:PutRolePolicy`;
+      success = true;
+      const remaining = resources.filter(r => !toFix.map(t => t.id).includes(r.id) && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All identity vulnerabilities remediated!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = "Permission boundaries already implemented.";
+    }
+  }
+  else if (lowerCmd === "aws iam enable-identity-monitoring") {
+    const groups = resources.filter(r => r.type === 'iam_group' && r.isVulnerable);
+    if (groups.length > 0) {
+      for (const group of groups) {
+        await storage.updateResource(group.id, { isVulnerable: false, status: 'monitored' });
+      }
+    }
+    output = `[SUCCESS] Identity monitoring enabled\n
+Configured Services:
+  - CloudTrail: IAM data events enabled
+  - GuardDuty: IAM finding types activated
+    + UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration
+    + CredentialAccess:IAMUser/AnomalousBehavior
+    + Persistence:IAMUser/ResourcePermissions
+  - IAM Access Analyzer: Continuous analysis enabled
+    + External access findings
+    + Unused access findings
+    + Policy validation
+  - EventBridge: Real-time alerts configured
+    + Role assumption from new IPs
+    + Permission boundary modifications
+    + Cross-account activity
+
+Alert Destinations:
+  - SIEM integration: Enabled
+  - PagerDuty: Critical findings
+  - Slack: All findings`;
+    success = true;
+    const remaining = resources.filter(r => r.isVulnerable);
+    if (remaining.length === 0) {
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Identity security controls fully implemented!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    }
+  }
+  else if (lowerCmd === "aws iam generate-security-report") {
+    const vulnerableCount = resources.filter(r => r.isVulnerable).length;
+    const totalCount = resources.length;
+    output = `=== Identity Security Assessment Report ===
+Generated: ${new Date().toISOString()}
+
+EXECUTIVE SUMMARY
+-----------------
+Total Identity Resources: ${totalCount}
+Compliant: ${totalCount - vulnerableCount}
+Non-Compliant: ${vulnerableCount}
+Risk Score: ${vulnerableCount === 0 ? 'LOW' : vulnerableCount <= 3 ? 'MEDIUM' : 'HIGH'}
+
+FINDINGS REMEDIATED
+-------------------
+1. Trust Policy Misconfigurations
+   - AdminRole: Added MFA condition, restricted principals
+   - CrossAccountRole: Removed wildcard trust, specified allowed accounts
+   - DeveloperRole: Removed escalation path to admin
+
+2. Privilege Escalation Paths Eliminated
+   - cicd-deployer -> DeveloperRole -> AdminRole: BLOCKED
+   - Service account permissions right-sized
+
+3. Credential Lifecycle Issues
+   - contractor-alex: Access revoked (stale account)
+   - backup-automation: Key rotated and scoped down
+
+4. Conditional Access Implemented
+   - MFA required for all role assumptions
+   - IP restrictions for sensitive operations
+   - Session duration limits enforced
+
+RECOMMENDATIONS
+---------------
+1. Implement regular access reviews (quarterly)
+2. Enable AWS SSO for centralized identity management
+3. Adopt infrastructure-as-code for IAM (Terraform/CloudFormation)
+4. Implement just-in-time access for privileged operations
+
+COMPLIANCE MAPPING
+------------------
+CIS AWS 1.5: MFA for root account - PASS
+CIS AWS 1.12: Disable unused credentials - PASS
+CIS AWS 1.16: Policies attached to groups/roles - PASS
+MITRE ATT&CK T1078: Valid Accounts - MITIGATED
+MITRE ATT&CK T1098: Account Manipulation - MITIGATED`;
+    success = true;
+  }
   // SIEM Threat Intel
   else if (lowerCmd.startsWith("aws siem lookup-ip ")) {
     const ipAddress = lowerCmd.replace("aws siem lookup-ip ", "").trim();
