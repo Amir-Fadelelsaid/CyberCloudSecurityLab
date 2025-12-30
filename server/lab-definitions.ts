@@ -109,12 +109,12 @@ export const storageSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["disaster-recovery-backup", "backup-logs"] },
     steps: [
-      { number: 1, title: "Assess Current State", description: "Scan infrastructure for backup vulnerabilities.", hint: "Type 'scan' to identify issues.", intel: "Ransomware operators specifically target backups first to maximize impact." },
-      { number: 2, title: "Review Versioning Status", description: "Check which buckets have versioning enabled.", hint: "Type 'aws s3 ls-versioning' to review.", intel: "S3 versioning keeps multiple variants of an object. When enabled, you can recover any previous version." },
-      { number: 3, title: "Understand the Risk", description: "Without versioning, deleted files cannot be recovered. This violates backup compliance requirements.", hint: "Consider what happens if someone accidentally deletes critical backups.", intel: "NIST CSF: PR.IP-4 requires backups to be conducted, maintained, and tested." },
-      { number: 4, title: "Enable Versioning", description: "Turn on versioning for the backup bucket.", hint: "Type 'aws s3 enable-versioning disaster-recovery-backup'.", intel: "Pro tip: Combine versioning with MFA Delete for an additional layer of protection against accidental or malicious deletion." },
-      { number: 5, title: "Verify Configuration", description: "Confirm versioning is now active.", hint: "Type 'aws s3 ls-versioning' to verify.", intel: "Once enabled, versioning cannot be fully disabled - only suspended. This is a feature, not a bug." },
-      { number: 6, title: "Document Compliance", description: "Run a final scan to confirm compliance status.", hint: "Type 'scan' to generate compliance report.", intel: "Document this change for your audit trail. Compliance isn't just about fixing - it's about proving you fixed it." }
+      { number: 1, title: "Assess Current State", description: "Scan infrastructure for backup vulnerabilities.", hint: "Type 'scan' to identify issues." },
+      { number: 2, title: "Review Versioning Status", description: "Check which buckets have versioning enabled.", hint: "Type 'aws s3 ls-versioning' to review." },
+      { number: 3, title: "Understand the Risk", description: "Without versioning, deleted files cannot be recovered. This violates backup compliance requirements.", hint: "Consider what happens if someone accidentally deletes critical backups." },
+      { number: 4, title: "Enable Versioning", description: "Turn on versioning for the backup bucket.", hint: "Type 'aws s3 enable-versioning disaster-recovery-backup'." },
+      { number: 5, title: "Verify Configuration", description: "Confirm versioning is now active.", hint: "Type 'aws s3 ls-versioning' to verify." },
+      { number: 6, title: "Document Compliance", description: "Run a final scan to confirm compliance status.", hint: "Type 'scan' to generate compliance report." }
     ],
     resources: [
       { type: "s3", name: "disaster-recovery-backup", config: { versioning: false }, isVulnerable: true, status: "active" },
@@ -133,12 +133,12 @@ export const storageSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["shared-data-lake"] },
     steps: [
-      { number: 1, title: "Identify Policy Risk", description: "Scan for overly permissive bucket policies.", hint: "Type 'scan' to find misconfigurations.", intel: "AWS Config rule 's3-bucket-public-read-prohibited' can automatically detect and alert on these issues." },
-      { number: 2, title: "Review Current Policy", description: "Examine the bucket's IAM policy document.", hint: "Type 'aws s3 get-policy shared-data-lake' to view.", intel: "Look for Principal: '*' or Principal: {'AWS': '*'} - both mean 'everyone in the world'." },
-      { number: 3, title: "Analyze Permissions", description: "The policy grants 's3:*' to principal '*'. This allows anyone to read, write, and delete data.", hint: "Wildcard policies violate CIS Benchmark 2.1.5.", intel: "This is a common finding in penetration tests. Attackers use tools like 'bucket_finder' to discover misconfigured buckets." },
-      { number: 4, title: "Apply Least Privilege", description: "Restrict the policy to specific actions and principals.", hint: "Type 'aws s3 restrict-policy shared-data-lake'.", intel: "Best practice: Use specific IAM roles instead of wildcards. Grant only read access if write isn't needed." },
-      { number: 5, title: "Verify New Policy", description: "Check that the policy is now restrictive.", hint: "Type 'aws s3 get-policy shared-data-lake' to confirm.", intel: "After fixing, test that legitimate users can still access what they need." },
-      { number: 6, title: "Final Verification", description: "Run security scan to confirm remediation.", hint: "Type 'scan' to verify.", intel: "Consider implementing S3 Block Public Access at the account level to prevent future misconfigurations." }
+      { number: 1, title: "Identify Policy Risk", description: "Scan for overly permissive bucket policies.", hint: "Type 'scan' to find misconfigurations." },
+      { number: 2, title: "Review Current Policy", description: "Examine the bucket's IAM policy document.", hint: "Type 'aws s3 get-policy shared-data-lake' to view." },
+      { number: 3, title: "Analyze Permissions", description: "The policy grants 's3:*' to principal '*'. This allows anyone to read, write, and delete data.", hint: "Wildcard policies violate CIS Benchmark 2.1.5." },
+      { number: 4, title: "Apply Least Privilege", description: "Restrict the policy to specific actions and principals.", hint: "Type 'aws s3 restrict-policy shared-data-lake'." },
+      { number: 5, title: "Verify New Policy", description: "Check that the policy is now restrictive.", hint: "Type 'aws s3 get-policy shared-data-lake' to confirm." },
+      { number: 6, title: "Final Verification", description: "Run security scan to confirm remediation.", hint: "Type 'scan' to verify." }
     ],
     resources: [
       { type: "s3", name: "shared-data-lake", config: { policy: "s3:*", principal: "*" }, isVulnerable: true, status: "active" }
@@ -156,12 +156,12 @@ export const storageSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["partner-data-exchange"] },
     steps: [
-      { number: 1, title: "Detect Anomaly", description: "Scan for buckets with external access.", hint: "Type 'scan' to identify issues.", intel: "Cross-account access is a common lateral movement technique. Attackers grant their accounts access for persistent data theft." },
-      { number: 2, title: "List External Access", description: "Check which accounts have access to the bucket.", hint: "Type 'aws s3 check-access partner-data-exchange'.", intel: "MITRE ATT&CK T1537: Transfer Data to Cloud Account - Adversaries may exfiltrate data by granting themselves access." },
-      { number: 3, title: "Identify Unauthorized Accounts", description: "Account 999888777666 is not in our approved partners list. This could be a compromise.", hint: "Cross-reference with your organization's approved account list.", intel: "Pro tip: Maintain a documented list of approved external accounts. Audit this list quarterly." },
-      { number: 4, title: "Review Bucket Policy", description: "Examine how the external access was granted.", hint: "Type 'aws s3 get-policy partner-data-exchange'.", intel: "Check CloudTrail for 'PutBucketPolicy' events to see WHO added this account and WHEN." },
-      { number: 5, title: "Revoke Unauthorized Access", description: "Remove access for unknown accounts.", hint: "Type 'aws s3 revoke-external partner-data-exchange'.", intel: "After revoking, monitor for re-addition attempts. If it happens again, you have an active compromise." },
-      { number: 6, title: "Verify Remediation", description: "Confirm only authorized accounts remain.", hint: "Type 'aws s3 check-access partner-data-exchange' to verify.", intel: "Document this incident. If data was accessed, you may need to notify affected parties under GDPR/CCPA." }
+      { number: 1, title: "Detect Anomaly", description: "Scan for buckets with external access.", hint: "Type 'scan' to identify issues." },
+      { number: 2, title: "List External Access", description: "Check which accounts have access to the bucket.", hint: "Type 'aws s3 check-access partner-data-exchange'." },
+      { number: 3, title: "Identify Unauthorized Accounts", description: "Account 999888777666 is not in our approved partners list. This could be a compromise.", hint: "Cross-reference with your organization's approved account list." },
+      { number: 4, title: "Review Bucket Policy", description: "Examine how the external access was granted.", hint: "Type 'aws s3 get-policy partner-data-exchange'." },
+      { number: 5, title: "Revoke Unauthorized Access", description: "Remove access for unknown accounts.", hint: "Type 'aws s3 revoke-external partner-data-exchange'." },
+      { number: 6, title: "Verify Remediation", description: "Confirm only authorized accounts remain.", hint: "Type 'aws s3 check-access partner-data-exchange' to verify." }
     ],
     resources: [
       { type: "s3", name: "partner-data-exchange", config: { crossAccount: ["123456789012", "999888777666"] }, isVulnerable: true, status: "active" }
@@ -179,12 +179,12 @@ export const storageSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { buckets: ["compliance-audit-logs"] },
     steps: [
-      { number: 1, title: "Identify Compliance Gap", description: "Scan for buckets missing WORM protection.", hint: "Type 'scan' to identify issues.", intel: "SEC Rule 17a-4 and FINRA Rule 4511 require broker-dealers to preserve records in non-rewriteable, non-erasable format." },
-      { number: 2, title: "Check Object Lock Status", description: "Review current Object Lock configuration.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'.", intel: "Object Lock has two modes: Governance (admins can override) and Compliance (nobody can delete, not even root)." },
-      { number: 3, title: "Understand Requirements", description: "SOX and HIPAA require immutable audit logs. Without Object Lock, logs can be tampered with.", hint: "MITRE ATT&CK T1565: Data Manipulation.", intel: "Attackers who compromise systems often delete logs first to cover their tracks. Immutable logs are your insurance policy." },
-      { number: 4, title: "Enable Object Lock", description: "Configure WORM protection in compliance mode.", hint: "Type 'aws s3 enable-object-lock compliance-audit-logs'.", intel: "Warning: Compliance mode is PERMANENT. Objects cannot be deleted until retention expires. Choose retention period carefully." },
-      { number: 5, title: "Verify Protection", description: "Confirm Object Lock is active.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'.", intel: "Test by attempting to delete a locked object - you should receive an 'Access Denied' error even with admin permissions." },
-      { number: 6, title: "Generate Compliance Report", description: "Document the remediation for auditors.", hint: "Type 'scan' to generate report.", intel: "Keep screenshots and timestamps. Auditors love documentation that proves exactly when controls were implemented." }
+      { number: 1, title: "Identify Compliance Gap", description: "Scan for buckets missing WORM protection.", hint: "Type 'scan' to identify issues." },
+      { number: 2, title: "Check Object Lock Status", description: "Review current Object Lock configuration.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'." },
+      { number: 3, title: "Understand Requirements", description: "SOX and HIPAA require immutable audit logs. Without Object Lock, logs can be tampered with.", hint: "MITRE ATT&CK T1565: Data Manipulation." },
+      { number: 4, title: "Enable Object Lock", description: "Configure WORM protection in compliance mode.", hint: "Type 'aws s3 enable-object-lock compliance-audit-logs'." },
+      { number: 5, title: "Verify Protection", description: "Confirm Object Lock is active.", hint: "Type 'aws s3 check-object-lock compliance-audit-logs'." },
+      { number: 6, title: "Generate Compliance Report", description: "Document the remediation for auditors.", hint: "Type 'scan' to generate report." }
     ],
     resources: [
       { type: "s3", name: "compliance-audit-logs", config: { objectLock: false }, isVulnerable: true, status: "active" }
@@ -514,12 +514,12 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "20-30 minutes",
     initialState: { vpn: ["vpn-datacenter-east"], vgw: ["vgw-prod-01"], cgw: ["cgw-datacenter"] },
     steps: [
-      { number: 1, title: "Assess VPN Status", description: "Check current VPN tunnel status and identify which tunnel is down.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east'.", intel: "AWS VPN connections have two tunnels for redundancy. If both are down, check the customer gateway first." },
-      { number: 2, title: "Review Tunnel Metrics", description: "Examine CloudWatch metrics for tunnel health and identify when the outage started.", hint: "Type 'aws cloudwatch get-vpn-metrics vpn-datacenter-east'.", intel: "Look for TunnelState, TunnelDataIn/Out metrics. Sudden drops indicate configuration changes or network issues." },
-      { number: 3, title: "Check Customer Gateway", description: "Verify the on-premises customer gateway configuration and status.", hint: "Type 'aws ec2 describe-cgw cgw-datacenter'.", intel: "Common issues: IP address changes, expired certificates, or firewall rule modifications on-premises." },
-      { number: 4, title: "Verify Route Tables", description: "Ensure route propagation is enabled and routes are correctly configured.", hint: "Type 'aws ec2 describe-route-tables --vpn'.", intel: "VPN routes must propagate to the correct route tables. Static routes require manual updates if on-prem subnets change." },
-      { number: 5, title: "Reset VPN Connection", description: "Reset the VPN tunnels to re-establish connectivity.", hint: "Type 'aws ec2 reset-vpn vpn-datacenter-east'.", intel: "Tunnel reset forces IKE renegotiation. Both tunnels will be momentarily disrupted." },
-      { number: 6, title: "Verify Connectivity", description: "Confirm both tunnels are now UP and traffic is flowing.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east' to verify.", intel: "Monitor for 5 minutes to ensure stability. Consider implementing VPN monitoring alarms." }
+      { number: 1, title: "Assess VPN Status", description: "Check current VPN tunnel status and identify which tunnel is down.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east'." },
+      { number: 2, title: "Review Tunnel Metrics", description: "Examine CloudWatch metrics for tunnel health and identify when the outage started.", hint: "Type 'aws cloudwatch get-vpn-metrics vpn-datacenter-east'." },
+      { number: 3, title: "Check Customer Gateway", description: "Verify the on-premises customer gateway configuration and status.", hint: "Type 'aws ec2 describe-cgw cgw-datacenter'." },
+      { number: 4, title: "Verify Route Tables", description: "Ensure route propagation is enabled and routes are correctly configured.", hint: "Type 'aws ec2 describe-route-tables --vpn'." },
+      { number: 5, title: "Reset VPN Connection", description: "Reset the VPN tunnels to re-establish connectivity.", hint: "Type 'aws ec2 reset-vpn vpn-datacenter-east'." },
+      { number: 6, title: "Verify Connectivity", description: "Confirm both tunnels are now UP and traffic is flowing.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east' to verify." }
     ],
     resources: [
       { type: "vpn_connection", name: "vpn-datacenter-east", config: { tunnel1: "DOWN", tunnel2: "DOWN", type: "ipsec.1" }, isVulnerable: true, status: "down" },
@@ -539,14 +539,14 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "25-40 minutes",
     initialState: { nat: ["nat-prod-01"], vpc: ["vpc-production"], subnets: ["subnet-private-1", "subnet-private-2"] },
     steps: [
-      { number: 1, title: "Identify Symptoms", description: "Review application error patterns and correlate with NAT Gateway metrics.", hint: "Type 'aws cloudwatch get-nat-metrics nat-prod-01'.", intel: "ErrorPortAllocation metric indicates port exhaustion. Each connection needs a unique source port (65,535 max)." },
-      { number: 2, title: "Analyze Connection Patterns", description: "Examine ActiveConnectionCount and PacketsDropCount metrics.", hint: "Type 'aws ec2 describe-nat nat-prod-01'.", intel: "High connection counts to few destinations exhaust ports faster. Connections to the same destination share ports." },
-      { number: 3, title: "Check Current Architecture", description: "Review how private subnets route through NAT Gateways.", hint: "Type 'aws ec2 describe-route-tables --nat'.", intel: "All private subnets using one NAT Gateway creates a bottleneck. Each NAT supports ~55,000 concurrent connections per destination." },
-      { number: 4, title: "Design Multi-NAT Solution", description: "Plan NAT Gateway per Availability Zone for redundancy and capacity.", hint: "Type 'aws ec2 plan-nat-architecture vpc-production'.", intel: "Best practice: One NAT Gateway per AZ provides both HA and increased port capacity." },
-      { number: 5, title: "Deploy Additional NAT", description: "Create a second NAT Gateway in another AZ.", hint: "Type 'aws ec2 create-nat nat-prod-02 subnet-public-2'.", intel: "NAT Gateways scale automatically but port limits remain. Multiple NATs distribute the load." },
-      { number: 6, title: "Update Route Tables", description: "Configure each private subnet to use its local AZ NAT Gateway.", hint: "Type 'aws ec2 update-routes-multi-nat vpc-production'.", intel: "Route traffic to the NAT Gateway in the same AZ for optimal performance and cost." },
-      { number: 7, title: "Verify Configuration", description: "Confirm new routing is active and traffic is distributed.", hint: "Type 'aws ec2 describe-route-tables --nat' to verify.", intel: "Monitor both NAT Gateways for balanced traffic distribution." },
-      { number: 8, title: "Implement Monitoring", description: "Set up CloudWatch alarms for ErrorPortAllocation metric.", hint: "Type 'aws cloudwatch create-nat-alarm nat-prod-01 nat-prod-02'.", intel: "Alert at 80% port utilization to proactively prevent future exhaustion." }
+      { number: 1, title: "Identify Symptoms", description: "Review application error patterns and correlate with NAT Gateway metrics.", hint: "Type 'aws cloudwatch get-nat-metrics nat-prod-01'." },
+      { number: 2, title: "Analyze Connection Patterns", description: "Examine ActiveConnectionCount and PacketsDropCount metrics.", hint: "Type 'aws ec2 describe-nat nat-prod-01'." },
+      { number: 3, title: "Check Current Architecture", description: "Review how private subnets route through NAT Gateways.", hint: "Type 'aws ec2 describe-route-tables --nat'." },
+      { number: 4, title: "Design Multi-NAT Solution", description: "Plan NAT Gateway per Availability Zone for redundancy and capacity.", hint: "Type 'aws ec2 plan-nat-architecture vpc-production'." },
+      { number: 5, title: "Deploy Additional NAT", description: "Create a second NAT Gateway in another AZ.", hint: "Type 'aws ec2 create-nat nat-prod-02 subnet-public-2'." },
+      { number: 6, title: "Update Route Tables", description: "Configure each private subnet to use its local AZ NAT Gateway.", hint: "Type 'aws ec2 update-routes-multi-nat vpc-production'." },
+      { number: 7, title: "Verify Configuration", description: "Confirm new routing is active and traffic is distributed.", hint: "Type 'aws ec2 describe-route-tables --nat' to verify." },
+      { number: 8, title: "Implement Monitoring", description: "Set up CloudWatch alarms for ErrorPortAllocation metric.", hint: "Type 'aws cloudwatch create-nat-alarm nat-prod-01 nat-prod-02'." }
     ],
     resources: [
       { type: "nat_gateway", name: "nat-prod-01", config: { errorPortAllocation: 847, activeConnections: 48500 }, isVulnerable: true, status: "degraded" },
@@ -565,14 +565,14 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "30-45 minutes",
     initialState: { resolver: ["rslvr-out-broken"], endpoints: ["rslvr-ep-outbound"], rules: ["fwd-rule-corp"] },
     steps: [
-      { number: 1, title: "Diagnose DNS Failure", description: "Test DNS resolution and identify where it fails.", hint: "Type 'aws route53resolver test-dns internal.corp.example.com'.", intel: "Route 53 Resolver handles DNS for VPCs. Outbound endpoints forward queries to on-premises DNS." },
-      { number: 2, title: "Check Resolver Endpoints", description: "Verify outbound endpoint status and IP addresses.", hint: "Type 'aws route53resolver describe-endpoint rslvr-ep-outbound'.", intel: "Outbound endpoints need ENIs in subnets that can reach on-premises DNS via VPN/Direct Connect." },
-      { number: 3, title: "Review Forwarding Rules", description: "Examine the resolver rule configuration for corp.example.com domain.", hint: "Type 'aws route53resolver describe-rule fwd-rule-corp'.", intel: "Rules specify which domains forward to which DNS servers. Check target IP addresses are correct." },
-      { number: 4, title: "Check Security Groups", description: "Verify endpoint security groups allow DNS traffic (UDP/TCP 53).", hint: "Type 'aws ec2 describe-sg rslvr-sg'.", intel: "Both inbound (from VPC) and outbound (to on-prem DNS) rules must allow DNS traffic." },
-      { number: 5, title: "Fix Security Group Rules", description: "Add missing rules to allow DNS resolution traffic.", hint: "Type 'aws ec2 fix-resolver-sg rslvr-sg'.", intel: "Resolver endpoints need: inbound UDP/TCP 53 from VPC CIDR, outbound UDP/TCP 53 to on-prem DNS." },
-      { number: 6, title: "Verify VPN Connectivity", description: "Ensure the VPN to on-premises is healthy for DNS traffic.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east'.", intel: "DNS forwarding requires network path to on-premises DNS servers. VPN issues affect DNS resolution." },
-      { number: 7, title: "Test Resolution", description: "Verify DNS queries now resolve correctly.", hint: "Type 'aws route53resolver test-dns internal.corp.example.com' to verify.", intel: "Test multiple internal hostnames to confirm consistent resolution." },
-      { number: 8, title: "Enable Query Logging", description: "Configure resolver query logging for troubleshooting.", hint: "Type 'aws route53resolver enable-logging rslvr-ep-outbound'.", intel: "Query logs help diagnose future DNS issues and provide security visibility into DNS traffic." }
+      { number: 1, title: "Diagnose DNS Failure", description: "Test DNS resolution and identify where it fails.", hint: "Type 'aws route53resolver test-dns internal.corp.example.com'." },
+      { number: 2, title: "Check Resolver Endpoints", description: "Verify outbound endpoint status and IP addresses.", hint: "Type 'aws route53resolver describe-endpoint rslvr-ep-outbound'." },
+      { number: 3, title: "Review Forwarding Rules", description: "Examine the resolver rule configuration for corp.example.com domain.", hint: "Type 'aws route53resolver describe-rule fwd-rule-corp'." },
+      { number: 4, title: "Check Security Groups", description: "Verify endpoint security groups allow DNS traffic (UDP/TCP 53).", hint: "Type 'aws ec2 describe-sg rslvr-sg'." },
+      { number: 5, title: "Fix Security Group Rules", description: "Add missing rules to allow DNS resolution traffic.", hint: "Type 'aws ec2 fix-resolver-sg rslvr-sg'." },
+      { number: 6, title: "Verify VPN Connectivity", description: "Ensure the VPN to on-premises is healthy for DNS traffic.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east'." },
+      { number: 7, title: "Test Resolution", description: "Verify DNS queries now resolve correctly.", hint: "Type 'aws route53resolver test-dns internal.corp.example.com' to verify." },
+      { number: 8, title: "Enable Query Logging", description: "Configure resolver query logging for troubleshooting.", hint: "Type 'aws route53resolver enable-logging rslvr-ep-outbound'." }
     ],
     resources: [
       { type: "resolver_endpoint", name: "rslvr-ep-outbound", config: { direction: "OUTBOUND", ips: ["10.0.1.10", "10.0.2.10"] }, isVulnerable: true, status: "degraded" },
@@ -592,12 +592,12 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { alb: ["alb-api-prod"], tg: ["tg-api-containers"], instances: ["ecs-task-1", "ecs-task-2"] },
     steps: [
-      { number: 1, title: "Check Target Health", description: "Review target group health status and failure reasons.", hint: "Type 'aws elbv2 describe-target-health tg-api-containers'.", intel: "Health check failure reasons: timeout, connection refused, or unexpected HTTP status code." },
-      { number: 2, title: "Review Health Check Config", description: "Examine the current health check settings.", hint: "Type 'aws elbv2 describe-target-group tg-api-containers'.", intel: "Check: path, port, protocol, timeout, interval, healthy/unhealthy thresholds." },
-      { number: 3, title: "Identify Mismatch", description: "Health check is hitting /health on port 80, but app runs on port 8080 with /api/health endpoint.", hint: "Type 'aws ecs describe-task ecs-task-1' to see container config.", intel: "Container port != health check port is a common misconfiguration after containerization." },
-      { number: 4, title: "Fix Health Check Path", description: "Update health check to use correct port and path.", hint: "Type 'aws elbv2 modify-target-group tg-api-containers --health-check-path /api/health --health-check-port 8080'.", intel: "Ensure path returns 200 OK. Some apps return 204 or 301 which fail default checks." },
-      { number: 5, title: "Verify Target Health", description: "Confirm targets are now showing healthy.", hint: "Type 'aws elbv2 describe-target-health tg-api-containers' to verify.", intel: "Targets need to pass healthy threshold (default 5 checks) before receiving traffic." },
-      { number: 6, title: "Monitor Recovery", description: "Verify API is serving traffic normally.", hint: "Type 'scan' to confirm all systems operational.", intel: "Monitor ALB RequestCount and HTTPCode_ELB_5XX metrics to confirm recovery." }
+      { number: 1, title: "Check Target Health", description: "Review target group health status and failure reasons.", hint: "Type 'aws elbv2 describe-target-health tg-api-containers'." },
+      { number: 2, title: "Review Health Check Config", description: "Examine the current health check settings.", hint: "Type 'aws elbv2 describe-target-group tg-api-containers'." },
+      { number: 3, title: "Identify Mismatch", description: "Health check is hitting /health on port 80, but app runs on port 8080 with /api/health endpoint.", hint: "Type 'aws ecs describe-task ecs-task-1' to see container config." },
+      { number: 4, title: "Fix Health Check Path", description: "Update health check to use correct port and path.", hint: "Type 'aws elbv2 modify-target-group tg-api-containers --health-check-path /api/health --health-check-port 8080'." },
+      { number: 5, title: "Verify Target Health", description: "Confirm targets are now showing healthy.", hint: "Type 'aws elbv2 describe-target-health tg-api-containers' to verify." },
+      { number: 6, title: "Monitor Recovery", description: "Verify API is serving traffic normally.", hint: "Type 'scan' to confirm all systems operational." }
     ],
     resources: [
       { type: "target_group", name: "tg-api-containers", config: { healthCheckPath: "/health", healthCheckPort: 80, healthyTargets: 0 }, isVulnerable: true, status: "unhealthy" },
@@ -616,16 +616,16 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "35-50 minutes",
     initialState: { flowlogs: ["fl-vpc-prod"], instances: ["analytics-server-01"], siem: ["traffic-alert-7721"] },
     steps: [
-      { number: 1, title: "Review SIEM Alert", description: "Examine the traffic anomaly alert details.", hint: "Type 'aws siem get-alert traffic-alert-7721'.", intel: "MITRE ATT&CK T1048: Exfiltration Over Alternative Protocol. Large outbound transfers are red flags." },
-      { number: 2, title: "Query Flow Logs", description: "Pull VPC Flow Log data for the analytics server during the anomaly window.", hint: "Type 'aws logs query-flow-logs analytics-server-01 --hours 12'.", intel: "Look for: destination IPs, ports used, bytes transferred, connection duration." },
-      { number: 3, title: "Identify Destination", description: "Research the destination IP and determine if it's legitimate.", hint: "Type 'aws siem lookup-ip 185.220.101.42'.", intel: "Threat intel shows IP is associated with known data exfiltration infrastructure. This is likely malicious." },
-      { number: 4, title: "Check Process Activity", description: "Review what process initiated these connections.", hint: "Type 'aws ssm get-process-logs analytics-server-01'.", intel: "Correlate network connections with process execution. Legitimate analytics exports vs. unauthorized transfers." },
-      { number: 5, title: "Analyze Data Types", description: "Determine what data may have been exfiltrated based on the server's role.", hint: "Type 'aws describe-instance-role analytics-server-01'.", intel: "Analytics server has read access to customer-data-lake. Potential PII exposure." },
-      { number: 6, title: "Contain the Threat", description: "Isolate the compromised server to stop ongoing exfiltration.", hint: "Type 'aws ec2 isolate analytics-server-01'.", intel: "Replace security group with deny-all rules. Preserve instance for forensics." },
-      { number: 7, title: "Block Malicious IP", description: "Add the destination IP to network deny lists.", hint: "Type 'aws waf add-ip-blocklist 185.220.101.42'.", intel: "Block at multiple layers: NACL, security group, and WAF for defense-in-depth." },
-      { number: 8, title: "Enable Enhanced Monitoring", description: "Implement Traffic Mirroring for deep packet inspection on critical servers.", hint: "Type 'aws ec2 create-traffic-mirror analytics-server-01'.", intel: "Traffic Mirroring sends copies to IDS for analysis without impacting application performance." },
-      { number: 9, title: "Create Detection Rule", description: "Build a SIEM rule to detect similar anomalies in the future.", hint: "Type 'aws siem create-rule outbound-anomaly-detection'.", intel: "Alert on: outbound > 5GB to new destination, connections to threat intel IPs, unusual ports." },
-      { number: 10, title: "Document Incident", description: "Generate incident report with timeline, impact assessment, and recommendations.", hint: "Type 'aws siem generate-incident-report traffic-alert-7721'.", intel: "Include: data classification of potentially exposed data, regulatory notification requirements, remediation steps." }
+      { number: 1, title: "Review SIEM Alert", description: "Examine the traffic anomaly alert details.", hint: "Type 'aws siem get-alert traffic-alert-7721'." },
+      { number: 2, title: "Query Flow Logs", description: "Pull VPC Flow Log data for the analytics server during the anomaly window.", hint: "Type 'aws logs query-flow-logs analytics-server-01 --hours 12'." },
+      { number: 3, title: "Identify Destination", description: "Research the destination IP and determine if it's legitimate.", hint: "Type 'aws siem lookup-ip 185.220.101.42'." },
+      { number: 4, title: "Check Process Activity", description: "Review what process initiated these connections.", hint: "Type 'aws ssm get-process-logs analytics-server-01'." },
+      { number: 5, title: "Analyze Data Types", description: "Determine what data may have been exfiltrated based on the server's role.", hint: "Type 'aws describe-instance-role analytics-server-01'." },
+      { number: 6, title: "Contain the Threat", description: "Isolate the compromised server to stop ongoing exfiltration.", hint: "Type 'aws ec2 isolate analytics-server-01'." },
+      { number: 7, title: "Block Malicious IP", description: "Add the destination IP to network deny lists.", hint: "Type 'aws waf add-ip-blocklist 185.220.101.42'." },
+      { number: 8, title: "Enable Enhanced Monitoring", description: "Implement Traffic Mirroring for deep packet inspection on critical servers.", hint: "Type 'aws ec2 create-traffic-mirror analytics-server-01'." },
+      { number: 9, title: "Create Detection Rule", description: "Build a SIEM rule to detect similar anomalies in the future.", hint: "Type 'aws siem create-rule outbound-anomaly-detection'." },
+      { number: 10, title: "Document Incident", description: "Generate incident report with timeline, impact assessment, and recommendations.", hint: "Type 'aws siem generate-incident-report traffic-alert-7721'." }
     ],
     resources: [
       { type: "ec2", name: "analytics-server-01", config: { outboundGB: 47, normalOutboundGB: 0.5, destIP: "185.220.101.42" }, isVulnerable: true, status: "suspicious" },
@@ -1546,12 +1546,12 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       vpc: ["flow-logs"]
     },
     steps: [
-      { number: 1, title: "Review Initial Alert", description: "Examine the CloudTrail events that triggered the anomaly detection.", hint: "Type 'aws cloudtrail get-events jenkins-deploy --time 03:00-04:00'.", intel: "MITRE ATT&CK T1087: Account Discovery, T1580: Cloud Infrastructure Discovery. Attackers often enumerate before acting." },
-      { number: 2, title: "Analyze Source IP", description: "Check if the API calls came from the expected Jenkins server or an unknown location.", hint: "Type 'aws cloudtrail analyze-source-ip jenkins-deploy'.", intel: "Jenkins server should have a static internal IP. External IPs or Tor exit nodes are immediate red flags." },
-      { number: 3, title: "Correlate with VPC Flow Logs", description: "Check network traffic from the source IP around the same timeframe.", hint: "Type 'siem correlate-logs cloudtrail vpc-flow --time 03:00-04:00'.", intel: "Look for: outbound connections to C2 infrastructure, data exfiltration, or lateral movement to other instances." },
-      { number: 4, title: "Check for Persistence", description: "Look for any changes the service account made that could indicate persistence.", hint: "Type 'aws cloudtrail find-persistence-indicators jenkins-deploy'.", intel: "T1098: Account Manipulation. Check for CreateAccessKey, AttachUserPolicy, CreateRole, or Lambda modifications." },
-      { number: 5, title: "Map to MITRE ATT&CK", description: "Document the observed TTPs and map them to the ATT&CK framework.", hint: "Type 'security map-to-attack jenkins-deploy'.", intel: "Mapping to ATT&CK helps communicate severity and identify gaps in detection coverage." },
-      { number: 6, title: "Generate Incident Report", description: "Create a detailed investigation report with timeline, evidence, and recommendations.", hint: "Type 'security generate-incident-report jenkins-deploy'.", intel: "Include: executive summary, detailed timeline, evidence artifacts, MITRE mapping, impact assessment, and containment recommendations." }
+      { number: 1, title: "Review Initial Alert", description: "Examine the CloudTrail events that triggered the anomaly detection.", hint: "Type 'aws cloudtrail get-events jenkins-deploy --time 03:00-04:00'." },
+      { number: 2, title: "Analyze Source IP", description: "Check if the API calls came from the expected Jenkins server or an unknown location.", hint: "Type 'aws cloudtrail analyze-source-ip jenkins-deploy'." },
+      { number: 3, title: "Correlate with VPC Flow Logs", description: "Check network traffic from the source IP around the same timeframe.", hint: "Type 'siem correlate-logs cloudtrail vpc-flow --time 03:00-04:00'." },
+      { number: 4, title: "Check for Persistence", description: "Look for any changes the service account made that could indicate persistence.", hint: "Type 'aws cloudtrail find-persistence-indicators jenkins-deploy'." },
+      { number: 5, title: "Map to MITRE ATT&CK", description: "Document the observed TTPs and map them to the ATT&CK framework.", hint: "Type 'security map-to-attack jenkins-deploy'." },
+      { number: 6, title: "Generate Incident Report", description: "Create a detailed investigation report with timeline, evidence, and recommendations.", hint: "Type 'security generate-incident-report jenkins-deploy'." }
     ],
     resources: [
       { type: "service_account", name: "jenkins-deploy", config: { normalHours: "09:00-18:00", suspiciousActivity: true, apiCalls: 47 }, isVulnerable: true, status: "under-investigation" },
@@ -1576,12 +1576,12 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       cloudtrail: ["instance-api-logs"]
     },
     steps: [
-      { number: 1, title: "Establish Baseline", description: "Check the normal behavior pattern for this instance before the anomaly.", hint: "Type 'aws cloudwatch get-baseline i-0abc123def456 --days 7'.", intel: "Understanding normal is crucial. If CPU is usually 20% and now it's 95%, that's a 5x increase - significant deviation." },
-      { number: 2, title: "Analyze Network Connections", description: "Review VPC flow logs to identify where the instance is communicating.", hint: "Type 'aws ec2 analyze-flow-logs i-0abc123def456'.", intel: "Look for: connections to known mining pools, C2 IP addresses, or unusual outbound ports (IRC, Tor, cryptocurrency protocols)." },
-      { number: 3, title: "Check Instance Changes", description: "Review CloudTrail for any modifications to the instance or its security group.", hint: "Type 'aws cloudtrail get-instance-events i-0abc123def456'.", intel: "T1496: Resource Hijacking. Attackers might have modified security groups to allow their traffic or installed software via SSM." },
-      { number: 4, title: "Correlate All Sources", description: "Combine all log sources to build a complete attack timeline.", hint: "Type 'siem correlate-logs cloudtrail vpc-flow cloudwatch --instance i-0abc123def456'.", intel: "The SIEM correlation will show you: when it started, how they got in, what they're doing, and how to stop them." },
-      { number: 5, title: "Assess Impact", description: "Determine what data or resources the attacker may have accessed.", hint: "Type 'security assess-impact i-0abc123def456'.", intel: "Check: instance role permissions, attached EBS volumes, network access to other resources, S3 buckets accessible." },
-      { number: 6, title: "Recommend Containment", description: "Based on your investigation, recommend immediate containment actions.", hint: "Type 'security recommend-containment i-0abc123def456'.", intel: "Options: isolate via security group, stop instance, snapshot for forensics. Balance between stopping the attack and preserving evidence." }
+      { number: 1, title: "Establish Baseline", description: "Check the normal behavior pattern for this instance before the anomaly.", hint: "Type 'aws cloudwatch get-baseline i-0abc123def456 --days 7'." },
+      { number: 2, title: "Analyze Network Connections", description: "Review VPC flow logs to identify where the instance is communicating.", hint: "Type 'aws ec2 analyze-flow-logs i-0abc123def456'." },
+      { number: 3, title: "Check Instance Changes", description: "Review CloudTrail for any modifications to the instance or its security group.", hint: "Type 'aws cloudtrail get-instance-events i-0abc123def456'." },
+      { number: 4, title: "Correlate All Sources", description: "Combine all log sources to build a complete attack timeline.", hint: "Type 'siem correlate-logs cloudtrail vpc-flow cloudwatch --instance i-0abc123def456'." },
+      { number: 5, title: "Assess Impact", description: "Determine what data or resources the attacker may have accessed.", hint: "Type 'security assess-impact i-0abc123def456'." },
+      { number: 6, title: "Recommend Containment", description: "Based on your investigation, recommend immediate containment actions.", hint: "Type 'security recommend-containment i-0abc123def456'." }
     ],
     resources: [
       { type: "ec2", name: "suspicious-instance", config: { instanceId: "i-0abc123def456", cpuUsage: "95%", normalCpu: "20%" }, isVulnerable: true, status: "compromised" },
@@ -1606,12 +1606,12 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       siem: ["user-activity"]
     },
     steps: [
-      { number: 1, title: "Review GuardDuty Finding", description: "Examine the complete GuardDuty finding with all context.", hint: "Type 'aws guardduty get-finding console-login-finding --detail'.", intel: "GuardDuty uses machine learning to establish behavioral baselines. New geolocation logins are flagged when they deviate from patterns." },
-      { number: 2, title: "Analyze Login Details", description: "Check CloudTrail for the specific console login event details.", hint: "Type 'aws cloudtrail get-console-login finance-admin'.", intel: "Look at: exact timestamp, source IP, user agent, MFA used (or not), subsequent actions taken after login." },
-      { number: 3, title: "Verify with User", description: "Document user verification - confirm they were not traveling or using VPN.", hint: "Type 'security log-user-verification finance-admin'.", intel: "Always verify with the user through a separate channel (phone, in-person). Attackers might control email." },
-      { number: 4, title: "Check Post-Login Activity", description: "Review what actions were taken during the suspicious session.", hint: "Type 'aws cloudtrail get-session-activity finance-admin'.", intel: "T1078: If credentials are compromised, attackers typically: enumerate (List/Describe), establish persistence, then access data." },
-      { number: 5, title: "Determine True/False Positive", description: "Based on evidence, classify the finding and document your reasoning.", hint: "Type 'aws guardduty classify-finding console-login-finding'.", intel: "True Positive: escalate to IR. False Positive: document reason (travel, VPN). Benign True Positive: expected but unusual activity." },
-      { number: 6, title: "Generate Analysis Report", description: "Create a detailed analysis report following the IR playbook format.", hint: "Type 'security generate-analysis-report console-login-finding'.", intel: "Report should include: finding summary, investigation steps taken, evidence collected, classification decision, and next steps." }
+      { number: 1, title: "Review GuardDuty Finding", description: "Examine the complete GuardDuty finding with all context.", hint: "Type 'aws guardduty get-finding console-login-finding --detail'." },
+      { number: 2, title: "Analyze Login Details", description: "Check CloudTrail for the specific console login event details.", hint: "Type 'aws cloudtrail get-console-login finance-admin'." },
+      { number: 3, title: "Verify with User", description: "Document user verification - confirm they were not traveling or using VPN.", hint: "Type 'security log-user-verification finance-admin'." },
+      { number: 4, title: "Check Post-Login Activity", description: "Review what actions were taken during the suspicious session.", hint: "Type 'aws cloudtrail get-session-activity finance-admin'." },
+      { number: 5, title: "Determine True/False Positive", description: "Based on evidence, classify the finding and document your reasoning.", hint: "Type 'aws guardduty classify-finding console-login-finding'." },
+      { number: 6, title: "Generate Analysis Report", description: "Create a detailed analysis report following the IR playbook format.", hint: "Type 'security generate-analysis-report console-login-finding'." }
     ],
     resources: [
       { type: "guardduty_finding", name: "console-login-finding", config: { severity: 8, type: "UnauthorizedAccess:IAMUser/ConsoleLogin", location: "Thailand" }, isVulnerable: true, status: "active" },
@@ -1635,12 +1635,12 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       logs: ["s3-access-logs"]
     },
     steps: [
-      { number: 1, title: "Analyze Alert Distribution", description: "Review the alert patterns to understand what's causing the noise.", hint: "Type 'siem analyze-alert-pattern unusual-s3-rule'.", intel: "Look for: common source IPs, users, time patterns, or specific buckets that appear in most false positives." },
-      { number: 2, title: "Sample True vs False", description: "Manually review a sample of alerts to identify distinguishing characteristics.", hint: "Type 'siem sample-alerts unusual-s3-rule --count 20'.", intel: "Document what makes true positives different: unusual timing, unknown IPs, sensitive buckets, bulk downloads vs incremental." },
-      { number: 3, title: "Identify Tuning Criteria", description: "Define specific exclusion criteria based on your analysis.", hint: "Type 'siem identify-exclusions unusual-s3-rule'.", intel: "Good exclusions: specific service account + specific bucket + specific time window. Bad exclusions: too broad (any service account)." },
-      { number: 4, title: "Create Tuning Proposal", description: "Document the proposed rule modifications with justification.", hint: "Type 'siem create-tuning-proposal unusual-s3-rule'.", intel: "Your proposal needs: current rule logic, proposed changes, expected noise reduction, detection coverage preserved, rollback plan." },
-      { number: 5, title: "Test in Simulation", description: "Run the tuned rule against historical data to validate it catches real threats.", hint: "Type 'siem test-rule unusual-s3-rule --historical 30d'.", intel: "The tuned rule should: catch all true positives from the last 30 days, reduce false positives by target amount." },
-      { number: 6, title: "Document and Deploy", description: "Finalize the tuning documentation and prepare for deployment.", hint: "Type 'siem deploy-tuning unusual-s3-rule'.", intel: "Include: before/after metrics, test results, approval chain, monitoring plan for first week after deployment." }
+      { number: 1, title: "Analyze Alert Distribution", description: "Review the alert patterns to understand what's causing the noise.", hint: "Type 'siem analyze-alert-pattern unusual-s3-rule'." },
+      { number: 2, title: "Sample True vs False", description: "Manually review a sample of alerts to identify distinguishing characteristics.", hint: "Type 'siem sample-alerts unusual-s3-rule --count 20'." },
+      { number: 3, title: "Identify Tuning Criteria", description: "Define specific exclusion criteria based on your analysis.", hint: "Type 'siem identify-exclusions unusual-s3-rule'." },
+      { number: 4, title: "Create Tuning Proposal", description: "Document the proposed rule modifications with justification.", hint: "Type 'siem create-tuning-proposal unusual-s3-rule'." },
+      { number: 5, title: "Test in Simulation", description: "Run the tuned rule against historical data to validate it catches real threats.", hint: "Type 'siem test-rule unusual-s3-rule --historical 30d'." },
+      { number: 6, title: "Document and Deploy", description: "Finalize the tuning documentation and prepare for deployment.", hint: "Type 'siem deploy-tuning unusual-s3-rule'." }
     ],
     resources: [
       { type: "detection_rule", name: "unusual-s3-rule", config: { alertsLastWeek: 347, falsePositiveRate: "95%", truePositives: 17 }, isVulnerable: false, status: "noisy" },
@@ -1667,16 +1667,16 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       github: ["exposed-repo"]
     },
     steps: [
-      { number: 1, title: "Confirm Exposure", description: "Verify the leaked credential and gather initial context.", hint: "Type 'security confirm-credential-exposure AKIA3EXAMPLE'.", intel: "Document: when was repo made public, when was key committed, what permissions does the key have, is it still active." },
-      { number: 2, title: "Timeline Malicious Usage", description: "Query CloudTrail for all usage of the compromised key, especially after exposure.", hint: "Type 'aws cloudtrail get-key-usage AKIA3EXAMPLE --since exposure'.", intel: "Focus on: API calls from unknown IPs, reconnaissance (List/Describe), persistence (CreateKey/CreateRole), data access." },
-      { number: 3, title: "Identify Attacker Actions", description: "Map all suspicious activity to understand attacker objectives.", hint: "Type 'security analyze-attacker-actions AKIA3EXAMPLE'.", intel: "T1078.004 + T1087 + T1580: Attackers typically: validate credentials, enumerate access, establish persistence, then pivot to objectives." },
-      { number: 4, title: "Assess Data Impact", description: "Determine what sensitive data the attacker could have accessed or exfiltrated.", hint: "Type 'security assess-data-exposure deployment-service'.", intel: "Review: S3 bucket access, database queries, secrets accessed. Check CloudTrail data events if available." },
-      { number: 5, title: "Coordinate Containment", description: "Work with the IR playbook to execute containment actions.", hint: "Type 'ir execute-playbook credential-compromise --key AKIA3EXAMPLE'.", intel: "Playbook steps: disable key, revoke sessions, check for persistence, rotate related secrets, notify stakeholders." },
-      { number: 6, title: "Check for Persistence", description: "Identify any backdoors or persistence mechanisms the attacker may have created.", hint: "Type 'security find-persistence deployment-service'.", intel: "Check: new IAM users, new access keys, modified roles, Lambda functions, EC2 instances with roles, SSM documents." },
-      { number: 7, title: "Collect Evidence", description: "Preserve forensic evidence according to chain of custody requirements.", hint: "Type 'forensics collect-evidence AKIA3EXAMPLE'.", intel: "Evidence: CloudTrail logs, VPC flow logs, S3 access logs, IAM credential reports, GitHub commit history." },
-      { number: 8, title: "Map to MITRE ATT&CK", description: "Document observed techniques using the ATT&CK framework.", hint: "Type 'security map-to-attack AKIA3EXAMPLE'.", intel: "Common techniques: T1078.004 (Cloud Accounts), T1087 (Account Discovery), T1580 (Cloud Infrastructure Discovery), T1530 (Data from Cloud Storage)." },
-      { number: 9, title: "Create Incident Timeline", description: "Build a detailed timeline of the incident from initial exposure to containment.", hint: "Type 'ir create-timeline AKIA3EXAMPLE'.", intel: "Timeline should include: credential committed, repo made public, first malicious use, detection, containment, and remediation milestones." },
-      { number: 10, title: "Generate Incident Report", description: "Produce comprehensive incident report for stakeholders.", hint: "Type 'ir generate-incident-report AKIA3EXAMPLE'.", intel: "Report sections: executive summary, timeline, technical details, impact assessment, containment actions, lessons learned, recommendations." }
+      { number: 1, title: "Confirm Exposure", description: "Verify the leaked credential and gather initial context.", hint: "Type 'security confirm-credential-exposure AKIA3EXAMPLE'." },
+      { number: 2, title: "Timeline Malicious Usage", description: "Query CloudTrail for all usage of the compromised key, especially after exposure.", hint: "Type 'aws cloudtrail get-key-usage AKIA3EXAMPLE --since exposure'." },
+      { number: 3, title: "Identify Attacker Actions", description: "Map all suspicious activity to understand attacker objectives.", hint: "Type 'security analyze-attacker-actions AKIA3EXAMPLE'." },
+      { number: 4, title: "Assess Data Impact", description: "Determine what sensitive data the attacker could have accessed or exfiltrated.", hint: "Type 'security assess-data-exposure deployment-service'." },
+      { number: 5, title: "Coordinate Containment", description: "Work with the IR playbook to execute containment actions.", hint: "Type 'ir execute-playbook credential-compromise --key AKIA3EXAMPLE'." },
+      { number: 6, title: "Check for Persistence", description: "Identify any backdoors or persistence mechanisms the attacker may have created.", hint: "Type 'security find-persistence deployment-service'." },
+      { number: 7, title: "Collect Evidence", description: "Preserve forensic evidence according to chain of custody requirements.", hint: "Type 'forensics collect-evidence AKIA3EXAMPLE'." },
+      { number: 8, title: "Map to MITRE ATT&CK", description: "Document observed techniques using the ATT&CK framework.", hint: "Type 'security map-to-attack AKIA3EXAMPLE'." },
+      { number: 9, title: "Create Incident Timeline", description: "Build a detailed timeline of the incident from initial exposure to containment.", hint: "Type 'ir create-timeline AKIA3EXAMPLE'." },
+      { number: 10, title: "Generate Incident Report", description: "Produce comprehensive incident report for stakeholders.", hint: "Type 'ir generate-incident-report AKIA3EXAMPLE'." }
     ],
     resources: [
       { type: "access_key", name: "compromised-key", config: { keyId: "AKIA3EXAMPLE", exposedSince: "48 hours", maliciousUsage: true }, isVulnerable: true, status: "compromised" },
@@ -1702,16 +1702,16 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       threat_intel: ["ip-reputation"]
     },
     steps: [
-      { number: 1, title: "Analyze Flow Patterns", description: "Examine VPC flow logs to understand the data transfer pattern.", hint: "Type 'aws ec2 analyze-flows db-prod-01 --destination 185.x.x.x'.", intel: "Look for: connection duration, packet counts, timing patterns (continuous vs bursts), ports used, protocol analysis." },
-      { number: 2, title: "Identify Destination", description: "Research the external IP to understand who's receiving the data.", hint: "Type 'threatintel lookup-ip 185.x.x.x'.", intel: "Check: IP reputation, geolocation, hosting provider, known malicious associations, reverse DNS, historical activity." },
-      { number: 3, title: "Correlate with Application Logs", description: "Check database and application logs for queries that could explain the data transfer.", hint: "Type 'siem correlate-logs database-logs application-logs --time 6h'.", intel: "Look for: unusual SELECT * queries, database dumps, bulk exports, application-initiated transfers, scheduled jobs." },
-      { number: 4, title: "Check for Compromise Indicators", description: "Look for signs that the database server itself may be compromised.", hint: "Type 'security check-compromise-indicators db-prod-01'.", intel: "Check: new processes, network connections, modified files, scheduled tasks, new user accounts, security group changes." },
-      { number: 5, title: "Assess Data Classification", description: "Determine what type of data was potentially exfiltrated.", hint: "Type 'security assess-data-classification production-db'.", intel: "Identify: tables accessed, PII/PCI/PHI content, customer data, financial records, intellectual property." },
-      { number: 6, title: "Calculate Exposure Scope", description: "Estimate the volume and sensitivity of data potentially exposed.", hint: "Type 'security calculate-exposure-scope db-prod-01 47GB'.", intel: "47GB could be: all customer records, years of transaction data, complete database dump. Quantify the impact." },
-      { number: 7, title: "Coordinate Containment", description: "Execute containment actions while preserving forensic evidence.", hint: "Type 'ir contain-exfiltration db-prod-01'.", intel: "Containment options: block destination IP, isolate instance, throttle network, but preserve instance state for forensics." },
-      { number: 8, title: "Collect Forensic Evidence", description: "Preserve all relevant evidence for potential legal proceedings.", hint: "Type 'forensics collect-exfiltration-evidence db-prod-01'.", intel: "Collect: memory dump, disk image, network logs, database query logs, authentication logs, file integrity data." },
-      { number: 9, title: "Prepare Breach Assessment", description: "Determine if this qualifies as a reportable data breach.", hint: "Type 'compliance assess-breach-notification db-prod-01'.", intel: "Consider: data types exposed, jurisdiction (GDPR, CCPA), notification timelines, regulatory requirements." },
-      { number: 10, title: "Generate Executive Report", description: "Create incident report for executive leadership and legal team.", hint: "Type 'ir generate-executive-report db-prod-01'.", intel: "Executive summary: what happened, what was exposed, business impact, customer impact, regulatory implications, remediation status." }
+      { number: 1, title: "Analyze Flow Patterns", description: "Examine VPC flow logs to understand the data transfer pattern.", hint: "Type 'aws ec2 analyze-flows db-prod-01 --destination 185.x.x.x'." },
+      { number: 2, title: "Identify Destination", description: "Research the external IP to understand who's receiving the data.", hint: "Type 'threatintel lookup-ip 185.x.x.x'." },
+      { number: 3, title: "Correlate with Application Logs", description: "Check database and application logs for queries that could explain the data transfer.", hint: "Type 'siem correlate-logs database-logs application-logs --time 6h'." },
+      { number: 4, title: "Check for Compromise Indicators", description: "Look for signs that the database server itself may be compromised.", hint: "Type 'security check-compromise-indicators db-prod-01'." },
+      { number: 5, title: "Assess Data Classification", description: "Determine what type of data was potentially exfiltrated.", hint: "Type 'security assess-data-classification production-db'." },
+      { number: 6, title: "Calculate Exposure Scope", description: "Estimate the volume and sensitivity of data potentially exposed.", hint: "Type 'security calculate-exposure-scope db-prod-01 47GB'." },
+      { number: 7, title: "Coordinate Containment", description: "Execute containment actions while preserving forensic evidence.", hint: "Type 'ir contain-exfiltration db-prod-01'." },
+      { number: 8, title: "Collect Forensic Evidence", description: "Preserve all relevant evidence for potential legal proceedings.", hint: "Type 'forensics collect-exfiltration-evidence db-prod-01'." },
+      { number: 9, title: "Prepare Breach Assessment", description: "Determine if this qualifies as a reportable data breach.", hint: "Type 'compliance assess-breach-notification db-prod-01'." },
+      { number: 10, title: "Generate Executive Report", description: "Create incident report for executive leadership and legal team.", hint: "Type 'ir generate-executive-report db-prod-01'." }
     ],
     resources: [
       { type: "vpc_flow", name: "exfil-flow-logs", config: { bytesTransferred: "47GB", destinationIP: "185.x.x.x", duration: "6 hours" }, isVulnerable: true, status: "active-exfil" },
@@ -1737,17 +1737,17 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       ir: ["investigation-workspace"]
     },
     steps: [
-      { number: 1, title: "Gather All Alerts", description: "Collect and review all three alerts with full context.", hint: "Type 'siem gather-related-alerts --time-window 30m'.", intel: "Collect: GuardDuty findings, S3 alerts, EC2 anomalies. Note timestamps, affected resources, and severity." },
-      { number: 2, title: "Establish Common Elements", description: "Look for connections between the three incidents.", hint: "Type 'security find-common-indicators'.", intel: "Check for: same IAM principal, same source IP, same time window, linked resources, shared VPC, common tags." },
-      { number: 3, title: "Build Unified Timeline", description: "Create a single timeline of all events across all three incidents.", hint: "Type 'ir create-unified-timeline'.", intel: "A unified timeline reveals attack progression: initial access -> privilege escalation -> lateral movement -> objective." },
-      { number: 4, title: "Identify Attack Chain", description: "Determine the sequence of attacker actions and map to ATT&CK.", hint: "Type 'security identify-attack-chain'.", intel: "Likely pattern: IAM credential compromise (T1078) -> Reconnaissance (T1580) -> Data access (T1530) -> Covering tracks (T1070)." },
-      { number: 5, title: "Assess Full Scope", description: "Determine all resources and data potentially impacted.", hint: "Type 'ir assess-incident-scope'.", intel: "Beyond the three alerts: what else could this principal access? What other resources share network access? What data is at risk?" },
-      { number: 6, title: "Execute IR Playbook", description: "Follow the incident response playbook for coordinated attacks.", hint: "Type 'ir execute-playbook coordinated-attack'.", intel: "Playbook priorities: contain all affected resources, preserve evidence, identify all compromise indicators, prevent lateral movement." },
-      { number: 7, title: "Hunt for Additional Indicators", description: "Proactively search for compromise indicators beyond the alerts.", hint: "Type 'hunt search-iocs'.", intel: "Hunt for: other users from same IP, other resources in same VPC, similar patterns in other accounts, persistence mechanisms." },
-      { number: 8, title: "Document Evidence Chain", description: "Create formal evidence documentation for each finding.", hint: "Type 'forensics document-evidence-chain'.", intel: "For each piece of evidence: source, collection method, hash, chain of custody, relevance to incident." },
-      { number: 9, title: "Coordinate Stakeholder Communication", description: "Prepare communications for various stakeholders.", hint: "Type 'ir prepare-stakeholder-comms'.", intel: "Different audiences need different information: SOC (technical details), management (impact), legal (breach implications)." },
-      { number: 10, title: "Create Comprehensive Report", description: "Produce the full incident report with all findings and recommendations.", hint: "Type 'ir generate-comprehensive-report'.", intel: "Report must include: executive summary, attack narrative, timeline, impact assessment, response actions, lessons learned, recommendations." },
-      { number: 11, title: "Define Remediation Actions", description: "Document specific remediation steps to prevent recurrence.", hint: "Type 'ir define-remediation-plan'.", intel: "Remediation should address: root cause, detection gaps, response improvements, control enhancements." }
+      { number: 1, title: "Gather All Alerts", description: "Collect and review all three alerts with full context.", hint: "Type 'siem gather-related-alerts --time-window 30m'." },
+      { number: 2, title: "Establish Common Elements", description: "Look for connections between the three incidents.", hint: "Type 'security find-common-indicators'." },
+      { number: 3, title: "Build Unified Timeline", description: "Create a single timeline of all events across all three incidents.", hint: "Type 'ir create-unified-timeline'." },
+      { number: 4, title: "Identify Attack Chain", description: "Determine the sequence of attacker actions and map to ATT&CK.", hint: "Type 'security identify-attack-chain'." },
+      { number: 5, title: "Assess Full Scope", description: "Determine all resources and data potentially impacted.", hint: "Type 'ir assess-incident-scope'." },
+      { number: 6, title: "Execute IR Playbook", description: "Follow the incident response playbook for coordinated attacks.", hint: "Type 'ir execute-playbook coordinated-attack'." },
+      { number: 7, title: "Hunt for Additional Indicators", description: "Proactively search for compromise indicators beyond the alerts.", hint: "Type 'hunt search-iocs'." },
+      { number: 8, title: "Document Evidence Chain", description: "Create formal evidence documentation for each finding.", hint: "Type 'forensics document-evidence-chain'." },
+      { number: 9, title: "Coordinate Stakeholder Communication", description: "Prepare communications for various stakeholders.", hint: "Type 'ir prepare-stakeholder-comms'." },
+      { number: 10, title: "Create Comprehensive Report", description: "Produce the full incident report with all findings and recommendations.", hint: "Type 'ir generate-comprehensive-report'." },
+      { number: 11, title: "Define Remediation Actions", description: "Document specific remediation steps to prevent recurrence.", hint: "Type 'ir define-remediation-plan'." }
     ],
     resources: [
       { type: "guardduty_finding", name: "iam-finding", config: { severity: 8, type: "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration" }, isVulnerable: true, status: "active" },
@@ -1774,17 +1774,17 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
       mitre: ["cloud-techniques"]
     },
     steps: [
-      { number: 1, title: "Define Hunt Hypothesis", description: "Create a structured hypothesis based on threat intelligence and ATT&CK.", hint: "Type 'hunt create-hypothesis'.", intel: "Good hypothesis: 'Attackers may have established persistence via Lambda functions (T1525) based on recent threat reports targeting our industry.'" },
-      { number: 2, title: "Select ATT&CK Techniques", description: "Choose specific cloud ATT&CK techniques to hunt for.", hint: "Type 'hunt select-techniques cloud'.", intel: "Priority cloud techniques: T1078.004 (Cloud Accounts), T1530 (Cloud Storage), T1537 (Transfer to Cloud Account), T1525 (Cloud Compute)." },
-      { number: 3, title: "Build Hunt Queries", description: "Create specific search queries for each selected technique.", hint: "Type 'hunt build-queries T1078.004 T1530 T1525'.", intel: "Queries should search for: anomalous API patterns, unusual data access, new compute resources, unexpected identity usage." },
-      { number: 4, title: "Execute T1078.004 Hunt", description: "Hunt for compromised cloud accounts and credential abuse.", hint: "Type 'hunt execute T1078.004'.", intel: "Look for: impossible travel, unusual login hours, failed then successful auth, API calls from new locations." },
-      { number: 5, title: "Execute T1530 Hunt", description: "Hunt for unauthorized access to cloud storage.", hint: "Type 'hunt execute T1530'.", intel: "Look for: bulk downloads, access from unusual IPs, sensitive bucket access by unexpected principals." },
-      { number: 6, title: "Execute T1525 Hunt", description: "Hunt for malicious code in cloud compute resources.", hint: "Type 'hunt execute T1525'.", intel: "Look for: new Lambda functions, modified Lambda code, unusual EC2 AMIs, containers from untrusted registries." },
-      { number: 7, title: "Analyze Hunt Results", description: "Review findings from all hunt queries.", hint: "Type 'hunt analyze-results'.", intel: "Categorize findings: confirmed malicious, suspicious needs investigation, benign but unusual, known good." },
-      { number: 8, title: "Investigate Suspicious Findings", description: "Deep dive on suspicious items that warrant further investigation.", hint: "Type 'hunt investigate-findings'.", intel: "For each suspicious finding: gather additional context, correlate with other data sources, determine true/false positive." },
-      { number: 9, title: "Document Discoveries", description: "Record all findings, whether malicious or benign.", hint: "Type 'hunt document-findings'.", intel: "Document everything: confirmed threats, new detection opportunities, gaps in visibility, baseline updates needed." },
-      { number: 10, title: "Create Detection Rules", description: "Turn hunt findings into new detection rules.", hint: "Type 'hunt create-detections'.", intel: "Good hunts produce: new SIEM rules, updated baselines, improved alert logic, enhanced monitoring coverage." },
-      { number: 11, title: "Generate Hunt Report", description: "Produce formal threat hunt report with methodology and findings.", hint: "Type 'hunt generate-report'.", intel: "Report includes: hypothesis, methodology, techniques hunted, findings, new detections created, recommendations." }
+      { number: 1, title: "Define Hunt Hypothesis", description: "Create a structured hypothesis based on threat intelligence and ATT&CK.", hint: "Type 'hunt create-hypothesis'." },
+      { number: 2, title: "Select ATT&CK Techniques", description: "Choose specific cloud ATT&CK techniques to hunt for.", hint: "Type 'hunt select-techniques cloud'." },
+      { number: 3, title: "Build Hunt Queries", description: "Create specific search queries for each selected technique.", hint: "Type 'hunt build-queries T1078.004 T1530 T1525'." },
+      { number: 4, title: "Execute T1078.004 Hunt", description: "Hunt for compromised cloud accounts and credential abuse.", hint: "Type 'hunt execute T1078.004'." },
+      { number: 5, title: "Execute T1530 Hunt", description: "Hunt for unauthorized access to cloud storage.", hint: "Type 'hunt execute T1530'." },
+      { number: 6, title: "Execute T1525 Hunt", description: "Hunt for malicious code in cloud compute resources.", hint: "Type 'hunt execute T1525'." },
+      { number: 7, title: "Analyze Hunt Results", description: "Review findings from all hunt queries.", hint: "Type 'hunt analyze-results'." },
+      { number: 8, title: "Investigate Suspicious Findings", description: "Deep dive on suspicious items that warrant further investigation.", hint: "Type 'hunt investigate-findings'." },
+      { number: 9, title: "Document Discoveries", description: "Record all findings, whether malicious or benign.", hint: "Type 'hunt document-findings'." },
+      { number: 10, title: "Create Detection Rules", description: "Turn hunt findings into new detection rules.", hint: "Type 'hunt create-detections'." },
+      { number: 11, title: "Generate Hunt Report", description: "Produce formal threat hunt report with methodology and findings.", hint: "Type 'hunt generate-report'." }
     ],
     resources: [
       { type: "hunt_workspace", name: "hunt-workspace", config: { techniques: ["T1078.004", "T1530", "T1525"], dataSourcesDays: 30 }, isVulnerable: false, status: "active" },
@@ -1913,12 +1913,12 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { roles: ["app-role", "deploy-role", "admin-role"] },
     steps: [
-      { number: 1, title: "Scan for Trust Issues", description: "Identify roles with complex trust relationships.", hint: "Type 'scan' to find vulnerabilities.", intel: "Role chaining: A assumes B, B assumes C, A effectively becomes C." },
-      { number: 2, title: "List Role Trust Policies", description: "Review trust policies for all IAM roles.", hint: "Type 'aws iam list-roles --with-trust'.", intel: "Look for roles that trust other roles in the same account." },
-      { number: 3, title: "Map Role Chains", description: "Build a graph of which roles can assume which other roles.", hint: "Type 'aws iam trace-role-chains'.", intel: "Follow the chain: if A->B and B->C, then A can effectively become C." },
-      { number: 4, title: "Identify Escalation Paths", description: "Find paths from low-privilege to high-privilege roles.", hint: "Type 'aws iam find-escalation-paths'.", intel: "Critical paths end at admin roles or roles with iam:* permissions." },
-      { number: 5, title: "Review Most Dangerous Path", description: "Analyze the highest-risk escalation chain.", hint: "Type 'aws iam analyze-path app-role admin-role'.", intel: "Document each hop in the chain and why it exists." },
-      { number: 6, title: "Break Escalation Chain", description: "Modify trust policies to prevent unintended escalation.", hint: "Type 'aws iam break-role-chain deploy-role'.", intel: "Remove trust from intermediate roles or add conditions to restrict chaining." }
+      { number: 1, title: "Scan for Trust Issues", description: "Identify roles with complex trust relationships.", hint: "Type 'scan' to find vulnerabilities." },
+      { number: 2, title: "List Role Trust Policies", description: "Review trust policies for all IAM roles.", hint: "Type 'aws iam list-roles --with-trust'." },
+      { number: 3, title: "Map Role Chains", description: "Build a graph of which roles can assume which other roles.", hint: "Type 'aws iam trace-role-chains'." },
+      { number: 4, title: "Identify Escalation Paths", description: "Find paths from low-privilege to high-privilege roles.", hint: "Type 'aws iam find-escalation-paths'." },
+      { number: 5, title: "Review Most Dangerous Path", description: "Analyze the highest-risk escalation chain.", hint: "Type 'aws iam analyze-path app-role admin-role'." },
+      { number: 6, title: "Break Escalation Chain", description: "Modify trust policies to prevent unintended escalation.", hint: "Type 'aws iam break-role-chain deploy-role'." }
     ],
     resources: [
       { type: "iam_role", name: "app-role", config: { canAssume: ["deploy-role"], permissions: "BasicAccess" }, isVulnerable: false, status: "active" },
@@ -1937,12 +1937,12 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { roles: ["external-data-access"] },
     steps: [
-      { number: 1, title: "Identify Trust Issues", description: "Scan for roles with external trust relationships.", hint: "Type 'scan' to find vulnerabilities.", intel: "IAM Access Analyzer automatically detects external principals." },
-      { number: 2, title: "List Roles", description: "Review all IAM roles in the account.", hint: "Type 'aws iam list-roles'.", intel: "Focus on roles with trust policies that allow sts:AssumeRole." },
-      { number: 3, title: "Examine Trust Policy", description: "Check who can assume the suspicious role.", hint: "Type 'aws iam get-role-trust external-data-access'.", intel: "Look for Principal statements with external account IDs." },
-      { number: 4, title: "Check Role Usage", description: "See if this role has been used recently.", hint: "Type 'aws iam get-role-last-used external-data-access'.", intel: "Correlate with CloudTrail for specific actions taken." },
-      { number: 5, title: "Verify External Account", description: "Confirm if the trusted account is legitimate.", hint: "Type 'aws organizations describe-account 999888777666'.", intel: "Unknown accounts should be treated as hostile." },
-      { number: 6, title: "Restrict Trust Policy", description: "Update the trust policy to remove unauthorized access.", hint: "Type 'aws iam fix-role-trust external-data-access'.", intel: "Use conditions like aws:PrincipalOrgID to limit trust to your org." }
+      { number: 1, title: "Identify Trust Issues", description: "Scan for roles with external trust relationships.", hint: "Type 'scan' to find vulnerabilities." },
+      { number: 2, title: "List Roles", description: "Review all IAM roles in the account.", hint: "Type 'aws iam list-roles'." },
+      { number: 3, title: "Examine Trust Policy", description: "Check who can assume the suspicious role.", hint: "Type 'aws iam get-role-trust external-data-access'." },
+      { number: 4, title: "Check Role Usage", description: "See if this role has been used recently.", hint: "Type 'aws iam get-role-last-used external-data-access'." },
+      { number: 5, title: "Verify External Account", description: "Confirm if the trusted account is legitimate.", hint: "Type 'aws organizations describe-account 999888777666'." },
+      { number: 6, title: "Restrict Trust Policy", description: "Update the trust policy to remove unauthorized access.", hint: "Type 'aws iam fix-role-trust external-data-access'." }
     ],
     resources: [
       { type: "iam_role", name: "external-data-access", config: { trustedAccount: "999888777666" }, isVulnerable: true, status: "external-trust" }
@@ -1959,12 +1959,12 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { policies: ["developer-policy"] },
     steps: [
-      { number: 1, title: "Scan for Escalation Paths", description: "Identify policies that allow privilege escalation.", hint: "Type 'scan' to find vulnerabilities.", intel: "Tools like Pacu and Cloudsplaining can automate this detection." },
-      { number: 2, title: "List Custom Policies", description: "Review all customer-managed IAM policies.", hint: "Type 'aws iam list-policies --scope Local'.", intel: "Custom policies are more likely to contain escalation paths." },
-      { number: 3, title: "Analyze Policy Document", description: "Check the developer policy for dangerous permissions.", hint: "Type 'aws iam get-policy-document developer-policy'.", intel: "Look for iam:*, sts:*, or combinations that allow self-modification." },
-      { number: 4, title: "Simulate Escalation", description: "Test if escalation is actually possible.", hint: "Type 'aws iam simulate-policy developer-policy iam:AttachUserPolicy'.", intel: "Use IAM Policy Simulator to validate your findings." },
-      { number: 5, title: "Create Restricted Version", description: "Build a policy without escalation permissions.", hint: "Type 'aws iam create-safe-policy developer-policy'.", intel: "Add explicit deny for iam:Create*, iam:Attach*, iam:Put*." },
-      { number: 6, title: "Apply Fixed Policy", description: "Replace the vulnerable policy with the secure version.", hint: "Type 'aws iam fix-policy developer-policy'.", intel: "Test thoroughly before applying - this could break developer workflows." }
+      { number: 1, title: "Scan for Escalation Paths", description: "Identify policies that allow privilege escalation.", hint: "Type 'scan' to find vulnerabilities." },
+      { number: 2, title: "List Custom Policies", description: "Review all customer-managed IAM policies.", hint: "Type 'aws iam list-policies --scope Local'." },
+      { number: 3, title: "Analyze Policy Document", description: "Check the developer policy for dangerous permissions.", hint: "Type 'aws iam get-policy-document developer-policy'." },
+      { number: 4, title: "Simulate Escalation", description: "Test if escalation is actually possible.", hint: "Type 'aws iam simulate-policy developer-policy iam:AttachUserPolicy'." },
+      { number: 5, title: "Create Restricted Version", description: "Build a policy without escalation permissions.", hint: "Type 'aws iam create-safe-policy developer-policy'." },
+      { number: 6, title: "Apply Fixed Policy", description: "Replace the vulnerable policy with the secure version.", hint: "Type 'aws iam fix-policy developer-policy'." }
     ],
     resources: [
       { type: "iam_policy", name: "developer-policy", config: { escalationPath: true }, isVulnerable: true, status: "dangerous" }
@@ -1981,12 +1981,12 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { roles: ["AWSServiceRoleForECS", "AWSServiceRoleForRDS"] },
     steps: [
-      { number: 1, title: "List Service Roles", description: "Find all service-linked roles in the account.", hint: "Type 'scan' to identify roles.", intel: "Service-linked roles are managed by AWS but can still be audited." },
-      { number: 2, title: "Identify Active Services", description: "Check which services are actually in use.", hint: "Type 'aws service list-active'.", intel: "Unused services shouldn't have roles." },
-      { number: 3, title: "Review Role Permissions", description: "Check what each service role can do.", hint: "Type 'aws iam list-service-roles'.", intel: "Compare against AWS documentation for expected permissions." },
-      { number: 4, title: "Check Usage Patterns", description: "See how each role has been used.", hint: "Type 'aws iam analyze-service-role-usage'.", intel: "CloudTrail shows all role assumption and API calls." },
-      { number: 5, title: "Identify Unused Roles", description: "Find service roles that haven't been used.", hint: "Type 'aws iam find-unused-service-roles'.", intel: "If a service isn't used, its role can be deleted." },
-      { number: 6, title: "Clean Up Unused Roles", description: "Remove roles for services no longer in use.", hint: "Type 'aws iam cleanup-service-roles'.", intel: "Some service roles cannot be deleted while resources exist." }
+      { number: 1, title: "List Service Roles", description: "Find all service-linked roles in the account.", hint: "Type 'scan' to identify roles." },
+      { number: 2, title: "Identify Active Services", description: "Check which services are actually in use.", hint: "Type 'aws service list-active'." },
+      { number: 3, title: "Review Role Permissions", description: "Check what each service role can do.", hint: "Type 'aws iam list-service-roles'." },
+      { number: 4, title: "Check Usage Patterns", description: "See how each role has been used.", hint: "Type 'aws iam analyze-service-role-usage'." },
+      { number: 5, title: "Identify Unused Roles", description: "Find service roles that haven't been used.", hint: "Type 'aws iam find-unused-service-roles'." },
+      { number: 6, title: "Clean Up Unused Roles", description: "Remove roles for services no longer in use.", hint: "Type 'aws iam cleanup-service-roles'." }
     ],
     resources: [
       { type: "iam_role", name: "AWSServiceRoleForECS", config: { lastUsed: "30 days ago" }, isVulnerable: false, status: "active" },
@@ -2004,12 +2004,12 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { policies: ["developer-role-creation"] },
     steps: [
-      { number: 1, title: "Assess Current State", description: "Check how developers currently create roles.", hint: "Type 'scan' to find vulnerabilities.", intel: "Permission boundaries limit what permissions a role can grant." },
-      { number: 2, title: "Review Existing Roles", description: "See what roles developers have created.", hint: "Type 'aws iam list-developer-roles'.", intel: "Look for roles with excessive permissions." },
-      { number: 3, title: "Design Boundary Policy", description: "Create a permission boundary that limits scope.", hint: "Type 'aws iam create-permission-boundary developer-boundary'.", intel: "Boundary should only allow permissions developers actually need." },
-      { number: 4, title: "Test Boundary", description: "Verify the boundary works as expected.", hint: "Type 'aws iam test-boundary developer-boundary'.", intel: "Test both allowed and denied actions." },
-      { number: 5, title: "Apply to Developer Policy", description: "Require boundary on all developer-created roles.", hint: "Type 'aws iam enforce-boundary developer-role-creation'.", intel: "Use iam:CreateRole condition to enforce boundaries." },
-      { number: 6, title: "Verify Enforcement", description: "Confirm developers can only create bounded roles.", hint: "Type 'aws iam verify-boundary-enforcement'.", intel: "Try creating a role without boundary to confirm it fails." }
+      { number: 1, title: "Assess Current State", description: "Check how developers currently create roles.", hint: "Type 'scan' to find vulnerabilities." },
+      { number: 2, title: "Review Existing Roles", description: "See what roles developers have created.", hint: "Type 'aws iam list-developer-roles'." },
+      { number: 3, title: "Design Boundary Policy", description: "Create a permission boundary that limits scope.", hint: "Type 'aws iam create-permission-boundary developer-boundary'." },
+      { number: 4, title: "Test Boundary", description: "Verify the boundary works as expected.", hint: "Type 'aws iam test-boundary developer-boundary'." },
+      { number: 5, title: "Apply to Developer Policy", description: "Require boundary on all developer-created roles.", hint: "Type 'aws iam enforce-boundary developer-role-creation'." },
+      { number: 6, title: "Verify Enforcement", description: "Confirm developers can only create bounded roles.", hint: "Type 'aws iam verify-boundary-enforcement'." }
     ],
     resources: [
       { type: "iam_policy", name: "developer-role-creation", config: { hasBoundary: false }, isVulnerable: true, status: "unbounded" }
@@ -2028,16 +2028,16 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "30-45 minutes",
     initialState: { users: ["admin-jenkins"], logs: ["cloudtrail-alerts"] },
     steps: [
-      { number: 1, title: "Confirm the Alert", description: "Verify the GuardDuty finding is legitimate.", hint: "Type 'scan' to assess the situation.", intel: "Check if the IP geolocation matches expected CI/CD locations." },
-      { number: 2, title: "Review CloudTrail Events", description: "Examine what actions the compromised credential performed.", hint: "Type 'aws cloudtrail lookup-events --username admin-jenkins'.", intel: "Look for reconnaissance commands like List*, Describe*, Get*." },
-      { number: 3, title: "Identify Attack Timeline", description: "Determine when the compromise started.", hint: "Type 'aws cloudtrail analyze-timeline admin-jenkins'.", intel: "Find the first anomalous event to scope the incident." },
-      { number: 4, title: "Check for Persistence", description: "Look for new users, roles, or access keys created.", hint: "Type 'aws iam find-persistence admin-jenkins'.", intel: "Attackers often create backdoor users or roles." },
-      { number: 5, title: "Disable Compromised Credentials", description: "Immediately deactivate the compromised user.", hint: "Type 'aws iam disable-user admin-jenkins'.", intel: "Disable before delete to preserve forensic evidence." },
-      { number: 6, title: "Rotate All Keys", description: "Generate new credentials for the service.", hint: "Type 'aws iam rotate-all-keys admin-jenkins'.", intel: "Assume all keys for this user are compromised." },
-      { number: 7, title: "Remove Persistence", description: "Delete any backdoors the attacker created.", hint: "Type 'aws iam remove-persistence'.", intel: "Check for lambda functions, EC2 instances with roles, etc." },
-      { number: 8, title: "Review Data Access", description: "Determine what data was accessed.", hint: "Type 'aws s3 analyze-access-logs admin-jenkins'.", intel: "S3 access logs show exactly what objects were downloaded." },
-      { number: 9, title: "Implement Controls", description: "Add MFA and IP restrictions.", hint: "Type 'aws iam harden-service-account admin-jenkins'.", intel: "Service accounts should use IAM roles for EC2, not long-lived keys." },
-      { number: 10, title: "Generate Incident Report", description: "Document the incident for compliance.", hint: "Type 'aws iam generate-incident-report admin-jenkins'.", intel: "Include timeline, impact assessment, and remediation steps." }
+      { number: 1, title: "Confirm the Alert", description: "Verify the GuardDuty finding is legitimate.", hint: "Type 'scan' to assess the situation." },
+      { number: 2, title: "Review CloudTrail Events", description: "Examine what actions the compromised credential performed.", hint: "Type 'aws cloudtrail lookup-events --username admin-jenkins'." },
+      { number: 3, title: "Identify Attack Timeline", description: "Determine when the compromise started.", hint: "Type 'aws cloudtrail analyze-timeline admin-jenkins'." },
+      { number: 4, title: "Check for Persistence", description: "Look for new users, roles, or access keys created.", hint: "Type 'aws iam find-persistence admin-jenkins'." },
+      { number: 5, title: "Disable Compromised Credentials", description: "Immediately deactivate the compromised user.", hint: "Type 'aws iam disable-user admin-jenkins'." },
+      { number: 6, title: "Rotate All Keys", description: "Generate new credentials for the service.", hint: "Type 'aws iam rotate-all-keys admin-jenkins'." },
+      { number: 7, title: "Remove Persistence", description: "Delete any backdoors the attacker created.", hint: "Type 'aws iam remove-persistence'." },
+      { number: 8, title: "Review Data Access", description: "Determine what data was accessed.", hint: "Type 'aws s3 analyze-access-logs admin-jenkins'." },
+      { number: 9, title: "Implement Controls", description: "Add MFA and IP restrictions.", hint: "Type 'aws iam harden-service-account admin-jenkins'." },
+      { number: 10, title: "Generate Incident Report", description: "Document the incident for compliance.", hint: "Type 'aws iam generate-incident-report admin-jenkins'." }
     ],
     resources: [
       { type: "iam_user", name: "admin-jenkins", config: { compromised: true, sourceIP: "Moscow, Russia" }, isVulnerable: true, status: "compromised" },
@@ -2055,16 +2055,16 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "30-45 minutes",
     initialState: { providers: ["okta-saml-provider"] },
     steps: [
-      { number: 1, title: "List Identity Providers", description: "Review configured SAML and OIDC providers.", hint: "Type 'scan' to identify configuration.", intel: "Check for multiple IdPs that may have different security postures." },
-      { number: 2, title: "Review SAML Metadata", description: "Examine the federation trust configuration.", hint: "Type 'aws iam get-saml-provider okta-saml-provider'.", intel: "Verify the metadata URL is current and certificates aren't expired." },
-      { number: 3, title: "Check Role Mappings", description: "See which roles can be assumed via SAML.", hint: "Type 'aws iam list-saml-roles'.", intel: "Ensure role mappings align with current org structure." },
-      { number: 4, title: "Audit Session Duration", description: "Check how long federated sessions last.", hint: "Type 'aws iam check-session-duration'.", intel: "Long sessions increase risk if IdP is compromised." },
-      { number: 5, title: "Review Attribute Mapping", description: "Verify SAML attributes map correctly to IAM.", hint: "Type 'aws iam review-saml-attributes'.", intel: "Incorrect mappings could grant wrong permissions." },
-      { number: 6, title: "Check for Stale Mappings", description: "Find role mappings for deleted IdP groups.", hint: "Type 'aws iam find-stale-mappings'.", intel: "Orphaned mappings are security debt." },
-      { number: 7, title: "Test Session Revocation", description: "Verify sessions can be terminated from IdP.", hint: "Type 'aws iam test-session-revocation'.", intel: "SAML doesn't support real-time revocation - test your workarounds." },
-      { number: 8, title: "Reduce Session Duration", description: "Shorten max session duration to reduce risk.", hint: "Type 'aws iam reduce-session-duration'.", intel: "Balance security with user experience." },
-      { number: 9, title: "Implement Conditions", description: "Add IP and MFA conditions to federated roles.", hint: "Type 'aws iam add-federation-conditions'.", intel: "Condition keys like aws:SourceIp work with SAML." },
-      { number: 10, title: "Generate Compliance Report", description: "Document federation security posture.", hint: "Type 'aws iam generate-federation-report'.", intel: "Include recommendations for IdP hardening." }
+      { number: 1, title: "List Identity Providers", description: "Review configured SAML and OIDC providers.", hint: "Type 'scan' to identify configuration." },
+      { number: 2, title: "Review SAML Metadata", description: "Examine the federation trust configuration.", hint: "Type 'aws iam get-saml-provider okta-saml-provider'." },
+      { number: 3, title: "Check Role Mappings", description: "See which roles can be assumed via SAML.", hint: "Type 'aws iam list-saml-roles'." },
+      { number: 4, title: "Audit Session Duration", description: "Check how long federated sessions last.", hint: "Type 'aws iam check-session-duration'." },
+      { number: 5, title: "Review Attribute Mapping", description: "Verify SAML attributes map correctly to IAM.", hint: "Type 'aws iam review-saml-attributes'." },
+      { number: 6, title: "Check for Stale Mappings", description: "Find role mappings for deleted IdP groups.", hint: "Type 'aws iam find-stale-mappings'." },
+      { number: 7, title: "Test Session Revocation", description: "Verify sessions can be terminated from IdP.", hint: "Type 'aws iam test-session-revocation'." },
+      { number: 8, title: "Reduce Session Duration", description: "Shorten max session duration to reduce risk.", hint: "Type 'aws iam reduce-session-duration'." },
+      { number: 9, title: "Implement Conditions", description: "Add IP and MFA conditions to federated roles.", hint: "Type 'aws iam add-federation-conditions'." },
+      { number: 10, title: "Generate Compliance Report", description: "Document federation security posture.", hint: "Type 'aws iam generate-federation-report'." }
     ],
     resources: [
       { type: "iam_provider", name: "okta-saml-provider", config: { sessionDuration: 43200, mfaRequired: false }, isVulnerable: true, status: "needs-review" }
@@ -2081,17 +2081,17 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "35-50 minutes",
     initialState: { resources: ["s3-policies", "kms-policies", "lambda-policies"] },
     steps: [
-      { number: 1, title: "Initialize Audit", description: "Scan all resources for inline policies.", hint: "Type 'scan' to begin analysis.", intel: "IAM Access Analyzer can help identify external access." },
-      { number: 2, title: "Audit S3 Bucket Policies", description: "Review all S3 bucket policies for external access.", hint: "Type 'aws s3 audit-bucket-policies'.", intel: "Look for Principal: * which allows public access." },
-      { number: 3, title: "Audit KMS Key Policies", description: "Check who can use encryption keys.", hint: "Type 'aws kms audit-key-policies'.", intel: "KMS policies control encryption access - very sensitive." },
-      { number: 4, title: "Audit Lambda Policies", description: "Review Lambda function resource policies.", hint: "Type 'aws lambda audit-function-policies'.", intel: "Lambda policies control who can invoke functions." },
-      { number: 5, title: "Audit SNS/SQS Policies", description: "Check messaging service access.", hint: "Type 'aws sns-sqs audit-policies'.", intel: "Queue policies can allow cross-account message injection." },
-      { number: 6, title: "Enable Access Analyzer", description: "Set up continuous policy analysis.", hint: "Type 'aws access-analyzer enable'.", intel: "Access Analyzer automatically finds external access grants." },
-      { number: 7, title: "Review Analyzer Findings", description: "Check what external access exists.", hint: "Type 'aws access-analyzer list-findings'.", intel: "Findings show exactly which principals have access." },
-      { number: 8, title: "Remediate Public Access", description: "Remove unintended public access.", hint: "Type 'aws access-analyzer remediate-public'.", intel: "Start with high-severity findings." },
-      { number: 9, title: "Remediate Cross-Account", description: "Fix unauthorized cross-account access.", hint: "Type 'aws access-analyzer remediate-cross-account'.", intel: "Verify before removing - some may be intentional." },
-      { number: 10, title: "Set Up Monitoring", description: "Alert on future policy changes.", hint: "Type 'aws access-analyzer enable-monitoring'.", intel: "Use EventBridge to trigger on policy modifications." },
-      { number: 11, title: "Generate Audit Report", description: "Document all findings and remediations.", hint: "Type 'aws access-analyzer generate-report'.", intel: "Include baseline for future comparisons." }
+      { number: 1, title: "Initialize Audit", description: "Scan all resources for inline policies.", hint: "Type 'scan' to begin analysis." },
+      { number: 2, title: "Audit S3 Bucket Policies", description: "Review all S3 bucket policies for external access.", hint: "Type 'aws s3 audit-bucket-policies'." },
+      { number: 3, title: "Audit KMS Key Policies", description: "Check who can use encryption keys.", hint: "Type 'aws kms audit-key-policies'." },
+      { number: 4, title: "Audit Lambda Policies", description: "Review Lambda function resource policies.", hint: "Type 'aws lambda audit-function-policies'." },
+      { number: 5, title: "Audit SNS/SQS Policies", description: "Check messaging service access.", hint: "Type 'aws sns-sqs audit-policies'." },
+      { number: 6, title: "Enable Access Analyzer", description: "Set up continuous policy analysis.", hint: "Type 'aws access-analyzer enable'." },
+      { number: 7, title: "Review Analyzer Findings", description: "Check what external access exists.", hint: "Type 'aws access-analyzer list-findings'." },
+      { number: 8, title: "Remediate Public Access", description: "Remove unintended public access.", hint: "Type 'aws access-analyzer remediate-public'." },
+      { number: 9, title: "Remediate Cross-Account", description: "Fix unauthorized cross-account access.", hint: "Type 'aws access-analyzer remediate-cross-account'." },
+      { number: 10, title: "Set Up Monitoring", description: "Alert on future policy changes.", hint: "Type 'aws access-analyzer enable-monitoring'." },
+      { number: 11, title: "Generate Audit Report", description: "Document all findings and remediations.", hint: "Type 'aws access-analyzer generate-report'." }
     ],
     resources: [
       { type: "policy_audit", name: "s3-policies", config: { publicBuckets: 3 }, isVulnerable: true, status: "exposed" },
@@ -2110,17 +2110,17 @@ export const iamSecurityLabs: LabDefinition[] = [
     estimatedTime: "40-55 minutes",
     initialState: { architecture: ["current-iam-state"] },
     steps: [
-      { number: 1, title: "Assess Current State", description: "Evaluate existing IAM architecture.", hint: "Type 'scan' to analyze infrastructure.", intel: "Document trust boundaries and access patterns." },
-      { number: 2, title: "Enable MFA Everywhere", description: "Require MFA for all human users.", hint: "Type 'aws iam enforce-mfa-all-users'.", intel: "Zero trust starts with strong authentication." },
-      { number: 3, title: "Implement Least Privilege", description: "Right-size all permissions based on usage.", hint: "Type 'aws iam implement-least-privilege'.", intel: "Use Access Analyzer's policy generation feature." },
-      { number: 4, title: "Enable Session Policies", description: "Add time and scope limits to sessions.", hint: "Type 'aws iam configure-session-policies'.", intel: "Short sessions limit blast radius of compromise." },
-      { number: 5, title: "Configure IP Restrictions", description: "Limit access to known networks.", hint: "Type 'aws iam configure-ip-restrictions'.", intel: "Use aws:SourceIp conditions in policies." },
-      { number: 6, title: "Implement Service Control Policies", description: "Add organization-wide guardrails.", hint: "Type 'aws organizations configure-scps'.", intel: "SCPs are the ultimate preventive control." },
-      { number: 7, title: "Enable Continuous Monitoring", description: "Set up real-time authorization logging.", hint: "Type 'aws cloudtrail enable-enhanced-logging'.", intel: "CloudTrail Insights can detect anomalies." },
-      { number: 8, title: "Configure Anomaly Detection", description: "Alert on unusual access patterns.", hint: "Type 'aws guardduty configure-iam-findings'.", intel: "GuardDuty detects credential abuse automatically." },
-      { number: 9, title: "Implement Just-in-Time Access", description: "Enable temporary privilege escalation.", hint: "Type 'aws iam configure-jit-access'.", intel: "Standing privileges are standing risk." },
-      { number: 10, title: "Test Zero Trust Controls", description: "Verify all controls work together.", hint: "Type 'aws iam test-zero-trust'.", intel: "Try accessing resources from unexpected locations." },
-      { number: 11, title: "Generate Compliance Report", description: "Document zero trust implementation.", hint: "Type 'aws iam generate-zero-trust-report'.", intel: "Map controls to zero trust maturity model." }
+      { number: 1, title: "Assess Current State", description: "Evaluate existing IAM architecture.", hint: "Type 'scan' to analyze infrastructure." },
+      { number: 2, title: "Enable MFA Everywhere", description: "Require MFA for all human users.", hint: "Type 'aws iam enforce-mfa-all-users'." },
+      { number: 3, title: "Implement Least Privilege", description: "Right-size all permissions based on usage.", hint: "Type 'aws iam implement-least-privilege'." },
+      { number: 4, title: "Enable Session Policies", description: "Add time and scope limits to sessions.", hint: "Type 'aws iam configure-session-policies'." },
+      { number: 5, title: "Configure IP Restrictions", description: "Limit access to known networks.", hint: "Type 'aws iam configure-ip-restrictions'." },
+      { number: 6, title: "Implement Service Control Policies", description: "Add organization-wide guardrails.", hint: "Type 'aws organizations configure-scps'." },
+      { number: 7, title: "Enable Continuous Monitoring", description: "Set up real-time authorization logging.", hint: "Type 'aws cloudtrail enable-enhanced-logging'." },
+      { number: 8, title: "Configure Anomaly Detection", description: "Alert on unusual access patterns.", hint: "Type 'aws guardduty configure-iam-findings'." },
+      { number: 9, title: "Implement Just-in-Time Access", description: "Enable temporary privilege escalation.", hint: "Type 'aws iam configure-jit-access'." },
+      { number: 10, title: "Test Zero Trust Controls", description: "Verify all controls work together.", hint: "Type 'aws iam test-zero-trust'." },
+      { number: 11, title: "Generate Compliance Report", description: "Document zero trust implementation.", hint: "Type 'aws iam generate-zero-trust-report'." }
     ],
     resources: [
       { type: "iam_architecture", name: "current-iam-state", config: { zeroTrustScore: 35 }, isVulnerable: true, status: "traditional" }
@@ -2145,19 +2145,19 @@ export const iamSecurityLabs: LabDefinition[] = [
       policies: ["AdminPolicy", "DeveloperPolicy", "CrossAccountTrust"]
     },
     steps: [
-      { number: 1, title: "Initialize Identity Audit", description: "Scan the identity infrastructure to understand the scope of the investigation.", hint: "Type 'scan' to analyze identity configuration.", intel: "MITRE ATT&CK T1078.004: Cloud Accounts. Attackers target identity misconfigurations for privilege escalation. Map all principals, roles, and trust relationships." },
-      { number: 2, title: "Map Identity Providers", description: "Review federated identity configuration and SAML/OIDC trust relationships.", hint: "Type 'aws iam list-identity-providers'.", intel: "Federation misconfigurations can allow any user from the IdP to assume powerful roles. Check the trust policy conditions." },
-      { number: 3, title: "Analyze User Permissions", description: "Review human user permissions and identify over-privileged accounts.", hint: "Type 'aws iam analyze-user-permissions'.", intel: "Focus on: direct policy attachments, group memberships, role assumption permissions. Users should access AWS through roles, not direct permissions." },
-      { number: 4, title: "Audit Service Accounts", description: "Examine service account permissions and credential lifecycle.", hint: "Type 'aws iam audit-service-accounts'.", intel: "Service accounts often accumulate permissions over time. Check for: unused permissions, long-lived credentials, overly broad trust policies." },
-      { number: 5, title: "Trace Role Assumption Paths", description: "Build a graph of all role assumption paths to identify privilege escalation routes.", hint: "Type 'aws iam trace-role-chains'.", intel: "Role chaining can create unexpected privilege escalation: ServiceAccount -> DeveloperRole -> AdminRole. Each link in the chain must be intentional." },
-      { number: 6, title: "Identify Trust Policy Issues", description: "Analyze trust policies for overly permissive principal definitions.", hint: "Type 'aws iam analyze-trust-policies'.", intel: "Watch for: Principal: *, missing conditions, wildcards in ARNs, trust to unknown accounts. T1098: Attackers modify trust policies for persistence." },
-      { number: 7, title: "Check Conditional Access", description: "Review IAM conditions for MFA requirements, IP restrictions, and time-based access.", hint: "Type 'aws iam check-conditional-access'.", intel: "Without conditions, any actor with credentials can act from anywhere. Implement: MFA requirements, source IP restrictions, time-based access for contractors." },
-      { number: 8, title: "Detect Privilege Escalation Paths", description: "Use IAM analysis to find all paths from low-privilege to admin access.", hint: "Type 'aws iam find-escalation-paths'.", intel: "Common paths: iam:PassRole + Lambda/EC2, iam:CreatePolicyVersion, sts:AssumeRole chains, iam:AttachUserPolicy. T1548: Abuse Elevation Control." },
-      { number: 9, title: "Review Credential Report", description: "Analyze the credential report for lifecycle issues: old keys, unused accounts, missing MFA.", hint: "Type 'aws iam get-credential-report'.", intel: "CIS AWS 1.12: Disable credentials unused for 90+ days. Orphaned accounts are backdoors waiting to be exploited." },
-      { number: 10, title: "Fix Trust Policy Misconfigurations", description: "Remediate the broken trust policies that enabled the privilege escalation.", hint: "Type 'aws iam fix-trust-policies'.", intel: "Add conditions: aws:PrincipalTag, aws:SourceArn, aws:RequestedRegion. Remove overly broad principals. Require MFA for sensitive role assumptions." },
-      { number: 11, title: "Implement Permission Boundaries", description: "Apply permission boundaries to limit the maximum permissions users and roles can have.", hint: "Type 'aws iam implement-permission-boundaries'.", intel: "Permission boundaries prevent privilege escalation even if policies are misconfigured. Essential for delegated administration." },
-      { number: 12, title: "Enable Identity Monitoring", description: "Configure CloudTrail, GuardDuty, and IAM Access Analyzer for continuous identity monitoring.", hint: "Type 'aws iam enable-identity-monitoring'.", intel: "Monitor: unusual role assumptions, credential access from new IPs, permission changes, cross-account activity." },
-      { number: 13, title: "Generate Identity Security Report", description: "Document findings, remediations, and recommendations for the security team.", hint: "Type 'aws iam generate-security-report'.", intel: "Include: privilege escalation paths fixed, trust policies remediated, conditional access implemented, monitoring enabled." }
+      { number: 1, title: "Initialize Identity Audit", description: "Scan the identity infrastructure to understand the scope of the investigation.", hint: "Type 'scan' to analyze identity configuration." },
+      { number: 2, title: "Map Identity Providers", description: "Review federated identity configuration and SAML/OIDC trust relationships.", hint: "Type 'aws iam list-identity-providers'." },
+      { number: 3, title: "Analyze User Permissions", description: "Review human user permissions and identify over-privileged accounts.", hint: "Type 'aws iam analyze-user-permissions'." },
+      { number: 4, title: "Audit Service Accounts", description: "Examine service account permissions and credential lifecycle.", hint: "Type 'aws iam audit-service-accounts'." },
+      { number: 5, title: "Trace Role Assumption Paths", description: "Build a graph of all role assumption paths to identify privilege escalation routes.", hint: "Type 'aws iam trace-role-chains'." },
+      { number: 6, title: "Identify Trust Policy Issues", description: "Analyze trust policies for overly permissive principal definitions.", hint: "Type 'aws iam analyze-trust-policies'." },
+      { number: 7, title: "Check Conditional Access", description: "Review IAM conditions for MFA requirements, IP restrictions, and time-based access.", hint: "Type 'aws iam check-conditional-access'." },
+      { number: 8, title: "Detect Privilege Escalation Paths", description: "Use IAM analysis to find all paths from low-privilege to admin access.", hint: "Type 'aws iam find-escalation-paths'." },
+      { number: 9, title: "Review Credential Report", description: "Analyze the credential report for lifecycle issues: old keys, unused accounts, missing MFA.", hint: "Type 'aws iam get-credential-report'." },
+      { number: 10, title: "Fix Trust Policy Misconfigurations", description: "Remediate the broken trust policies that enabled the privilege escalation.", hint: "Type 'aws iam fix-trust-policies'." },
+      { number: 11, title: "Implement Permission Boundaries", description: "Apply permission boundaries to limit the maximum permissions users and roles can have.", hint: "Type 'aws iam implement-permission-boundaries'." },
+      { number: 12, title: "Enable Identity Monitoring", description: "Configure CloudTrail, GuardDuty, and IAM Access Analyzer for continuous identity monitoring.", hint: "Type 'aws iam enable-identity-monitoring'." },
+      { number: 13, title: "Generate Identity Security Report", description: "Document findings, remediations, and recommendations for the security team.", hint: "Type 'aws iam generate-security-report'." }
     ],
     resources: [
       { type: "identity_provider", name: "okta-federation", config: { type: "SAML", users: 150, mfaEnforced: false, roleMapping: "dynamic" }, isVulnerable: false, status: "federated" },
@@ -2297,14 +2297,14 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { securityGroups: ["web-sg", "app-sg", "db-sg", "bastion-sg"], vpc: ["production-vpc"], instances: ["web-01", "web-02", "app-01", "db-01"] },
     steps: [
-      { number: 1, title: "Audit Current Security Groups", description: "Scan all security groups to identify overly permissive rules and exposure.", hint: "Type 'scan' to analyze security group configurations.", intel: "CIS AWS 5.2-5.4: No security groups should allow unrestricted ingress to sensitive ports. MITRE ATT&CK T1190: Attackers exploit exposed services." },
-      { number: 2, title: "Map Application Traffic", description: "Understand legitimate traffic patterns between tiers to design proper rules.", hint: "Type 'aws ec2 analyze-traffic-patterns'.", intel: "Document: ALB to web (443), web to app (8080), app to db (5432), all tiers to monitoring (443 outbound)." },
-      { number: 3, title: "Design Security Group Hierarchy", description: "Plan the security group architecture with proper tier isolation.", hint: "Type 'aws ec2 plan-security-group-architecture'.", intel: "Use security group references instead of CIDR blocks where possible. SG-to-SG rules are more maintainable." },
-      { number: 4, title: "Implement Web Tier SG", description: "Configure web tier security group to only accept traffic from ALB.", hint: "Type 'aws ec2 configure-web-tier-sg'.", intel: "Web tier should only accept 443 from ALB security group. No direct SSH access - use Session Manager." },
-      { number: 5, title: "Implement App Tier SG", description: "Configure application tier to only accept traffic from web tier.", hint: "Type 'aws ec2 configure-app-tier-sg'.", intel: "App tier accepts traffic only from web SG on application port. Egress to DB SG on 5432 only." },
-      { number: 6, title: "Implement Data Tier SG", description: "Lock down database tier with strict ingress from app tier only.", hint: "Type 'aws ec2 configure-data-tier-sg'.", intel: "Database SG allows 5432 only from app SG. No internet egress. Consider using PrivateLink for AWS service access." },
-      { number: 7, title: "Configure Admin Access", description: "Set up secure administrative access through bastion or Session Manager.", hint: "Type 'aws ec2 configure-admin-access'.", intel: "Prefer SSM Session Manager over SSH bastion. If using bastion, restrict to corporate IP ranges only." },
-      { number: 8, title: "Verify Segmentation", description: "Test that traffic flows correctly and unauthorized paths are blocked.", hint: "Type 'aws ec2 verify-network-segmentation'.", intel: "Run connectivity tests from each tier to verify rules work as expected. Document any exceptions." }
+      { number: 1, title: "Audit Current Security Groups", description: "Scan all security groups to identify overly permissive rules and exposure.", hint: "Type 'scan' to analyze security group configurations." },
+      { number: 2, title: "Map Application Traffic", description: "Understand legitimate traffic patterns between tiers to design proper rules.", hint: "Type 'aws ec2 analyze-traffic-patterns'." },
+      { number: 3, title: "Design Security Group Hierarchy", description: "Plan the security group architecture with proper tier isolation.", hint: "Type 'aws ec2 plan-security-group-architecture'." },
+      { number: 4, title: "Implement Web Tier SG", description: "Configure web tier security group to only accept traffic from ALB.", hint: "Type 'aws ec2 configure-web-tier-sg'." },
+      { number: 5, title: "Implement App Tier SG", description: "Configure application tier to only accept traffic from web tier.", hint: "Type 'aws ec2 configure-app-tier-sg'." },
+      { number: 6, title: "Implement Data Tier SG", description: "Lock down database tier with strict ingress from app tier only.", hint: "Type 'aws ec2 configure-data-tier-sg'." },
+      { number: 7, title: "Configure Admin Access", description: "Set up secure administrative access through bastion or Session Manager.", hint: "Type 'aws ec2 configure-admin-access'." },
+      { number: 8, title: "Verify Segmentation", description: "Test that traffic flows correctly and unauthorized paths are blocked.", hint: "Type 'aws ec2 verify-network-segmentation'." }
     ],
     resources: [
       { type: "security_group", name: "web-sg", config: { inbound: [{ port: "0-65535", source: "0.0.0.0/0" }], outbound: "unrestricted" }, isVulnerable: true, status: "permissive" },
@@ -2325,14 +2325,14 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { kms: ["aws-managed-keys"], s3: ["customer-data", "app-logs"], rds: ["prod-database"], ebs: ["app-volumes"] },
     steps: [
-      { number: 1, title: "Inventory Encryption Status", description: "Scan all data stores to identify unencrypted resources.", hint: "Type 'scan' to analyze encryption configuration.", intel: "PCI DSS 3.4: Render PAN unreadable. HIPAA: Encryption is an addressable safeguard. MITRE ATT&CK T1530: Data from cloud storage." },
-      { number: 2, title: "Design KMS Key Strategy", description: "Plan customer-managed KMS keys for different data classifications.", hint: "Type 'aws kms design-key-strategy'.", intel: "Use separate CMKs for different data types: PII, financial, logs. Enable automatic rotation. Define key policies carefully." },
-      { number: 3, title: "Create Data Classification Keys", description: "Create KMS keys for each data classification level.", hint: "Type 'aws kms create-classification-keys'.", intel: "Key aliases: alias/pii-data, alias/financial-data, alias/application-data. Grant encrypt/decrypt to appropriate roles only." },
-      { number: 4, title: "Enable S3 Encryption", description: "Encrypt all S3 buckets with appropriate KMS keys.", hint: "Type 'aws s3 enable-kms-encryption customer-data'.", intel: "Use bucket default encryption with CMK. Enable bucket keys to reduce KMS API costs. Re-encrypt existing objects." },
-      { number: 5, title: "Enable RDS Encryption", description: "Ensure database encryption at rest with KMS.", hint: "Type 'aws rds enable-encryption prod-database'.", intel: "RDS encryption must be enabled at creation. For existing unencrypted DBs, take snapshot, copy with encryption, restore." },
-      { number: 6, title: "Enable EBS Encryption", description: "Encrypt all EBS volumes and enable default encryption.", hint: "Type 'aws ec2 enable-ebs-encryption'.", intel: "Enable account-level default encryption so all new volumes are encrypted. Migrate existing unencrypted volumes." },
-      { number: 7, title: "Configure Key Rotation", description: "Enable automatic annual rotation for all customer-managed keys.", hint: "Type 'aws kms enable-key-rotation-all'.", intel: "CIS AWS 3.8: Enable KMS CMK rotation. AWS rotates the backing key material annually while keeping the same key ID." },
-      { number: 8, title: "Verify Encryption Coverage", description: "Run compliance scan to verify all data stores are encrypted.", hint: "Type 'aws security verify-encryption-compliance'.", intel: "Generate compliance report for auditors. Document any exceptions with compensating controls." }
+      { number: 1, title: "Inventory Encryption Status", description: "Scan all data stores to identify unencrypted resources.", hint: "Type 'scan' to analyze encryption configuration." },
+      { number: 2, title: "Design KMS Key Strategy", description: "Plan customer-managed KMS keys for different data classifications.", hint: "Type 'aws kms design-key-strategy'." },
+      { number: 3, title: "Create Data Classification Keys", description: "Create KMS keys for each data classification level.", hint: "Type 'aws kms create-classification-keys'." },
+      { number: 4, title: "Enable S3 Encryption", description: "Encrypt all S3 buckets with appropriate KMS keys.", hint: "Type 'aws s3 enable-kms-encryption customer-data'." },
+      { number: 5, title: "Enable RDS Encryption", description: "Ensure database encryption at rest with KMS.", hint: "Type 'aws rds enable-encryption prod-database'." },
+      { number: 6, title: "Enable EBS Encryption", description: "Encrypt all EBS volumes and enable default encryption.", hint: "Type 'aws ec2 enable-ebs-encryption'." },
+      { number: 7, title: "Configure Key Rotation", description: "Enable automatic annual rotation for all customer-managed keys.", hint: "Type 'aws kms enable-key-rotation-all'." },
+      { number: 8, title: "Verify Encryption Coverage", description: "Run compliance scan to verify all data stores are encrypted.", hint: "Type 'aws security verify-encryption-compliance'." }
     ],
     resources: [
       { type: "s3", name: "customer-data", config: { encryption: "none", dataType: "PII" }, isVulnerable: true, status: "unencrypted" },
@@ -2353,14 +2353,14 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
     estimatedTime: "20-30 minutes",
     initialState: { logs: ["cloudtrail", "guardduty", "vpc-flowlogs"], siem: ["siem-config"], alerts: [] },
     steps: [
-      { number: 1, title: "Inventory Log Sources", description: "Identify all security-relevant log sources that should feed the SIEM.", hint: "Type 'scan' to analyze available log sources.", intel: "Essential sources: CloudTrail, VPC Flow Logs, GuardDuty, Config, WAF logs, application logs, DNS logs." },
-      { number: 2, title: "Configure Log Forwarding", description: "Set up centralized log aggregation for SIEM ingestion.", hint: "Type 'aws logs configure-siem-forwarding'.", intel: "Use CloudWatch Logs subscription filters or S3 event notifications. Consider Kinesis for real-time streaming." },
-      { number: 3, title: "Map MITRE ATT&CK Coverage", description: "Identify which attack techniques your current logging can detect.", hint: "Type 'siem analyze-attack-coverage'.", intel: "Map log sources to MITRE ATT&CK: CloudTrail for T1078 (Valid Accounts), Flow Logs for T1046 (Network Scanning)." },
-      { number: 4, title: "Create Detection Rules", description: "Build correlation rules for high-fidelity threat detection.", hint: "Type 'siem create-detection-rules'.", intel: "Start with high-confidence detections: impossible travel, console login without MFA, root account usage, resource deletion." },
-      { number: 5, title: "Configure Alert Severity", description: "Assign severity levels based on attack impact and confidence.", hint: "Type 'siem configure-alert-severity'.", intel: "CRITICAL: confirmed compromise. HIGH: likely attack. MEDIUM: suspicious activity. LOW: anomaly for investigation." },
-      { number: 6, title: "Set Up Alert Routing", description: "Configure notification channels for different severity levels.", hint: "Type 'siem configure-alert-routing'.", intel: "CRITICAL/HIGH: page on-call immediately. MEDIUM: ticket for next business day. LOW: weekly review." },
-      { number: 7, title: "Create Investigation Dashboards", description: "Build dashboards for security analyst workflows.", hint: "Type 'siem create-investigation-dashboards'.", intel: "Dashboards: Alert Overview, User Activity Timeline, Network Connections, Resource Changes, Geographic Anomalies." },
-      { number: 8, title: "Tune False Positives", description: "Review initial alerts and create tuning rules for known-good patterns.", hint: "Type 'siem tune-detection-rules'.", intel: "Document tuning decisions. Create allowlists for legitimate automation, known scanner IPs, expected admin activity patterns." }
+      { number: 1, title: "Inventory Log Sources", description: "Identify all security-relevant log sources that should feed the SIEM.", hint: "Type 'scan' to analyze available log sources." },
+      { number: 2, title: "Configure Log Forwarding", description: "Set up centralized log aggregation for SIEM ingestion.", hint: "Type 'aws logs configure-siem-forwarding'." },
+      { number: 3, title: "Map MITRE ATT&CK Coverage", description: "Identify which attack techniques your current logging can detect.", hint: "Type 'siem analyze-attack-coverage'." },
+      { number: 4, title: "Create Detection Rules", description: "Build correlation rules for high-fidelity threat detection.", hint: "Type 'siem create-detection-rules'." },
+      { number: 5, title: "Configure Alert Severity", description: "Assign severity levels based on attack impact and confidence.", hint: "Type 'siem configure-alert-severity'." },
+      { number: 6, title: "Set Up Alert Routing", description: "Configure notification channels for different severity levels.", hint: "Type 'siem configure-alert-routing'." },
+      { number: 7, title: "Create Investigation Dashboards", description: "Build dashboards for security analyst workflows.", hint: "Type 'siem create-investigation-dashboards'." },
+      { number: 8, title: "Tune False Positives", description: "Review initial alerts and create tuning rules for known-good patterns.", hint: "Type 'siem tune-detection-rules'." }
     ],
     resources: [
       { type: "log_source", name: "cloudtrail", config: { enabled: true, siemIntegrated: false }, isVulnerable: false, status: "not-forwarded" },
@@ -2381,14 +2381,14 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
     estimatedTime: "20-30 minutes",
     initialState: { iam: ["developer-role", "cicd-role", "lambda-role"], policies: ["escalation-paths"], monitoring: ["cloudtrail"] },
     steps: [
-      { number: 1, title: "Identify Escalation Paths", description: "Analyze IAM to find all privilege escalation vectors.", hint: "Type 'scan' to analyze privilege escalation paths.", intel: "Common paths: iam:CreatePolicy+AttachPolicy, iam:PassRole+lambda:CreateFunction, iam:CreateAccessKey on admin users." },
-      { number: 2, title: "Map Dangerous Permissions", description: "List all principals with IAM modification capabilities.", hint: "Type 'aws iam analyze-escalation-risk'.", intel: "Focus on: iam:*, lambda:CreateFunction+PassRole, ec2:RunInstances+PassRole, glue:CreateDevEndpoint+PassRole." },
-      { number: 3, title: "Create Permission Boundaries", description: "Implement permission boundaries to cap maximum permissions.", hint: "Type 'aws iam create-permission-boundaries'.", intel: "Permission boundaries limit what delegated admins can grant. Even if they create admin policies, the boundary caps effective permissions." },
-      { number: 4, title: "Apply Boundaries to Roles", description: "Attach permission boundaries to all human and service roles.", hint: "Type 'aws iam apply-permission-boundaries'.", intel: "Boundary should deny: iam:CreateUser, iam:AttachUserPolicy, iam:PutRolePolicy on privileged resources." },
-      { number: 5, title: "Create Escalation Detection Rules", description: "Build CloudTrail-based detection for escalation attempts.", hint: "Type 'aws cloudtrail create-escalation-detections'.", intel: "Alert on: CreatePolicy with admin permissions, AttachRolePolicy to privileged roles, AssumeRole to admin roles from unexpected sources." },
-      { number: 6, title: "Implement SCPs", description: "Add organization-level guardrails to prevent escalation.", hint: "Type 'aws organizations create-escalation-scp'.", intel: "SCP to deny: modification of admin roles, deletion of security resources, disabling security services." },
-      { number: 7, title: "Test Detection", description: "Simulate escalation attempts to verify detection works.", hint: "Type 'aws iam simulate-escalation-attack'.", intel: "Test each escalation path identified. Verify alerts fire and prevention controls block the attempt." },
-      { number: 8, title: "Document Controls", description: "Create runbook for responding to escalation alerts.", hint: "Type 'aws iam generate-escalation-runbook'.", intel: "Runbook: verify legitimacy, revoke access if malicious, preserve evidence, investigate scope of compromise." }
+      { number: 1, title: "Identify Escalation Paths", description: "Analyze IAM to find all privilege escalation vectors.", hint: "Type 'scan' to analyze privilege escalation paths." },
+      { number: 2, title: "Map Dangerous Permissions", description: "List all principals with IAM modification capabilities.", hint: "Type 'aws iam analyze-escalation-risk'." },
+      { number: 3, title: "Create Permission Boundaries", description: "Implement permission boundaries to cap maximum permissions.", hint: "Type 'aws iam create-permission-boundaries'." },
+      { number: 4, title: "Apply Boundaries to Roles", description: "Attach permission boundaries to all human and service roles.", hint: "Type 'aws iam apply-permission-boundaries'." },
+      { number: 5, title: "Create Escalation Detection Rules", description: "Build CloudTrail-based detection for escalation attempts.", hint: "Type 'aws cloudtrail create-escalation-detections'." },
+      { number: 6, title: "Implement SCPs", description: "Add organization-level guardrails to prevent escalation.", hint: "Type 'aws organizations create-escalation-scp'." },
+      { number: 7, title: "Test Detection", description: "Simulate escalation attempts to verify detection works.", hint: "Type 'aws iam simulate-escalation-attack'." },
+      { number: 8, title: "Document Controls", description: "Create runbook for responding to escalation alerts.", hint: "Type 'aws iam generate-escalation-runbook'." }
     ],
     resources: [
       { type: "iam_role", name: "developer-role", config: { escalationRisk: "high", permissions: ["iam:CreatePolicy", "iam:AttachUserPolicy"] }, isVulnerable: true, status: "risky" },
@@ -2417,17 +2417,17 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
       network: ["security-groups", "nacls", "waf"]
     },
     steps: [
-      { number: 1, title: "Initialize Assessment", description: "Run comprehensive security scan across all resource types.", hint: "Type 'scan' to perform full environment assessment.", intel: "CIS AWS Benchmark provides 200+ controls. Focus on Level 1 (essential) and Level 2 (defense-in-depth) controls." },
-      { number: 2, title: "Assess IAM Security", description: "Evaluate identity and access management configuration.", hint: "Type 'aws iam assess-security-posture'.", intel: "Check: root account usage, MFA coverage, password policy, access key age, overly permissive policies, unused credentials." },
-      { number: 3, title: "Assess Network Security", description: "Analyze network architecture and segmentation.", hint: "Type 'aws ec2 assess-network-security'.", intel: "Check: security group rules, NACL configuration, VPC peering risks, public IP exposure, flow log coverage." },
-      { number: 4, title: "Assess Data Protection", description: "Evaluate encryption and data classification controls.", hint: "Type 'aws assess-data-protection'.", intel: "Check: S3 bucket policies, RDS encryption, EBS encryption, KMS key management, backup security." },
-      { number: 5, title: "Assess Logging Coverage", description: "Verify comprehensive security monitoring.", hint: "Type 'aws assess-logging-coverage'.", intel: "Check: CloudTrail multi-region, data events, Config recording, GuardDuty enabled, log integrity validation." },
-      { number: 6, title: "Assess Compliance Status", description: "Check against regulatory frameworks.", hint: "Type 'aws securityhub assess-compliance'.", intel: "Check: CIS AWS Benchmark, PCI-DSS (if processing cards), HIPAA (if health data), SOC 2 controls." },
-      { number: 7, title: "Calculate Risk Scores", description: "Assign risk scores based on likelihood and impact.", hint: "Type 'security calculate-risk-scores'.", intel: "Risk = Likelihood x Impact. Consider: exploitability, asset criticality, compensating controls, detection capability." },
-      { number: 8, title: "Generate Threat Model", description: "Create threat model for the environment.", hint: "Type 'security generate-threat-model'.", intel: "Map attack paths using STRIDE or MITRE ATT&CK. Identify crown jewels and critical paths to them." },
-      { number: 9, title: "Prioritize Findings", description: "Create remediation roadmap based on risk.", hint: "Type 'security prioritize-remediation'.", intel: "Quick wins first, then high-risk items. Consider: business disruption, resource requirements, dependencies." },
-      { number: 10, title: "Remediate Critical Issues", description: "Fix the highest priority vulnerabilities.", hint: "Type 'security remediate-critical'.", intel: "Focus on: public exposure, admin access without MFA, unencrypted sensitive data, disabled logging." },
-      { number: 11, title: "Generate Executive Report", description: "Create professional assessment report for leadership.", hint: "Type 'security generate-assessment-report'.", intel: "Include: executive summary, risk heatmap, finding details, remediation status, compliance gaps, recommendations." }
+      { number: 1, title: "Initialize Assessment", description: "Run comprehensive security scan across all resource types.", hint: "Type 'scan' to perform full environment assessment." },
+      { number: 2, title: "Assess IAM Security", description: "Evaluate identity and access management configuration.", hint: "Type 'aws iam assess-security-posture'." },
+      { number: 3, title: "Assess Network Security", description: "Analyze network architecture and segmentation.", hint: "Type 'aws ec2 assess-network-security'." },
+      { number: 4, title: "Assess Data Protection", description: "Evaluate encryption and data classification controls.", hint: "Type 'aws assess-data-protection'." },
+      { number: 5, title: "Assess Logging Coverage", description: "Verify comprehensive security monitoring.", hint: "Type 'aws assess-logging-coverage'." },
+      { number: 6, title: "Assess Compliance Status", description: "Check against regulatory frameworks.", hint: "Type 'aws securityhub assess-compliance'." },
+      { number: 7, title: "Calculate Risk Scores", description: "Assign risk scores based on likelihood and impact.", hint: "Type 'security calculate-risk-scores'." },
+      { number: 8, title: "Generate Threat Model", description: "Create threat model for the environment.", hint: "Type 'security generate-threat-model'." },
+      { number: 9, title: "Prioritize Findings", description: "Create remediation roadmap based on risk.", hint: "Type 'security prioritize-remediation'." },
+      { number: 10, title: "Remediate Critical Issues", description: "Fix the highest priority vulnerabilities.", hint: "Type 'security remediate-critical'." },
+      { number: 11, title: "Generate Executive Report", description: "Create professional assessment report for leadership.", hint: "Type 'security generate-assessment-report'." }
     ],
     resources: [
       { type: "environment", name: "production-vpc", config: { securityScore: 42, criticalFindings: 8, highFindings: 23 }, isVulnerable: true, status: "at-risk" },
@@ -2452,17 +2452,17 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
       response: ["containment-lambda", "forensics-bucket"]
     },
     steps: [
-      { number: 1, title: "Detect Initial Access", description: "Identify signs of compromised credential usage in logs.", hint: "Type 'scan' to analyze recent security events.", intel: "MITRE ATT&CK T1078.004: Cloud accounts. Look for: unusual source IPs, failed then successful auth, new user agents." },
-      { number: 2, title: "Analyze Attack Timeline", description: "Build a timeline of attacker activity from logs.", hint: "Type 'aws cloudtrail analyze-attack-timeline'.", intel: "Focus on: GetCallerIdentity (whoami), DescribeInstances (recon), ListBuckets (targeting), CreateAccessKey (persistence)." },
-      { number: 3, title: "Identify Privilege Escalation", description: "Detect attempts to gain higher privileges.", hint: "Type 'aws iam detect-privilege-escalation'.", intel: "Look for: AttachUserPolicy, CreatePolicyVersion, PassRole to admin role, AssumeRole to privileged role." },
-      { number: 4, title: "Map Lateral Movement", description: "Trace attacker movement between resources.", hint: "Type 'aws ec2 analyze-lateral-movement'.", intel: "VPC Flow Logs show connections. Look for: unusual instance-to-instance traffic, SSM session abuse, EC2 Instance Connect." },
-      { number: 5, title: "Identify Data Access", description: "Determine what data the attacker accessed.", hint: "Type 'aws s3 analyze-data-access'.", intel: "S3 data events show object-level access. Look for: bulk downloads, unusual bucket access patterns, cross-region access." },
-      { number: 6, title: "Execute Containment", description: "Isolate compromised resources and revoke attacker access.", hint: "Type 'aws ir execute-containment'.", intel: "Containment: disable compromised credentials, isolate EC2 instances, block attacker IPs, snapshot for forensics." },
-      { number: 7, title: "Preserve Evidence", description: "Collect forensic evidence before remediation.", hint: "Type 'aws ir collect-forensic-evidence'.", intel: "Collect: CloudTrail logs, VPC Flow Logs, EC2 memory dump, EBS snapshots, IAM credential reports." },
-      { number: 8, title: "Eradicate Persistence", description: "Remove attacker persistence mechanisms.", hint: "Type 'aws ir eradicate-persistence'.", intel: "Check for: new IAM users, new access keys, modified Lambda functions, new EC2 instances, changed security groups." },
-      { number: 9, title: "Assess Data Impact", description: "Determine scope of data exposure.", hint: "Type 'aws ir assess-data-impact'.", intel: "List all objects accessed. Classify data types. Determine if PII/PHI/PCI data was accessed. Prepare breach notification if required." },
-      { number: 10, title: "Improve Defenses", description: "Implement controls to prevent recurrence.", hint: "Type 'aws ir implement-improvements'.", intel: "Add: credential scanning in CI/CD, MFA for CLI access, permission boundaries, enhanced monitoring for sensitive APIs." },
-      { number: 11, title: "Generate Incident Report", description: "Document the incident for stakeholders and lessons learned.", hint: "Type 'aws ir generate-incident-report'.", intel: "Include: timeline, impact assessment, containment actions, root cause, lessons learned, improvement recommendations." }
+      { number: 1, title: "Detect Initial Access", description: "Identify signs of compromised credential usage in logs.", hint: "Type 'scan' to analyze recent security events." },
+      { number: 2, title: "Analyze Attack Timeline", description: "Build a timeline of attacker activity from logs.", hint: "Type 'aws cloudtrail analyze-attack-timeline'." },
+      { number: 3, title: "Identify Privilege Escalation", description: "Detect attempts to gain higher privileges.", hint: "Type 'aws iam detect-privilege-escalation'." },
+      { number: 4, title: "Map Lateral Movement", description: "Trace attacker movement between resources.", hint: "Type 'aws ec2 analyze-lateral-movement'." },
+      { number: 5, title: "Identify Data Access", description: "Determine what data the attacker accessed.", hint: "Type 'aws s3 analyze-data-access'." },
+      { number: 6, title: "Execute Containment", description: "Isolate compromised resources and revoke attacker access.", hint: "Type 'aws ir execute-containment'." },
+      { number: 7, title: "Preserve Evidence", description: "Collect forensic evidence before remediation.", hint: "Type 'aws ir collect-forensic-evidence'." },
+      { number: 8, title: "Eradicate Persistence", description: "Remove attacker persistence mechanisms.", hint: "Type 'aws ir eradicate-persistence'." },
+      { number: 9, title: "Assess Data Impact", description: "Determine scope of data exposure.", hint: "Type 'aws ir assess-data-impact'." },
+      { number: 10, title: "Improve Defenses", description: "Implement controls to prevent recurrence.", hint: "Type 'aws ir implement-improvements'." },
+      { number: 11, title: "Generate Incident Report", description: "Document the incident for stakeholders and lessons learned.", hint: "Type 'aws ir generate-incident-report'." }
     ],
     resources: [
       { type: "attack", name: "compromised-credentials", config: { source: "github-leak", accessLevel: "developer" }, isVulnerable: true, status: "active-attack" },
@@ -2489,17 +2489,17 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
       s3: ["forensics-bucket"]
     },
     steps: [
-      { number: 1, title: "Design IR Workflow", description: "Map out the automated incident response workflow.", hint: "Type 'scan' to analyze current IR capability.", intel: "Workflow: Detect -> Triage -> Contain -> Notify -> Investigate -> Remediate -> Report. Different paths for different finding types." },
-      { number: 2, title: "Create Containment Functions", description: "Build Lambda functions for automated containment actions.", hint: "Type 'aws lambda create-containment-functions'.", intel: "Functions needed: isolate-ec2 (quarantine SG), revoke-credentials, snapshot-for-forensics, block-ip-address." },
-      { number: 3, title: "Create Investigation Functions", description: "Build functions to gather forensic context.", hint: "Type 'aws lambda create-investigation-functions'.", intel: "Functions: get-instance-metadata, get-cloudtrail-activity, get-vpc-flowlogs, get-user-activity, enrich-with-threatintel." },
-      { number: 4, title: "Build Step Functions Workflow", description: "Create state machine for IR orchestration.", hint: "Type 'aws stepfunctions create-ir-workflow'.", intel: "Use parallel states for containment + notification. Use choice states for severity-based routing. Include human approval for destructive actions." },
-      { number: 5, title: "Configure EventBridge Rules", description: "Set up event-driven triggers from GuardDuty.", hint: "Type 'aws events create-ir-triggers'.", intel: "Route by finding type: EC2 findings -> instance containment, IAM findings -> credential revocation, S3 findings -> bucket lockdown." },
-      { number: 6, title: "Create Forensics Pipeline", description: "Set up evidence collection and preservation.", hint: "Type 'aws ir create-forensics-pipeline'.", intel: "S3 bucket with object lock. Automatic collection of logs, snapshots, metadata. Chain of custody documentation." },
-      { number: 7, title: "Configure Notifications", description: "Set up multi-channel alerting for incidents.", hint: "Type 'aws ir configure-notifications'.", intel: "SNS for email/SMS, Slack webhook for ChatOps, PagerDuty for on-call escalation, ServiceNow for ticket creation." },
-      { number: 8, title: "Create Approval Workflows", description: "Add human approval gates for destructive actions.", hint: "Type 'aws stepfunctions add-approval-gates'.", intel: "Require approval for: instance termination, user deletion, production changes. Timeout and escalate if no response." },
-      { number: 9, title: "Test with Simulated Incidents", description: "Generate test findings to validate the pipeline.", hint: "Type 'aws guardduty generate-sample-findings'.", intel: "Test each finding type. Verify containment works. Check notification delivery. Time the response." },
-      { number: 10, title: "Measure and Tune", description: "Establish metrics and tune response times.", hint: "Type 'aws ir measure-response-metrics'.", intel: "Track: Mean Time to Detect, Mean Time to Contain, False positive rate. Target: contain within 5 minutes of detection." },
-      { number: 11, title: "Document Runbooks", description: "Create runbooks for manual escalation paths.", hint: "Type 'aws ir generate-runbooks'.", intel: "Runbooks for: automated containment failures, unknown finding types, false positive handling, post-incident review." }
+      { number: 1, title: "Design IR Workflow", description: "Map out the automated incident response workflow.", hint: "Type 'scan' to analyze current IR capability." },
+      { number: 2, title: "Create Containment Functions", description: "Build Lambda functions for automated containment actions.", hint: "Type 'aws lambda create-containment-functions'." },
+      { number: 3, title: "Create Investigation Functions", description: "Build functions to gather forensic context.", hint: "Type 'aws lambda create-investigation-functions'." },
+      { number: 4, title: "Build Step Functions Workflow", description: "Create state machine for IR orchestration.", hint: "Type 'aws stepfunctions create-ir-workflow'." },
+      { number: 5, title: "Configure EventBridge Rules", description: "Set up event-driven triggers from GuardDuty.", hint: "Type 'aws events create-ir-triggers'." },
+      { number: 6, title: "Create Forensics Pipeline", description: "Set up evidence collection and preservation.", hint: "Type 'aws ir create-forensics-pipeline'." },
+      { number: 7, title: "Configure Notifications", description: "Set up multi-channel alerting for incidents.", hint: "Type 'aws ir configure-notifications'." },
+      { number: 8, title: "Create Approval Workflows", description: "Add human approval gates for destructive actions.", hint: "Type 'aws stepfunctions add-approval-gates'." },
+      { number: 9, title: "Test with Simulated Incidents", description: "Generate test findings to validate the pipeline.", hint: "Type 'aws guardduty generate-sample-findings'." },
+      { number: 10, title: "Measure and Tune", description: "Establish metrics and tune response times.", hint: "Type 'aws ir measure-response-metrics'." },
+      { number: 11, title: "Document Runbooks", description: "Create runbooks for manual escalation paths.", hint: "Type 'aws ir generate-runbooks'." }
     ],
     resources: [
       { type: "ir_automation", name: "current-state", config: { automatedContainment: false, mttc: "4 hours" }, isVulnerable: true, status: "manual" },
@@ -2525,17 +2525,17 @@ export const cloudSecurityEngineerLabs: LabDefinition[] = [
       soc: ["limited-visibility"]
     },
     steps: [
-      { number: 1, title: "Design Organization Structure", description: "Plan the AWS Organizations hierarchy for security and governance.", hint: "Type 'scan' to analyze current organization.", intel: "Recommended OUs: Security, Infrastructure, Workloads/Prod, Workloads/Dev, Sandbox. Each OU gets tailored SCPs." },
-      { number: 2, title: "Create Security Account", description: "Set up dedicated security tooling account.", hint: "Type 'aws organizations create-security-account'.", intel: "Security account hosts: GuardDuty admin, Security Hub aggregator, CloudTrail org trail, Config aggregator, forensics tools." },
-      { number: 3, title: "Create Log Archive Account", description: "Set up immutable log storage account.", hint: "Type 'aws organizations create-log-archive-account'.", intel: "Log archive: no human access, immutable storage, 7-year retention for compliance. All accounts stream logs here." },
-      { number: 4, title: "Implement SCPs", description: "Create Service Control Policies for guardrails.", hint: "Type 'aws organizations implement-scps'.", intel: "SCPs: deny region restriction bypass, deny security service disablement, deny root access, deny leaving organization." },
-      { number: 5, title: "Deploy GuardDuty Organization", description: "Enable GuardDuty across all accounts.", hint: "Type 'aws guardduty enable-organization'.", intel: "Security account as delegated admin. Auto-enable for new accounts. Configure S3 and EKS protection." },
-      { number: 6, title: "Deploy Security Hub Organization", description: "Enable Security Hub with compliance standards.", hint: "Type 'aws securityhub enable-organization'.", intel: "Enable CIS AWS Benchmark and AWS Foundational Security. Aggregate findings to security account." },
-      { number: 7, title: "Configure Org CloudTrail", description: "Set up organization-wide CloudTrail.", hint: "Type 'aws cloudtrail enable-organization-trail'.", intel: "Single trail for all accounts. Data events for S3 and Lambda. Logs to log archive account with KMS encryption." },
-      { number: 8, title: "Deploy Config Organization", description: "Enable AWS Config across all accounts.", hint: "Type 'aws config enable-organization'.", intel: "Aggregate to security account. Deploy conformance packs for compliance. Auto-remediation for critical rules." },
-      { number: 9, title: "Implement Network Security", description: "Deploy centralized network security controls.", hint: "Type 'aws network implement-central-security'.", intel: "Options: Network Firewall in inspection VPC, Transit Gateway for segmentation, centralized egress with NAT Gateway." },
-      { number: 10, title: "Configure SOC Integration", description: "Connect all security services to SOC.", hint: "Type 'aws security configure-soc-integration'.", intel: "Stream findings to SIEM. Configure alert routing. Create investigation playbooks. Enable cross-account investigation." },
-      { number: 11, title: "Generate Architecture Documentation", description: "Create comprehensive architecture documentation.", hint: "Type 'aws security generate-architecture-docs'.", intel: "Include: architecture diagrams, data flow diagrams, SCP documentation, runbooks, compliance mapping." }
+      { number: 1, title: "Design Organization Structure", description: "Plan the AWS Organizations hierarchy for security and governance.", hint: "Type 'scan' to analyze current organization." },
+      { number: 2, title: "Create Security Account", description: "Set up dedicated security tooling account.", hint: "Type 'aws organizations create-security-account'." },
+      { number: 3, title: "Create Log Archive Account", description: "Set up immutable log storage account.", hint: "Type 'aws organizations create-log-archive-account'." },
+      { number: 4, title: "Implement SCPs", description: "Create Service Control Policies for guardrails.", hint: "Type 'aws organizations implement-scps'." },
+      { number: 5, title: "Deploy GuardDuty Organization", description: "Enable GuardDuty across all accounts.", hint: "Type 'aws guardduty enable-organization'." },
+      { number: 6, title: "Deploy Security Hub Organization", description: "Enable Security Hub with compliance standards.", hint: "Type 'aws securityhub enable-organization'." },
+      { number: 7, title: "Configure Org CloudTrail", description: "Set up organization-wide CloudTrail.", hint: "Type 'aws cloudtrail enable-organization-trail'." },
+      { number: 8, title: "Deploy Config Organization", description: "Enable AWS Config across all accounts.", hint: "Type 'aws config enable-organization'." },
+      { number: 9, title: "Implement Network Security", description: "Deploy centralized network security controls.", hint: "Type 'aws network implement-central-security'." },
+      { number: 10, title: "Configure SOC Integration", description: "Connect all security services to SOC.", hint: "Type 'aws security configure-soc-integration'." },
+      { number: 11, title: "Generate Architecture Documentation", description: "Create comprehensive architecture documentation.", hint: "Type 'aws security generate-architecture-docs'." }
     ],
     resources: [
       { type: "organization", name: "org-root", config: { accounts: 5, securityAccount: false, scps: 0 }, isVulnerable: true, status: "ungoverned" },
