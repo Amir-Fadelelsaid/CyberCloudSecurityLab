@@ -43,16 +43,16 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ## Features
 
-### 81 Interactive Labs Across 7 Categories
+### 89 Interactive Labs Across 7 Categories
 
 | Category | Beginner | Intermediate | Advanced | Challenge | **Total** |
 |----------|----------|--------------|----------|-----------|-----------|
 | **Storage Security** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
-| **Network Security** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
+| **Network Security** | 3 labs | 6 labs | 6 labs | 1 lab | **16** |
 | **SOC Operations** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
 | **SOC Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
 | **Cloud Security Analyst** | 4 labs | 4 labs | 4 labs | - | **12** |
-| **IAM Security** | 4 labs | 4 labs | 4 labs | - | **12** |
+| **IAM Security** | 5 labs | 5 labs | 5 labs | - | **15** |
 | **Cloud Security Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
 
 ### Enterprise SOC Simulation Platform
@@ -81,11 +81,11 @@ Earn certificates upon completing all labs in a category:
 | Certificate | Labs Required |
 |-------------|---------------|
 | Storage Security | 11 labs |
-| Network Security | 11 labs |
+| Network Security | 16 labs |
 | SOC Operations | 11 labs |
 | SOC Engineer | 12 labs |
 | Cloud Security Analyst | 12 labs |
-| IAM Security | 12 labs |
+| IAM Security | 15 labs |
 | Cloud Security Engineer | 12 labs |
 
 ### Dynamic Leveling System
@@ -97,7 +97,7 @@ Earn certificates upon completing all labs in a category:
 | 2 | Analyst | 16+ labs | Analyst Badge |
 | 3 | Engineer | 31+ labs | Engineer Badge |
 | 4 | Architect | 51+ labs | Architect Badge |
-| 5 | Elite Defender | All 81 labs | Elite Defender Badge |
+| 5 | Elite Defender | All 89 labs | Elite Defender Badge |
 
 ### 19 Unlockable Badges
 
