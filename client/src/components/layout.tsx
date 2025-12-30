@@ -56,7 +56,30 @@ export function Layout({ children }: LayoutProps) {
           </Link>
         </div>
 
-        <nav className="flex-1 px-4 py-8 space-y-2">
+        {/* User info section - moved up for easy access */}
+        <div className="px-4 py-4 border-b border-border/50 space-y-2">
+          <Link href="/badges">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-black/20 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold font-mono border border-primary/30 group-hover:bg-primary/30 transition-colors">
+                {levelInfo?.level || 0}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-white truncate">{user.firstName || "User"}</p>
+                <p className="text-[10px] text-muted-foreground truncate font-mono">Level {levelInfo?.level || 0} {levelInfo?.title || "Recruit"}</p>
+              </div>
+            </div>
+          </Link>
+          <button
+            onClick={() => logout()}
+            className="w-full flex items-center gap-3 px-4 py-2 text-xs font-mono text-destructive hover:bg-destructive/10 rounded-lg transition-colors border border-transparent hover:border-destructive/20"
+            data-testid="button-logout"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>TERMINATE_SESSION</span>
+          </button>
+        </div>
+
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location === item.href || (item.href !== '/' && location.startsWith(item.href));
             const Icon = item.icon;
@@ -79,29 +102,10 @@ export function Layout({ children }: LayoutProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-border/50 space-y-2">
-          <Link href="/badges">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-black/20 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold font-mono border border-primary/30 group-hover:bg-primary/30 transition-colors">
-                {levelInfo?.level || 0}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white truncate">{user.firstName || "User"}</p>
-                <p className="text-[10px] text-muted-foreground truncate font-mono">Level {levelInfo?.level || 0} {levelInfo?.title || "Recruit"}</p>
-              </div>
-            </div>
-          </Link>
-          <button
-            onClick={() => logout()}
-            className="w-full flex items-center gap-3 px-4 py-2 text-xs font-mono text-destructive hover:bg-destructive/10 rounded-lg transition-colors border border-transparent hover:border-destructive/20"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>TERMINATE_SESSION</span>
-          </button>
-          <div className="pt-4 mt-4 border-t border-border/30 text-center">
-            <p className="text-[10px] text-muted-foreground font-mono">Created by</p>
-            <p className="text-xs text-primary/80 font-medium">Amir Fadelelsaid</p>
-          </div>
+        {/* Creator credit at bottom */}
+        <div className="px-4 py-3 border-t border-border/30 text-center">
+          <p className="text-[10px] text-muted-foreground font-mono">Created by</p>
+          <p className="text-xs text-primary/80 font-medium">Amir Fadelelsaid</p>
         </div>
       </aside>
 
