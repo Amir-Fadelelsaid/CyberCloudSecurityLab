@@ -245,7 +245,8 @@ export function CommunityDiscussion() {
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{getUserName(post.user)}</span>
                         {isCreator(post.userId) && (
-                          <Badge className="bg-gradient-to-r from-primary to-emerald-400 text-black text-xs font-bold">
+                          <Badge className="bg-gradient-to-r from-primary to-emerald-400 text-black text-xs font-bold gap-1">
+                            <Shield className="w-3 h-3" />
                             Creator
                           </Badge>
                         )}
@@ -333,7 +334,8 @@ export function CommunityDiscussion() {
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                   <span className="font-medium text-xs">{getUserName(reply.user)}</span>
                                   {isCreator(reply.userId) && (
-                                    <Badge className="bg-gradient-to-r from-primary to-emerald-400 text-black text-[10px] font-bold px-1.5 py-0">
+                                    <Badge className="bg-gradient-to-r from-primary to-emerald-400 text-black text-[10px] font-bold px-1.5 py-0 gap-0.5">
+                                      <Shield className="w-2.5 h-2.5" />
                                       Creator
                                     </Badge>
                                   )}
