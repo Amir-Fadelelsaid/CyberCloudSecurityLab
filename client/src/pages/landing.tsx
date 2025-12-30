@@ -170,13 +170,13 @@ export default function Landing() {
           <h2 className="text-2xl font-display font-bold text-center text-white mb-8">7 Security Domains</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {[
-              { name: "Storage", count: 11, color: "from-teal-500/20 to-teal-600/10" },
-              { name: "Network", count: 16, color: "from-blue-500/20 to-blue-600/10" },
-              { name: "SOC Ops", count: 11, color: "from-violet-500/20 to-violet-600/10" },
-              { name: "SOC Eng", count: 12, color: "from-orange-500/20 to-orange-600/10" },
-              { name: "Cloud Analyst", count: 12, color: "from-cyan-500/20 to-cyan-600/10" },
-              { name: "IAM", count: 15, color: "from-yellow-500/20 to-yellow-600/10" },
-              { name: "Cloud SecEng", count: 12, color: "from-rose-500/20 to-rose-600/10" },
+              { name: "Storage", count: 12, color: "from-teal-500/20 to-teal-600/10" },
+              { name: "Network", count: 17, color: "from-blue-500/20 to-blue-600/10" },
+              { name: "SOC Ops", count: 12, color: "from-violet-500/20 to-violet-600/10" },
+              { name: "SOC Eng", count: 13, color: "from-orange-500/20 to-orange-600/10" },
+              { name: "Cloud Analyst", count: 14, color: "from-cyan-500/20 to-cyan-600/10" },
+              { name: "IAM", count: 16, color: "from-yellow-500/20 to-yellow-600/10" },
+              { name: "Cloud SecEng", count: 13, color: "from-rose-500/20 to-rose-600/10" },
             ].map((cat, i) => (
               <div key={i} className={`rounded-xl bg-gradient-to-br ${cat.color} border border-white/10 p-4 text-center`}>
                 <p className="text-2xl font-bold text-white">{cat.count}</p>
