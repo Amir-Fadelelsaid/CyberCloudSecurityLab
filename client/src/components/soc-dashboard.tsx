@@ -700,7 +700,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
         </TabsList>
 
         <div className="flex-1 relative min-h-0">
-        <TabsContent value="alerts" className="absolute inset-0 m-0 overflow-hidden">
+        <TabsContent value="alerts" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:pointer-events-none data-[state=inactive]:hidden">
           <div className="flex h-full">
             {/* Alert List */}
             <div className={clsx("flex flex-col transition-all duration-300", selectedAlertId ? "w-1/2 border-r border-white/10" : "w-full")}>
@@ -963,7 +963,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
           </div>
         </TabsContent>
 
-        <TabsContent value="logs" className="absolute inset-0 m-0 overflow-hidden flex flex-col">
+        <TabsContent value="logs" className="absolute inset-0 m-0 overflow-hidden flex flex-col data-[state=inactive]:pointer-events-none data-[state=inactive]:hidden">
           {/* Log Source Filter */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5 flex-shrink-0">
             <Filter className="w-3 h-3 text-muted-foreground" />
@@ -1127,7 +1127,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="network" className="absolute inset-0 m-0 overflow-hidden">
+        <TabsContent value="network" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:pointer-events-none data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="p-2">
               <table className="w-full text-[10px] font-mono">
@@ -1205,7 +1205,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="endpoints" className="absolute inset-0 m-0 overflow-hidden">
+        <TabsContent value="endpoints" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:pointer-events-none data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="p-2 space-y-2">
               {endpointActivity.map((activity, idx) => (
@@ -1289,7 +1289,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
         </TabsContent>
 
         {/* Detection Rules Tab */}
-        <TabsContent value="detections" className="absolute inset-0 m-0 overflow-hidden">
+        <TabsContent value="detections" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:pointer-events-none data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="p-2 space-y-2">
               {detectionRules.map((rule, idx) => {
@@ -1356,7 +1356,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
         </TabsContent>
 
         {/* Cases Tab */}
-        <TabsContent value="cases" className="absolute inset-0 m-0 overflow-hidden">
+        <TabsContent value="cases" className="absolute inset-0 m-0 overflow-hidden data-[state=inactive]:pointer-events-none data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="p-2 space-y-2">
               {cases.map((caseItem, idx) => {
