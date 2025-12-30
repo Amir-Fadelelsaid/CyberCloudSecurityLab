@@ -71,7 +71,7 @@ Every lab provides real-time feedback at each step:
 - Trophy icon appears after each step is completed
 - 1-2 sentence explanations of what was accomplished
 - Links actions to broader security concepts and best practices
-- Demonstrates why each step matters for cloud security
+- Demonstrates why each step matters
 - Available on all Beginner, Intermediate, Advanced, and Challenge labs
 - Examples:
   - "You identified the exposed access key. Speed is critical - bots continuously scan GitHub for AWS keys and can exploit them within minutes of exposure."
