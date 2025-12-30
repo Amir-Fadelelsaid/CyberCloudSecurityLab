@@ -369,7 +369,7 @@ export default function LabWorkspace() {
                               
                               {/* Hint - collapsible */}
                               <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20">
-                                <span className="text-primary font-bold">CMD:</span> {step.hint?.replace("Type '", "").replace("'", "").replace(" to ", " ").split('.')[0]}
+                                <span className="text-primary font-bold">CMD:</span> {step.hint?.match(/'([^']+)'/)?.[1] || step.hint}
                               </div>
                               
                               {step.intel && !isCompleted && (
