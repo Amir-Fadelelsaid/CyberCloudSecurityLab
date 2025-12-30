@@ -604,6 +604,115 @@ const statusConfig = {
   resolved: { color: "bg-green-500/15 text-green-200/80", label: "RESOLVED" }
 };
 
+// Alert-specific investigation and remediation commands
+const getInvestigationCommands = (alert: SIEMAlert): string[] => {
+  const commands: string[] = ["scan"];
+  
+  switch (alert.id) {
+    case "ALT-001": // Unauthorized API Key Usage
+      commands.push(
+        "aws cloudtrail lookup-events",
+        `aws iam get-credential-report`,
+        alert.sourceIp ? `siem correlate-logs cloudtrail vpc-flow --ip ${alert.sourceIp}` : "siem correlate-logs cloudtrail vpc-flow"
+      );
+      break;
+    case "ALT-002": // S3 Bucket Policy Modified
+      commands.push(
+        "aws s3 ls",
+        "aws s3 get-bucket-policy",
+        "aws cloudtrail lookup-events --s3"
+      );
+      break;
+    case "ALT-003": // Unusual EC2 Instance Launch
+      commands.push(
+        "aws ec2 ls",
+        "aws guardduty list-findings",
+        "aws cloudtrail lookup-events --ec2"
+      );
+      break;
+    case "ALT-004": // Failed Login Attempts Spike
+      commands.push(
+        "aws iam list-users",
+        "aws cloudtrail lookup-events --username admin",
+        `siem analyze-pattern failed-logins`
+      );
+      break;
+    case "ALT-005": // Security Group Rule Added
+      commands.push(
+        "aws ec2 ls-sg",
+        "aws ec2 describe-sg prod-sg",
+        "aws cloudtrail lookup-events --sg"
+      );
+      break;
+    case "ALT-006": // New IAM Role Created
+      commands.push(
+        "aws iam list-roles",
+        "aws cloudtrail lookup-events --iam",
+        "aws iam analyze-policies"
+      );
+      break;
+    default:
+      commands.push(
+        "aws cloudtrail lookup-events",
+        "siem show-alerts --status pending"
+      );
+  }
+  
+  return commands;
+};
+
+const getRemediationCommands = (alert: SIEMAlert): string[] => {
+  switch (alert.id) {
+    case "ALT-001": // Unauthorized API Key Usage
+      return [
+        "aws iam revoke-credentials compromised-key",
+        "aws iam enforce-mfa-policy",
+        "security generate-incident-report"
+      ];
+    case "ALT-002": // S3 Bucket Policy Modified
+      return [
+        "aws s3 fix production-bucket",
+        "aws s3 enable-block-public-access production-bucket",
+        "aws cloudtrail enable-data-events"
+      ];
+    case "ALT-003": // Unusual EC2 Instance Launch
+      return [
+        "aws ec2 terminate suspicious-instance",
+        "aws ec2 revoke-launch-permissions",
+        "aws guardduty enable-enhanced"
+      ];
+    case "ALT-004": // Failed Login Attempts Spike
+      return [
+        "aws iam lock-account admin",
+        "aws waf add-ip-blocklist 203.0.113.100",
+        "siem create-rule brute-force-detection"
+      ];
+    case "ALT-005": // Security Group Rule Added
+      return [
+        "aws ec2 restrict-ssh prod-instance",
+        "aws ec2 restrict-sg prod-sg",
+        "aws config enable-sg-monitoring"
+      ];
+    case "ALT-006": // New IAM Role Created
+      return [
+        "aws iam review-role LambdaExecutionRole",
+        "aws iam apply-permission-boundaries",
+        "aws cloudtrail create-iam-alerts"
+      ];
+    case "ALT-007": // CloudWatch Alarm Triggered
+      return [
+        "aws cloudwatch acknowledge-alarm",
+        "aws ec2 scale-down",
+        "aws budgets set-alert"
+      ];
+    default:
+      return [
+        "security remediate-critical",
+        "security generate-assessment-report"
+      ];
+  }
+};
+
 export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertId, className }: SOCDashboardProps) {
   const [alerts, setAlerts] = useState<SIEMAlert[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -940,18 +1049,33 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                           </div>
                         </div>
 
-                        {/* Recommended Actions */}
-                        <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
-                          <h4 className="text-[10px] font-mono text-primary mb-2 uppercase flex items-center gap-1">
-                            <Terminal className="w-3 h-3" /> Investigate via Terminal
+                        {/* Investigation Commands */}
+                        <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-500/20">
+                          <h4 className="text-[10px] font-mono text-blue-400 mb-2 uppercase flex items-center gap-1">
+                            <Search className="w-3 h-3" /> Investigation Commands
                           </h4>
                           <p className="text-[10px] text-muted-foreground mb-2">
-                            Use the terminal below to investigate this alert. Try commands like:
+                            Run these commands in the terminal to investigate:
                           </p>
                           <div className="space-y-1 font-mono text-[10px]">
-                            <div className="bg-black/50 rounded px-2 py-1 text-primary">scan</div>
-                            <div className="bg-black/50 rounded px-2 py-1 text-primary">aws cloudtrail lookup-events</div>
-                            <div className="bg-black/50 rounded px-2 py-1 text-primary">aws iam analyze-timeline {selectedAlert.sourceIp ? `--source-ip ${selectedAlert.sourceIp}` : ""}</div>
+                            {getInvestigationCommands(selectedAlert).map((cmd, idx) => (
+                              <div key={idx} className="bg-black/50 rounded px-2 py-1 text-blue-300">{cmd}</div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Remediation Commands */}
+                        <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
+                          <h4 className="text-[10px] font-mono text-primary mb-2 uppercase flex items-center gap-1">
+                            <Terminal className="w-3 h-3" /> Remediation Commands
+                          </h4>
+                          <p className="text-[10px] text-muted-foreground mb-2">
+                            After investigation, run these to remediate:
+                          </p>
+                          <div className="space-y-1 font-mono text-[10px]">
+                            {getRemediationCommands(selectedAlert).map((cmd, idx) => (
+                              <div key={idx} className="bg-black/50 rounded px-2 py-1 text-primary">{cmd}</div>
+                            ))}
                           </div>
                         </div>
                       </div>

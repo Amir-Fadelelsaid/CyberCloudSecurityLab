@@ -622,23 +622,27 @@ Security controls validated successfully.`;
     }
   }
   // EC2/Network Commands
-  else if (lowerCmd.startsWith("aws ec2 restrict-ssh ")) {
-    const instanceId = lowerCmd.replace("aws ec2 restrict-ssh ", "").trim();
-    const sg = resources.find(r => r.type === 'security_group');
-    if (sg && sg.isVulnerable) {
-      await storage.updateResource(sg.id, { isVulnerable: false, status: 'secured' });
+  else if (lowerCmd.startsWith("aws ec2 restrict-ssh ") || lowerCmd === "aws ec2 restrict-ssh") {
+    const instanceId = lowerCmd.replace("aws ec2 restrict-ssh ", "").trim() || "instance";
+    const sg = resources.find(r => r.type === 'security_group' && r.isVulnerable);
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    const targetResource = sg || anyVulnerable;
+    if (targetResource && targetResource.isVulnerable) {
+      await storage.updateResource(targetResource.id, { isVulnerable: false, status: 'secured' });
       output = `[SUCCESS] Security group updated for ${instanceId}\n  - SSH restricted to 10.0.0.0/8 (internal only)\n  - Removed 0.0.0.0/0 from ingress`;
       success = true;
-      const remaining = resources.filter(r => r.id !== sg.id && r.isVulnerable);
+      const remaining = resources.filter(r => r.id !== targetResource.id && r.isVulnerable);
       if (remaining.length === 0) {
         labCompleted = true;
         output += "\n\n[MISSION COMPLETE] All vulnerabilities remediated!";
         await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
       }
     } else if (sg) {
       output = `Info: Security group for ${instanceId} is already secure.`;
     } else {
-      output = `Error: Instance ${instanceId} not found.`;
+      output = `[SUCCESS] SSH access restricted for ${instanceId}.`;
+      success = true;
     }
   }
   else if (lowerCmd.startsWith("aws ec2 restrict-rdp ")) {
@@ -956,8 +960,33 @@ Your progress has been recorded.`;
         output = "No CloudTrail events recorded.";
       }
     } else {
-      output = "No CloudTrail configured for this lab.";
+      // Default CloudTrail output for SOC scenarios
+      output = `=== CloudTrail Event History ===
+
+Recent API Activity (last 24h):
+
+[2025-12-30T03:42:00Z] AssumeRole
+  User: arn:aws:iam::123456789012:user/compromised
+  Source IP: 198.51.100.45 (Suspicious)
+  Target Role: cross-account-admin
+
+[2025-12-30T03:43:00Z] ListBuckets
+  User: arn:aws:sts::123456789012:assumed-role/cross-account-admin
+  Source IP: 198.51.100.45
+
+[2025-12-30T03:44:00Z] GetObject
+  User: arn:aws:sts::123456789012:assumed-role/cross-account-admin
+  Source IP: 198.51.100.45
+  Bucket: sensitive-data-bucket
+
+[2025-12-30T03:45:00Z] CreateAccessKey
+  User: arn:aws:iam::123456789012:user/admin
+  Source IP: 198.51.100.45
+
+[!] ALERT: Unusual API activity from IP 198.51.100.45
+[!] Pattern suggests credential compromise and data access`;
     }
+    success = true;
   }
   else if (lowerCmd.startsWith("aws cloudtrail enable ")) {
     const trailName = lowerCmd.replace("aws cloudtrail enable ", "").trim();
@@ -5741,15 +5770,851 @@ Noisy neighbor prevention active.`;
 Data isolation verified.`;
     success = true;
   }
+  // ============= SOC INVESTIGATION COMMANDS =============
+  else if (lowerCmd === "aws iam get-credential-report" || lowerCmd.startsWith("aws iam get-credential")) {
+    output = `=== IAM Credential Report ===
+
+User              Created       Last Used     MFA    Access Keys   Status
+--------------------------------------------------------------------------------
+admin             2023-01-15    2h ago        No     1 active      VULNERABLE
+deploy-svc        2023-06-20    5m ago        N/A    1 active      OK
+sarah.chen        2024-02-10    3h ago        Yes    0 keys        OK
+compromised-key   2024-12-28    NOW           No     1 active      COMPROMISED
+
+[!] ALERT: 'compromised-key' showing activity from unknown IP.
+[!] ALERT: 'admin' user has no MFA enabled.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem correlate-logs ") || lowerCmd === "siem correlate-logs") {
+    output = `=== Log Correlation Analysis ===
+
+Correlating CloudTrail, VPC Flow Logs, and GuardDuty...
+
+Timeline of Related Events:
+  03:42:15  CloudTrail  AssumeRole from 198.51.100.45
+  03:42:18  VPC Flow    Inbound SSH from 198.51.100.45
+  03:42:45  CloudTrail  ListBuckets API call
+  03:43:01  CloudTrail  GetObject on sensitive-data bucket
+  03:44:12  GuardDuty   UnauthorizedAccess alert triggered
+
+[!] Attack chain identified: Credential theft → Lateral movement → Data access
+[!] Source IP 198.51.100.45 appears in multiple log sources`;
+    success = true;
+  }
+  else if (lowerCmd === "aws s3 get-bucket-policy" || lowerCmd.startsWith("aws s3 get-bucket-policy")) {
+    output = `=== Bucket Policy Analysis ===
+
+Bucket: production-bucket
+Policy Type: PUBLIC ACCESS
+
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "PublicRead",
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": ["s3:GetObject"],
+    "Resource": "arn:aws:s3:::production-bucket/*"
+  }]
+}
+
+[!] CRITICAL: Principal "*" allows ANY user to read objects!
+[!] This policy was modified 5 minutes ago.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem analyze-pattern ")) {
+    const pattern = lowerCmd.replace("siem analyze-pattern ", "");
+    output = `=== Pattern Analysis: ${pattern} ===
+
+Analyzing behavioral patterns...
+
+Detection Findings:
+  Occurrences: 127 events in last 24 hours
+  Peak Time: 03:00 - 04:00 UTC
+  Source IPs: 3 unique (1 flagged as malicious)
+  Affected Users: 2 accounts
+
+Anomalies Detected:
+  [!] 50+ attempts in 5-minute window (threshold: 10)
+  [!] Geographic anomaly: Login from unusual country
+  [!] Time anomaly: Activity outside normal business hours
+
+Recommended: Create detection rule for this pattern.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail lookup-events --s3") || lowerCmd === "aws cloudtrail lookup-events --s3") {
+    output = `=== S3-Related CloudTrail Events ===
+
+Recent S3 API Activity:
+  03:42:00  PutBucketPolicy      production-bucket  user/admin
+  03:42:01  PutBucketAcl         production-bucket  user/admin (CHANGED TO PUBLIC)
+  03:43:00  GetObject            production-bucket  Anonymous
+  03:43:05  GetObject            production-bucket  Anonymous
+  03:44:00  ListBucket           production-bucket  Anonymous
+
+[!] Bucket policy changed to allow public access 5 minutes ago
+[!] Anonymous access detected immediately after policy change`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail lookup-events --ec2") || lowerCmd === "aws cloudtrail lookup-events --ec2") {
+    output = `=== EC2-Related CloudTrail Events ===
+
+Recent EC2 API Activity:
+  03:30:00  RunInstances         p3.2xlarge × 10    ap-south-1
+  03:30:05  ModifySecurityGroup  sg-gpu-mining      0.0.0.0/0:22
+  03:31:00  CreateKeyPair        mining-key         user/compromised
+  03:32:00  AssociateAddress     eip-xxx            i-suspicious
+
+[!] 10 GPU instances launched in unusual region (ap-south-1)
+[!] Security group opened SSH to entire internet
+[!] Activity from compromised user credentials`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail lookup-events --username") || lowerCmd === "aws cloudtrail lookup-events --username admin") {
+    output = `=== User Activity: admin ===
+
+Failed Login Attempts (last hour):
+  03:40:00  ConsoleLogin  FAILED  203.0.113.100
+  03:40:02  ConsoleLogin  FAILED  203.0.113.100
+  03:40:05  ConsoleLogin  FAILED  203.0.113.100
+  ... 47 more attempts ...
+  03:44:58  ConsoleLogin  FAILED  203.0.113.100
+
+[!] Brute force attack detected
+[!] All attempts from single IP: 203.0.113.100
+[!] Recommend: Block IP and enable MFA`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail lookup-events --sg") || lowerCmd === "aws cloudtrail lookup-events --sg") {
+    output = `=== Security Group CloudTrail Events ===
+
+Recent Security Group Changes:
+  03:35:00  AuthorizeSecurityGroupIngress  prod-sg  22/TCP  0.0.0.0/0
+  03:35:05  AuthorizeSecurityGroupIngress  prod-sg  3389/TCP  0.0.0.0/0
+  03:36:00  ModifySecurityGroupRules       dev-sg   (restrictive)
+
+[!] SSH (port 22) opened to internet on production security group
+[!] RDP (port 3389) also opened - possible lateral movement prep
+[!] Changes made by user: admin (possibly compromised)`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail lookup-events --iam") || lowerCmd === "aws cloudtrail lookup-events --iam") {
+    output = `=== IAM CloudTrail Events ===
+
+Recent IAM Changes:
+  03:45:00  CreateRole           LambdaExecutionRole  AdministratorAccess
+  03:45:02  AttachRolePolicy     LambdaExecutionRole  S3FullAccess
+  03:45:05  CreateAccessKey      deploy-svc           NEW KEY CREATED
+  03:46:00  PutUserPolicy        admin                INLINE POLICY ADDED
+
+[!] New role created with overly permissive access
+[!] New access key created (potential persistence mechanism)
+[!] Inline policy bypasses managed policy controls`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam analyze-policies" || lowerCmd.startsWith("aws iam analyze-policies")) {
+    output = `=== IAM Policy Analysis ===
+
+Overly Permissive Policies Found:
+  
+  LambdaExecutionRole:
+    - s3:* on *  [CRITICAL]
+    - iam:PassRole on *  [HIGH]
+    
+  admin-inline-policy:
+    - *:* on *  [CRITICAL - God mode]
+    
+  deploy-svc:
+    - ec2:* on *  [MEDIUM]
+
+Recommendations:
+  1. Remove inline policies, use managed policies
+  2. Apply least privilege principle
+  3. Add resource constraints to * actions`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-sg ") || lowerCmd === "aws ec2 describe-sg") {
+    const sgName = lowerCmd.replace("aws ec2 describe-sg ", "") || "prod-sg";
+    output = `=== Security Group: ${sgName} ===
+
+Group ID: sg-0abc123def456
+VPC: vpc-production
+Description: Production web servers
+
+Inbound Rules:
+  [!] 22/TCP    0.0.0.0/0       SSH from anywhere     VULNERABLE
+  [!] 3389/TCP  0.0.0.0/0       RDP from anywhere     VULNERABLE
+  [OK] 443/TCP  0.0.0.0/0       HTTPS (expected)
+  [OK] 80/TCP   10.0.0.0/16     HTTP from VPC only
+
+Outbound Rules:
+  [OK] All traffic  0.0.0.0/0   Default egress
+
+[!] CRITICAL: SSH and RDP open to internet - must be restricted`;
+    success = true;
+  }
+  else if (lowerCmd === "aws guardduty list-findings" || lowerCmd.startsWith("aws guardduty list-findings")) {
+    output = `=== GuardDuty Findings ===
+
+Active Findings (last 24h):
+
+[CRITICAL] UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration
+  Severity: 8.5
+  Resource: i-0abc123def456
+  Description: EC2 instance credentials used from external IP
+  First Seen: 2 hours ago
+  
+[HIGH] Recon:IAMUser/MaliciousIPCaller
+  Severity: 7.0
+  Resource: user/compromised
+  Description: API calls from known malicious IP
+  First Seen: 3 hours ago
+
+[HIGH] CryptoCurrency:EC2/BitcoinTool.B
+  Severity: 7.0
+  Resource: i-suspicious-gpu
+  Description: EC2 instance mining cryptocurrency
+  First Seen: 1 hour ago
+
+Total: 3 active findings requiring attention`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam list-users" || lowerCmd.startsWith("aws iam list-users")) {
+    output = `=== IAM Users ===
+
+User                Created         Last Activity   MFA     Status
+------------------------------------------------------------------------
+admin               2023-01-15      2 hours ago     No      ACTIVE
+deploy-svc          2023-06-20      5 min ago       N/A     ACTIVE
+sarah.chen          2024-02-10      3 hours ago     Yes     ACTIVE
+compromised-key     2024-12-28      NOW             No      ACTIVE [!]
+backup-admin        2024-01-05      30 days ago     No      INACTIVE
+
+[!] WARNING: 'compromised-key' showing unusual activity
+[!] WARNING: 3 users without MFA enabled`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam list-roles" || lowerCmd.startsWith("aws iam list-roles")) {
+    output = `=== IAM Roles ===
+
+Role                        Trust Policy              Permissions
+------------------------------------------------------------------------
+LambdaExecutionRole         lambda.amazonaws.com      S3FullAccess [!]
+EC2InstanceRole             ec2.amazonaws.com         SSMFullAccess [OK]
+CrossAccountRole            External: 123456789012   AdministratorAccess [!]
+OrganizationRole            organizations.aws.com     ReadOnly [OK]
+
+[!] LambdaExecutionRole has overly permissive S3 access
+[!] CrossAccountRole trusts external account with admin access`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 revoke-launch-permissions") || lowerCmd === "aws ec2 revoke-launch-permissions") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Launch Permissions Revoked ===
+
+[OK] AMI launch permissions removed for external accounts
+[OK] Instance launch blocked in non-approved regions
+[OK] Service quota reduced for GPU instances
+[OK] SCP applied to prevent unauthorized launches
+
+Compute abuse prevented.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Launch permissions revoked.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws cloudwatch acknowledge-alarm") || lowerCmd === "aws cloudwatch acknowledge-alarm") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Alarm Acknowledged ===
+
+[OK] Alarm state changed to ACKNOWLEDGED
+[OK] SOC ticket created: INC-${Math.floor(Math.random() * 10000)}
+[OK] On-call notified
+[OK] Remediation tracking enabled
+
+Alarm being actively investigated.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Alarm acknowledged.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws budgets set-alert") || lowerCmd === "aws budgets set-alert") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Budget Alert Configured ===
+
+[OK] Alert threshold: 80% of monthly budget
+[OK] Email notification configured
+[OK] SNS topic for automation
+[OK] Slack integration enabled
+
+Cost anomalies will trigger immediate alerts.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Budget alert configured.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 scale-down") || lowerCmd === "aws ec2 scale-down") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Auto Scaling Updated ===
+
+[OK] Desired capacity reduced
+[OK] GPU instances terminated
+[OK] Spot requests cancelled
+[OK] Reserved capacity returned
+
+Compute costs brought under control.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Instances scaled down.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws s3 enable-block-public-access ") || lowerCmd === "aws s3 enable-block-public-access") {
+    const anyVulnerable = resources.find(r => (r.type === 's3' || r.type === 'bucket') && r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Block Public Access Enabled ===
+
+[OK] BlockPublicAcls: true
+[OK] IgnorePublicAcls: true
+[OK] BlockPublicPolicy: true
+[OK] RestrictPublicBuckets: true
+
+Bucket can no longer be made public.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Block public access enabled.`;
+      success = true;
+    }
+  }
+  // ============= ADDITIONAL SOC INVESTIGATION COMMANDS =============
+  else if (lowerCmd === "aws ec2 ls-sg" || lowerCmd.startsWith("aws ec2 ls-sg")) {
+    output = `=== Security Groups ===
+
+Group ID            Name              VPC               Inbound Rules    Status
+--------------------------------------------------------------------------------
+sg-0abc123def       prod-sg           vpc-production    5 rules          [!] OPEN
+sg-0def456ghi       dev-sg            vpc-development   3 rules          OK
+sg-0ghi789jkl       bastion-sg        vpc-production    2 rules          OK
+sg-0jkl012mno       db-sg             vpc-production    1 rule           OK
+
+[!] WARNING: prod-sg has overly permissive inbound rules
+    Use 'aws ec2 describe-sg prod-sg' for details`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem show-alerts") || lowerCmd === "siem show-alerts") {
+    output = `=== SIEM Active Alerts ===
+
+ID        Severity   Type                           Status      Age
+------------------------------------------------------------------------
+ALT-001   CRITICAL   Unauthorized API Key Usage     PENDING     5m
+ALT-002   HIGH       S3 Bucket Policy Modified      PENDING     12m
+ALT-003   HIGH       Unusual EC2 Instance Launch    PENDING     8m
+ALT-004   MEDIUM     Failed Login Attempts Spike    PENDING     15m
+ALT-005   MEDIUM     Security Group Rule Added      PENDING     3m
+ALT-006   LOW        New IAM Role Created           PENDING     22m
+
+Total: 6 pending alerts requiring attention`;
+    success = true;
+  }
+  // ============= ADDITIONAL SOC REMEDIATION COMMANDS =============
+  else if (lowerCmd.startsWith("aws iam enforce-mfa-policy") || lowerCmd === "aws iam enforce-mfa-policy") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== MFA Policy Enforced ===
+
+[OK] IAM policy updated to require MFA for all users
+[OK] Grace period: 24 hours for compliance
+[OK] Non-compliant users will be locked
+[OK] CloudTrail logging enabled for policy changes
+
+All users must now enable MFA.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] MFA policy enforced.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 restrict-ssh ") || lowerCmd === "aws ec2 restrict-ssh") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== SSH Access Restricted ===
+
+[OK] SSH port 22 removed from 0.0.0.0/0
+[OK] SSH allowed only from bastion subnet (10.0.1.0/24)
+[OK] Security group updated
+[OK] Change logged to CloudTrail
+
+Instance SSH access now follows security best practices.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] SSH access restricted.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws iam apply-permission-boundaries") || lowerCmd === "aws iam apply-permission-boundaries") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Permission Boundaries Applied ===
+
+[OK] DeveloperBoundary attached to all developer roles
+[OK] AdminBoundary attached to admin roles
+[OK] Maximum permissions now capped
+[OK] Privilege escalation paths blocked
+
+Roles can no longer exceed boundary permissions.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Permission boundaries applied.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("security remediate-critical") || lowerCmd === "security remediate-critical") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Critical Vulnerabilities Remediated ===
+
+[OK] Public S3 buckets locked down
+[OK] Overly permissive security groups restricted
+[OK] Unattached EBS volumes encrypted
+[OK] Root account MFA verified
+[OK] Default VPCs reviewed
+
+Critical security gaps addressed.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Critical vulnerabilities remediated.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("security generate-assessment-report") || lowerCmd === "security generate-assessment-report") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Security Assessment Report Generated ===
+
+Report: SEC-ASSESS-${new Date().toISOString().split('T')[0]}.pdf
+
+Executive Summary:
+  Overall Score: 78/100 (improved from 45/100)
+  Critical Issues: 0 remaining
+  High Issues: 2 remaining (non-blocking)
+  Compliance: CIS AWS Benchmark 82%
+
+Key Improvements:
+  - Public access eliminated
+  - MFA enforcement enabled
+  - Logging enhanced
+  - Network segmentation improved
+
+Next Steps documented in report.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Security assessment report generated.`;
+      success = true;
+    }
+  }
+  // ============= SOC REMEDIATION COMMANDS =============
+  else if (lowerCmd.startsWith("aws iam revoke-credentials ") || lowerCmd === "aws iam revoke-credentials") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Credentials Revoked ===
+
+[OK] Access key deactivated immediately
+[OK] Session tokens invalidated
+[OK] Console access disabled
+[OK] CloudTrail marker added for audit
+
+Compromised credentials neutralized.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Credentials revoked.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 terminate ") || lowerCmd === "aws ec2 terminate") {
+    const anyVulnerable = resources.find(r => (r.type === 'ec2' || r.type === 'instance') && r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Instance Terminated ===
+
+[OK] Instance terminated immediately
+[OK] EBS volumes scheduled for deletion
+[OK] Elastic IP released
+[OK] Security group detached
+
+Suspicious compute resources eliminated.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Instance terminated.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws iam lock-account ") || lowerCmd === "aws iam lock-account") {
+    const anyVulnerable = resources.find(r => (r.type === 'iam' || r.type === 'user') && r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Account Locked ===
+
+[OK] Console password disabled
+[OK] All access keys deactivated
+[OK] Active sessions terminated
+[OK] Account marked for security review
+
+User account secured pending investigation.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Account locked.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws waf add-ip-blocklist ") || lowerCmd === "aws waf add-ip-blocklist") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== IP Added to Blocklist ===
+
+[OK] IP added to WAF block rule
+[OK] All regions updated
+[OK] CloudFront distributions updated
+[OK] Rate limiting applied
+
+Malicious IP blocked at network edge.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] IP blocklist updated.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("siem create-rule ") || lowerCmd === "siem create-rule") {
+    const ruleName = lowerCmd.replace("siem create-rule ", "") || "detection-rule";
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Detection Rule Created: ${ruleName} ===
+
+[OK] Rule logic validated
+[OK] Threshold configured (10 events/5 min)
+[OK] Alert severity: HIGH
+[OK] Notification routing configured
+
+Future attacks of this pattern will be detected.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Detection rule created: ${ruleName}`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 restrict-sg ") || lowerCmd === "aws ec2 restrict-sg") {
+    const anyVulnerable = resources.find(r => (r.type === 'security_group' || r.type === 'securityGroup' || r.type === 'sg') && r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Security Group Restricted ===
+
+[OK] Removed 0.0.0.0/0 ingress rules
+[OK] SSH restricted to bastion CIDR only
+[OK] RDP access removed
+[OK] Unnecessary ports closed
+
+Security group now follows least privilege.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Security group restricted.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("aws iam review-role ") || lowerCmd === "aws iam review-role") {
+    const roleName = lowerCmd.replace("aws iam review-role ", "") || "role";
+    output = `=== Role Review: ${roleName} ===
+
+Current Permissions:
+  - s3:* on arn:aws:s3:::*  [OVERLY PERMISSIVE]
+  - iam:PassRole on *  [DANGEROUS]
+  - logs:* on *  [OK]
+
+Trust Policy:
+  - Principal: lambda.amazonaws.com [OK]
+  - Condition: None [MISSING]
+
+Recommendations:
+  1. Restrict S3 access to specific buckets
+  2. Add resource conditions to PassRole
+  3. Add external ID for cross-account trust`;
+    success = true;
+  }
+  else if (lowerCmd === "aws cloudtrail enable-data-events" || lowerCmd.startsWith("aws cloudtrail enable-data-events")) {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== S3 Data Events Enabled ===
+
+[OK] Read events logging enabled
+[OK] Write events logging enabled
+[OK] All buckets included
+[OK] Log delivery verified
+
+S3 access now fully audited.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] CloudTrail data events enabled.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws guardduty enable-enhanced" || lowerCmd.startsWith("aws guardduty enable-enhanced")) {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== GuardDuty Enhanced Mode Enabled ===
+
+[OK] EKS runtime monitoring active
+[OK] Lambda network monitoring active
+[OK] Malware protection enabled
+[OK] Finding confidence threshold lowered
+
+Enhanced threat detection now active.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] GuardDuty enhanced mode enabled.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd.startsWith("security generate-incident-report") || lowerCmd === "security generate-incident-report") {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Incident Report Generated ===
+
+Report: IR-${new Date().toISOString().split('T')[0]}-001.pdf
+
+Summary:
+  Type: Unauthorized Access / Credential Compromise
+  Severity: CRITICAL
+  Duration: Contained within 15 minutes
+  Impact: Limited - early detection prevented data exfil
+  Root Cause: Compromised API credentials
+  
+Actions Taken:
+  - Credentials revoked
+  - Source IP blocked
+  - Detection rules created
+  
+Lessons Learned documented.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Incident report generated.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws config enable-sg-monitoring" || lowerCmd.startsWith("aws config enable-sg-monitoring")) {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== Security Group Monitoring Enabled ===
+
+[OK] AWS Config rule: restricted-ssh deployed
+[OK] AWS Config rule: restricted-rdp deployed
+[OK] SNS notifications configured
+[OK] Auto-remediation Lambda deployed
+
+Security group changes will be automatically detected and remediated.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Security group monitoring enabled.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws cloudtrail create-iam-alerts" || lowerCmd.startsWith("aws cloudtrail create-iam-alerts")) {
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
+      output = `=== IAM Change Alerts Created ===
+
+[OK] EventBridge rule: IAM role creation
+[OK] EventBridge rule: Policy attachment
+[OK] EventBridge rule: Access key creation
+[OK] SNS topic configured
+[OK] SOC queue integration complete
+
+IAM changes will trigger immediate alerts.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== anyVulnerable.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] IAM change alerts created.`;
+      success = true;
+    }
+  }
   // ============= GENERIC RESOURCE UPDATE HANDLER =============
   else if (lowerCmd.startsWith("aws ") || lowerCmd.startsWith("siem ") || lowerCmd.startsWith("soar ") || lowerCmd.startsWith("hunt ") || lowerCmd.startsWith("ir ") || lowerCmd.startsWith("security ") || lowerCmd.startsWith("threat-intel ") || lowerCmd.startsWith("detection ") || lowerCmd.startsWith("purple-team ") || lowerCmd.startsWith("dashboard ") || lowerCmd.startsWith("logs ")) {
-    // Generic handler for any remaining commands - check if it might be a fix command
+    // Generic handler for any remaining commands - check if it might be a fix/remediation command
     const anyVulnerable = resources.find(r => r.isVulnerable);
-    if (anyVulnerable && (lowerCmd.includes("fix") || lowerCmd.includes("remediate") || lowerCmd.includes("secure") || lowerCmd.includes("enable") || lowerCmd.includes("configure") || lowerCmd.includes("create") || lowerCmd.includes("deploy") || lowerCmd.includes("apply") || lowerCmd.includes("enforce") || lowerCmd.includes("implement") || lowerCmd.includes("execute") || lowerCmd.includes("generate-report") || lowerCmd.includes("activate"))) {
+    const actionKeywords = ["fix", "remediate", "secure", "enable", "configure", "create", "deploy", "apply", "enforce", "implement", "execute", "generate-report", "activate", "revoke", "lock", "terminate", "restrict", "block", "acknowledge", "add-ip-blocklist", "scale-down", "set-alert", "review-role", "create-iam-alerts", "enable-sg-monitoring", "restrict-sg"];
+    if (anyVulnerable && actionKeywords.some(keyword => lowerCmd.includes(keyword))) {
       await storage.updateResource(anyVulnerable.id, { isVulnerable: false, status: 'secured' });
       output = `=== Command Executed Successfully ===
 
-[OK] ${cmd}
+[OK] ${command}
 
 Action completed. Security posture improved.`;
       success = true;
@@ -5762,7 +6627,7 @@ Action completed. Security posture improved.`;
       }
     } else {
       // It's a read/analysis command
-      output = `=== ${cmd} ===
+      output = `=== ${command} ===
 
 Command executed. Review the output above for findings.
 Use appropriate remediation commands to fix issues.`;
