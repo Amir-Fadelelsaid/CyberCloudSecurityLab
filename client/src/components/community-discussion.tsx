@@ -42,8 +42,12 @@ type DiscussionPost = {
   replies: DiscussionPost[];
 };
 
+const CREATOR_USER_ID = "21487518";
+
 export function CommunityDiscussion() {
   const { user: authUser } = useAuth();
+  
+  const isCreator = (userId: string) => userId === CREATOR_USER_ID;
   const { toast } = useToast();
   const [newPost, setNewPost] = useState("");
   const [replyContents, setReplyContents] = useState<Record<number, string>>({});
@@ -240,6 +244,11 @@ export function CommunityDiscussion() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{getUserName(post.user)}</span>
+                        {isCreator(post.userId) && (
+                          <Badge className="bg-gradient-to-r from-primary to-emerald-400 text-black text-xs font-bold">
+                            Creator
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="text-xs">
                           {post.category || "general"}
                         </Badge>
@@ -323,6 +332,11 @@ export function CommunityDiscussion() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                   <span className="font-medium text-xs">{getUserName(reply.user)}</span>
+                                  {isCreator(reply.userId) && (
+                                    <Badge className="bg-gradient-to-r from-primary to-emerald-400 text-black text-[10px] font-bold px-1.5 py-0">
+                                      Creator
+                                    </Badge>
+                                  )}
                                   <span className="text-xs text-muted-foreground">
                                     {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
                                   </span>
