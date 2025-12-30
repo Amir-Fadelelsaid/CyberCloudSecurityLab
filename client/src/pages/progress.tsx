@@ -26,7 +26,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CommunityDiscussion } from "@/components/community-discussion";
@@ -280,19 +279,6 @@ export default function MyProgress() {
         </div>
       </motion.div>
 
-      <Tabs defaultValue="progress" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="progress" className="gap-2" data-testid="tab-progress">
-            <Activity className="w-4 h-4" />
-            Progress
-          </TabsTrigger>
-          <TabsTrigger value="community" className="gap-2" data-testid="tab-community">
-            <Users className="w-4 h-4" />
-            Community
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="progress" className="mt-0">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -561,12 +547,20 @@ export default function MyProgress() {
           </CardContent>
         </Card>
       </motion.div>
-        </TabsContent>
 
-        <TabsContent value="community" className="mt-0">
-          <CommunityDiscussion />
-        </TabsContent>
-      </Tabs>
+      {/* Community Discussion Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mt-8"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <Users className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-semibold">Community Discussion</h2>
+        </div>
+        <CommunityDiscussion />
+      </motion.div>
     </div>
   );
 }
