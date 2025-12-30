@@ -10,6 +10,7 @@ export interface LabDefinition {
   description: string;
   briefing?: string;
   scenario?: string;
+  learningObjectives?: string[];
   difficulty: "Beginner" | "Intermediate" | "Advanced" | "Challenge";
   category: "Storage Security" | "Network Security" | "SOC Operations" | "SOC Engineer" | "Cloud Security Analyst" | "IAM Security" | "Cloud Security Engineer";
   estimatedTime: string;
@@ -1416,9 +1417,15 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
   // BEGINNER LABS (4) - Alert triage, basic investigation, documentation
   {
     title: "SIEM Alert Triage and Validation",
-    description: "Your SIEM has generated 15 alerts overnight. Triage each alert, validate true positives versus false positives, and document your findings.",
-    briefing: "SHIFT HANDOVER: You're taking over the morning shift. The overnight queue has 15 unacknowledged alerts ranging from LOW to HIGH severity. Triage, validate, and clear the queue before the 10 AM standup.",
-    scenario: "It's 7:30 AM and you've just logged into the SOC. Your SIEM dashboard shows alerts for failed logins, unusual API calls, and a potential data exfiltration. Most are probably false positives, but one could be real. Your job: find it.",
+    description: "Review security alerts in your SIEM dashboard. Learn to tell the difference between real threats (true positives) and harmless activity (false positives), then document what you found.",
+    briefing: "Morning shift starting - 15 alerts need review before 10 AM standup.",
+    scenario: "You've just started your shift as a SOC analyst. Your SIEM dashboard shows 15 alerts from overnight - failed logins, unusual API calls, and a possible data leak. Most are probably harmless, but one could be a real attack. Your mission: find the real threat among the noise.",
+    learningObjectives: [
+      "How to use a SIEM (Security Information and Event Management) dashboard",
+      "The difference between true positives (real threats) and false positives (harmless alerts)",
+      "How to investigate an alert by checking source IPs and user behavior",
+      "How to document your findings for other analysts"
+    ],
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",
@@ -1439,9 +1446,15 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
   },
   {
     title: "CloudTrail Log Analysis",
-    description: "A developer reported their AWS console session felt 'weird' yesterday. Analyze CloudTrail logs to investigate if their credentials were compromised.",
-    briefing: "USER REPORT: Developer Sarah Chen says she noticed unfamiliar resources in her console yesterday afternoon. She doesn't remember creating them. Investigate her CloudTrail activity for the past 24 hours.",
-    scenario: "Sarah is a backend developer who usually only accesses Lambda and DynamoDB. She called the security hotline because she saw EC2 instances she didn't create. Could be a mistake, could be credential theft.",
+    description: "A developer says something felt 'off' with their AWS account. Use CloudTrail logs to investigate whether someone stole their credentials and accessed their account.",
+    briefing: "User reports suspicious activity in their AWS console.",
+    scenario: "Developer Sarah Chen called the security hotline - she saw EC2 instances in her console that she didn't create. Sarah normally only uses Lambda and DynamoDB for her work. Was it a mistake, or did someone steal her login credentials? Your job: check the logs and find out.",
+    learningObjectives: [
+      "What CloudTrail is and why it records every action in AWS",
+      "How to look up a user's activity history using CloudTrail",
+      "How to spot suspicious behavior by checking login locations (IP addresses)",
+      "How to identify actions that don't match a user's normal job duties"
+    ],
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",
@@ -1461,9 +1474,15 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
   },
   {
     title: "Public S3 Bucket Alert Investigation",
-    description: "GuardDuty detected an S3 bucket that may be publicly accessible. Investigate the alert, assess the exposure, and recommend remediation.",
-    briefing: "GUARDDUTY ALERT: Policy:S3/BucketAnonymousAccessGranted detected on bucket 'analytics-export-2024'. Determine if sensitive data is exposed and assess the impact.",
-    scenario: "The automated scanner flagged a bucket with anonymous access. Before panicking, you need to determine: What's in the bucket? How long has it been exposed? Has anyone accessed it? Is this intentional (public website assets) or a mistake?",
+    description: "AWS GuardDuty found an S3 storage bucket that might be open to the public. Investigate if sensitive data is exposed and decide how urgently it needs to be fixed.",
+    briefing: "GuardDuty alert: S3 bucket may have public access enabled.",
+    scenario: "An automated security scan found a storage bucket called 'analytics-export-2024' that allows anonymous access. Before raising the alarm, you need to investigate: What kind of data is in there? Is it supposed to be public (like website images)? Or is this a dangerous mistake exposing company secrets?",
+    learningObjectives: [
+      "What GuardDuty is and how it automatically detects security problems",
+      "Why public S3 buckets can be dangerous (data leaks, compliance violations)",
+      "How to check what's inside a bucket and classify the data sensitivity",
+      "How to check access logs to see if anyone already downloaded the data"
+    ],
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",
@@ -1483,9 +1502,15 @@ export const cloudSecurityAnalystLabs: LabDefinition[] = [
   },
   {
     title: "Credential Usage Monitoring",
-    description: "Review IAM credential usage reports to identify dormant accounts, unused access keys, and credential hygiene issues.",
-    briefing: "WEEKLY REVIEW: Your weekly credential hygiene check is due. Review the IAM credential report and identify accounts that need attention.",
-    scenario: "Good security hygiene requires regular credential reviews. Access keys older than 90 days should be rotated. Unused credentials should be disabled. Your job: find the problems and flag them for remediation.",
+    description: "Run a credential hygiene check to find old passwords, unused access keys, and accounts that haven't been used in months. These are security risks that need to be cleaned up.",
+    briefing: "Weekly credential review - find accounts that need attention.",
+    scenario: "Part of your job as a security analyst is regular credential reviews. Old access keys are risky - if they were leaked months ago, attackers could still be using them. Unused accounts are targets for hackers. Your task: generate a credential report and find all the problems.",
+    learningObjectives: [
+      "Why old credentials are a security risk (they might be leaked without anyone knowing)",
+      "What 'credential rotation' means and why it's important",
+      "How to find dormant accounts that should be disabled",
+      "How to generate and read an IAM credential report"
+    ],
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",

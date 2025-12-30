@@ -403,50 +403,61 @@ export default function LabWorkspace() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Mission Briefing */}
-                {(lab as any).briefing && (
-                  <motion.div 
-                    className="bg-destructive/10 rounded-lg p-4 border border-destructive/30"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="w-4 h-4 text-destructive" />
-                      <span className="text-xs font-bold text-destructive uppercase tracking-wider">Alert</span>
-                    </div>
-                    <p className="text-xs text-destructive/90 leading-relaxed">{(lab as any).briefing}</p>
-                  </motion.div>
-                )}
-
-                {/* Scenario */}
-                {(lab as any).scenario && (
-                  <motion.div 
-                    className="bg-cyan-950/30 rounded-lg p-4 border border-cyan-500/30"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Shield className="w-4 h-4 text-cyan-400" />
-                      <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Situation</span>
-                    </div>
-                    <p className="text-xs text-cyan-100/80 leading-relaxed">{(lab as any).scenario}</p>
-                  </motion.div>
-                )}
-
-                {/* Objective */}
+                {/* Mission Briefing - Combined Alert + Scenario for clarity */}
                 <motion.div 
-                  className="bg-primary/5 rounded-lg p-4 border border-primary/30"
+                  className="bg-gradient-to-br from-slate-900/80 to-slate-800/40 rounded-lg p-4 border border-slate-600/30"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-bold text-primary uppercase tracking-wider">Objective</span>
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="w-4 h-4 text-slate-300" />
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Mission Briefing</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{lab.description}</p>
+                  {(lab as any).scenario ? (
+                    <p className="text-xs text-slate-200/90 leading-relaxed">{(lab as any).scenario}</p>
+                  ) : (lab as any).briefing ? (
+                    <p className="text-xs text-slate-200/90 leading-relaxed">{(lab as any).briefing}</p>
+                  ) : (
+                    <p className="text-xs text-slate-200/90 leading-relaxed">Welcome to your security training lab. Follow the objectives panel to complete each step.</p>
+                  )}
                 </motion.div>
+
+                {/* Your Goal - Clear objective */}
+                <motion.div 
+                  className="bg-primary/10 rounded-lg p-4 border border-primary/40"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-primary uppercase tracking-wider">Your Goal</span>
+                  </div>
+                  <p className="text-xs text-white/90 leading-relaxed font-medium">{lab.description}</p>
+                </motion.div>
+
+                {/* What You'll Learn - New beginner-friendly section */}
+                {(lab as any).learningObjectives && (lab as any).learningObjectives.length > 0 && (
+                  <motion.div 
+                    className="bg-violet-950/30 rounded-lg p-4 border border-violet-500/30"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <Zap className="w-4 h-4 text-violet-400" />
+                      <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">What You'll Learn</span>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {(lab as any).learningObjectives.map((obj: string, i: number) => (
+                        <li key={i} className="text-[11px] text-violet-200/80 flex items-start gap-2">
+                          <CheckCircle2 className="w-3 h-3 text-violet-400 mt-0.5 flex-shrink-0" />
+                          <span>{obj}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
 
                 {/* Difficulty & Time */}
                 <div className="flex gap-2">
@@ -462,6 +473,23 @@ export default function LabWorkspace() {
                     <p className="text-sm font-bold text-white">{lab.estimatedTime || '10-15 min'}</p>
                   </div>
                 </div>
+
+                {/* Getting Started Tip for beginners */}
+                {lab.difficulty === 'Beginner' && (
+                  <motion.div 
+                    className="bg-amber-950/20 rounded-lg p-3 border border-amber-500/20"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-[10px] text-amber-200/80 leading-relaxed">
+                        <span className="font-bold text-amber-400">Tip:</span> Switch to the Objectives tab on the left to see step-by-step instructions. Each step has a command you can type in the terminal below.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
           </div>
