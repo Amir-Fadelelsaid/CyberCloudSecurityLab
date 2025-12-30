@@ -2,7 +2,7 @@
 
 ## Overview
 
-CloudShieldLab is a gamified cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations. The application provides 89 interactive labs across 7 categories covering Storage Security (11 labs), Network Security (16 labs), SOC Operations (11 labs), SOC Engineer (12 labs), Cloud Security Analyst (12 labs), IAM Security (15 labs with Identity Graph visualization), and Cloud Security Engineer (12 labs) scenarios. Users learn through hands-on practice with simulated AWS CLI commands and receive real-time feedback mapped to security frameworks like MITRE ATT&CK and CIS Controls.
+CloudShieldLab is a gamified cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations. The application provides 97 interactive labs across 7 categories covering Storage Security (12 labs including 1 expert Challenge), Network Security (17 labs including 1 expert Challenge), SOC Operations (12 labs including 1 expert Challenge), SOC Engineer (13 labs including 1 expert Challenge), Cloud Security Analyst (14 labs including 2 expert Challenges), IAM Security (16 labs including 1 expert Challenge with Identity Graph visualization), and Cloud Security Engineer (13 labs including 1 expert Challenge) scenarios. Users learn through hands-on practice with simulated AWS CLI commands and receive real-time feedback mapped to security frameworks like MITRE ATT&CK and CIS Controls.
 
 ## User Preferences
 

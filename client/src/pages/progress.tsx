@@ -41,8 +41,8 @@ const levelThresholds = [
   { level: 1, title: "Operator", min: 7, max: 15 },
   { level: 2, title: "Analyst", min: 16, max: 30 },
   { level: 3, title: "Engineer", min: 31, max: 50 },
-  { level: 4, title: "Architect", min: 51, max: 88 },
-  { level: 5, title: "Elite Defender", min: 89, max: 89 },
+  { level: 4, title: "Architect", min: 51, max: 96 },
+  { level: 5, title: "Elite Defender", min: 97, max: 97 },
 ];
 
 type UserProfile = {

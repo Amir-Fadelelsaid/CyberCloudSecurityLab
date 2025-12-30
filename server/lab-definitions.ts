@@ -860,7 +860,7 @@ export const socOperationsLabs: LabDefinition[] = [
   }
 ];
 
-// ============= CHALLENGE LABS (No guidance - practice independently) =============
+// ============= CHALLENGE LABS (Expert level - no guidance, multi-vector attacks, harder than Advanced) =============
 export const challengeLabs: LabDefinition[] = [
   // Storage Security Challenge
   {
@@ -915,6 +915,236 @@ export const challengeLabs: LabDefinition[] = [
       { type: "iam_user", name: "challenge-compromised-user", config: { hasExcessivePermissions: true, suspiciousActivity: true }, isVulnerable: true, status: "active" }
     ],
     fixCommands: ["aws iam disable-user challenge-compromised-user", "aws cloudtrail enable challenge-trail"]
+  },
+
+  // ===== NEW EXPERT CHALLENGE LABS (8 new labs - harder than Advanced) =====
+
+  // 1. Shadow Data Lake Exfiltration - Storage Security Expert Challenge
+  {
+    title: "Shadow Data Lake Exfiltration Hunt",
+    description: "CRITICAL: Threat intelligence indicates an APT group has established persistent data exfiltration channels across multiple storage services. No playbook exists - locate all shadow data lakes, identify exfiltration mechanisms, trace data movement, and contain the breach. Multi-service, multi-account scenario.",
+    briefing: "RED TEAM EXERCISE WENT LIVE: A penetration test uncovered REAL threat actor infrastructure piggybacking on test findings. They've created hidden S3 buckets, EFS mounts, and cross-account replication jobs. 47TB of data at risk across 6 storage services.",
+    scenario: "You're called in at 2 AM. The CISO received an anonymous tip that corporate data is being sold on dark web forums. Initial investigation shows the threat actor has been inside for 90+ days, creating shadow infrastructure that mimics legitimate services. Your mission: find everything they built and shut it down without tipping them off.",
+    difficulty: "Challenge",
+    category: "Storage Security",
+    estimatedTime: "45-75 minutes",
+    initialState: { 
+      buckets: ["shadow-exfil-primary", "shadow-exfil-staging", "shadow-exfil-backup"],
+      efs: ["hidden-mount-prod"],
+      replication: ["cross-account-job-1", "cross-account-job-2"],
+      glacier: ["deep-archive-exfil"]
+    },
+    steps: [
+      { number: 1, title: "Hunt and Contain", description: "Locate all shadow storage infrastructure, trace data movement patterns, identify exfiltration destinations, and contain without alerting the attacker. Correlate CloudTrail, VPC Flow Logs, and S3 access logs. No guidance - expert level.", hint: "Think like a threat hunter." }
+    ],
+    resources: [
+      { type: "s3", name: "shadow-exfil-primary", config: { access: "private", crossAccount: "attacker-account-111", replication: true, dataSize: "23TB" }, isVulnerable: true, status: "active" },
+      { type: "s3", name: "shadow-exfil-staging", config: { lifecycle: "transition-to-glacier", encryption: "attacker-kms-key" }, isVulnerable: true, status: "active" },
+      { type: "s3", name: "shadow-exfil-backup", config: { objectLock: "governance", retentionDays: 365 }, isVulnerable: true, status: "locked" },
+      { type: "efs", name: "hidden-mount-prod", config: { mountedFrom: "10.0.99.0/24", throughputMode: "provisioned" }, isVulnerable: true, status: "mounted" },
+      { type: "replication_job", name: "cross-account-job-1", config: { destination: "attacker-bucket-eu", schedule: "every-6-hours" }, isVulnerable: true, status: "running" },
+      { type: "glacier", name: "deep-archive-exfil", config: { vaultLock: true, retrievalPolicy: "expedited" }, isVulnerable: true, status: "archived" }
+    ],
+    fixCommands: ["aws s3 revoke-cross-account shadow-exfil-primary", "aws datasync stop-job cross-account-job-1", "aws datasync stop-job cross-account-job-2", "aws efs delete-mount-target hidden-mount-prod", "aws s3 block-public-access shadow-exfil-staging", "aws glacier delete-vault-access-policy deep-archive-exfil"]
+  },
+
+  // 2. Zero Trust Network Breach Simulation - Network Security Expert Challenge
+  {
+    title: "Zero Trust Segmentation Breach",
+    description: "SIMULATION: An attacker has compromised an internal service and is attempting lateral movement across your zero-trust architecture. They've bypassed network ACLs, created covert tunnels, and are exploiting trust relationships between VPCs. Trace the breach path and contain it.",
+    briefing: "ZERO DAY EXPLOITATION: A new vulnerability in your API gateway allowed initial access. The attacker has pivoted through 4 VPCs, established reverse shells, and is 2 hops away from production databases. Time is critical.",
+    scenario: "Your EDR detected suspicious outbound connections from a 'trusted' internal service. Investigation reveals the attacker is using legitimate AWS services (SSM, Lambda) as covert channels. They've modified route tables, created transit gateway attachments, and are actively scanning your network. Stop them before they reach crown jewels.",
+    difficulty: "Challenge",
+    category: "Network Security",
+    estimatedTime: "50-80 minutes",
+    initialState: {
+      vpcs: ["compromised-vpc-dev", "pivot-vpc-staging", "target-vpc-prod", "exfil-vpc-dmz"],
+      tunnels: ["covert-channel-1", "covert-channel-2"],
+      routes: ["malicious-route-1", "malicious-route-2", "malicious-route-3"],
+      transitGateway: ["tgw-compromised"]
+    },
+    steps: [
+      { number: 1, title: "Breach Containment", description: "Map the complete attack path across all VPCs. Identify all covert channels, malicious routes, and compromised trust relationships. Contain the breach and restore network integrity. No playbook - you're the expert.", hint: "Correlate VPC Flow Logs, Transit Gateway metrics, and network telemetry." }
+    ],
+    resources: [
+      { type: "vpc", name: "compromised-vpc-dev", config: { compromisedInstances: 3, lateralMovement: true, c2Beacon: "active" }, isVulnerable: true, status: "compromised" },
+      { type: "vpc", name: "pivot-vpc-staging", config: { routeTableModified: true, nacl: "permissive", ssmTunnel: true }, isVulnerable: true, status: "pivot-point" },
+      { type: "vpc", name: "target-vpc-prod", config: { dbInstances: 4, scanningDetected: true, oneHopAway: true }, isVulnerable: true, status: "targeted" },
+      { type: "transit_gateway", name: "tgw-compromised", config: { unauthorizedAttachments: 2, routeTablePoisoned: true }, isVulnerable: true, status: "abused" },
+      { type: "covert_channel", name: "covert-channel-1", config: { type: "DNS-over-HTTPS", destination: "attacker.xyz" }, isVulnerable: true, status: "active" },
+      { type: "covert_channel", name: "covert-channel-2", config: { type: "SSM-tunnel", sessionId: "session-xxx" }, isVulnerable: true, status: "established" }
+    ],
+    fixCommands: ["aws ec2 isolate-vpc compromised-vpc-dev", "aws ec2 remove-tgw-attachment tgw-compromised", "aws ssm terminate-session covert-channel-2", "aws ec2 restore-route-table pivot-vpc-staging", "aws ec2 block-outbound compromised-vpc-dev"]
+  },
+
+  // 3. Live Multi-Vector Incident Command - SOC Operations Expert Challenge
+  {
+    title: "Live Multi-Vector Incident Command",
+    description: "ACTIVE INCIDENT: Multiple simultaneous attacks detected - ransomware deployment, credential theft, cryptomining, and data exfiltration. Lead the incident response across all attack vectors simultaneously. Prioritize, delegate, contain, and investigate in real-time.",
+    briefing: "CODE RED: This is not a drill. Four separate attack campaigns detected in the last 30 minutes. Evidence suggests a coordinated attack by multiple threat actors or a sophisticated APT. You are incident commander.",
+    scenario: "Your SIEM is on fire. GuardDuty is screaming. The board is asking questions. You have 4 parallel attack chains to manage: ransomware hitting file servers, credentials being exfiltrated to Telegram, cryptominers spinning up GPU instances, and a slow data leak to an overseas IP. Which do you stop first?",
+    difficulty: "Challenge",
+    category: "SOC Operations",
+    estimatedTime: "60-90 minutes",
+    initialState: {
+      incidents: ["ransomware-active", "credential-theft-active", "cryptomining-active", "data-exfil-active"],
+      compromisedAssets: 47,
+      attackVectors: 4,
+      timeToContain: "unknown"
+    },
+    steps: [
+      { number: 1, title: "Incident Command", description: "You are the incident commander. Triage all 4 active attack vectors, prioritize based on business impact, coordinate containment actions, preserve forensic evidence, and maintain situational awareness. No runbook - you write the playbook.", hint: "Think NIST IR lifecycle across parallel incidents." }
+    ],
+    resources: [
+      { type: "ransomware_incident", name: "ransomware-active", config: { encryptedSystems: 12, ransom: "50 BTC", spreadRate: "3 systems/hour", killSwitch: "unknown" }, isVulnerable: true, status: "spreading" },
+      { type: "credential_theft", name: "credential-theft-active", config: { stolenCreds: 847, exfilDestination: "telegram-bot", privilegedAccounts: 23 }, isVulnerable: true, status: "ongoing" },
+      { type: "cryptomining", name: "cryptomining-active", config: { instances: 156, costPerHour: "$2,340", gpuUtilization: "100%" }, isVulnerable: true, status: "mining" },
+      { type: "data_exfiltration", name: "data-exfil-active", config: { dataVolume: "2.3TB", destination: "185.xx.xx.xx", protocol: "HTTPS", duration: "6 hours" }, isVulnerable: true, status: "active" },
+      { type: "siem_alerts", name: "alert-queue", config: { pending: 2847, critical: 156, escalated: 0 }, isVulnerable: false, status: "overwhelmed" }
+    ],
+    fixCommands: ["aws ir contain-ransomware ransomware-active", "aws ir revoke-all-credentials credential-theft-active", "aws ec2 terminate-mining-instances cryptomining-active", "aws ec2 block-exfil-destination data-exfil-active", "aws ir create-war-room"]
+  },
+
+  // 4. Insider Threat Privilege Escalation - SOC Engineer Expert Challenge
+  {
+    title: "Insider Threat Detection Engineering",
+    description: "INSIDER THREAT: A trusted employee with elevated access has gone rogue. They're covering their tracks, disabling monitoring, and using legitimate access for illegitimate purposes. Build detection rules that catch the insider without tipping them off.",
+    briefing: "HUMAN INTELLIGENCE: HR received a credible tip that a senior DevOps engineer is exfiltrating intellectual property before joining a competitor. They have admin access and know your monitoring blind spots.",
+    scenario: "The suspect knows your SIEM inside out - they helped build it. They're using off-hours access, legitimate tools, and staying just under detection thresholds. Your challenge: create detection logic that catches subtle behavioral anomalies without alerting them via normal security processes.",
+    difficulty: "Challenge",
+    category: "SOC Engineer",
+    estimatedTime: "50-70 minutes",
+    initialState: {
+      suspectUser: "devops-senior-john",
+      accessLevel: "admin",
+      monitoringGaps: 7,
+      evidenceNeeded: true
+    },
+    steps: [
+      { number: 1, title: "Covert Detection Engineering", description: "Build behavioral analytics rules, UEBA baselines, and covert detection mechanisms that catch insider threats without alerting the suspect. Consider access patterns, data movement, off-hours activity, and privilege abuse. Expert level - no templates.", hint: "Behavioral analytics and statistical anomaly detection." }
+    ],
+    resources: [
+      { type: "iam_user", name: "devops-senior-john", config: { accessLevel: "admin", tenure: "3 years", noticePeriod: "2 weeks", accessPatternChange: true }, isVulnerable: false, status: "under-investigation" },
+      { type: "siem_rules", name: "insider-detection", config: { currentRules: 0, uebaEnabled: false, baselinesDefined: false }, isVulnerable: true, status: "blind" },
+      { type: "dlp_policy", name: "data-loss-prevention", config: { fileMonitoring: "disabled", emailScanning: "keywords-only", cloudStorageBlocked: false }, isVulnerable: true, status: "gaps" },
+      { type: "access_logs", name: "behavioral-data", config: { offHoursAccess: "increasing", sensitiveFileAccess: "300%_baseline", gitCloneActivity: "massive" }, isVulnerable: false, status: "evidence" },
+      { type: "ueba", name: "user-entity-analytics", config: { enabled: false, riskScore: "not-calculated" }, isVulnerable: true, status: "not-deployed" }
+    ],
+    fixCommands: ["siem create-behavioral-rule insider-off-hours", "siem create-rule data-volume-anomaly", "siem enable-ueba devops-senior-john", "dlp enable-file-monitoring", "aws cloudtrail enable-data-events"]
+  },
+
+  // 5. Cross-Region Credential Poisoning - Cloud Security Analyst Expert Challenge
+  {
+    title: "Cross-Region Credential Poisoning",
+    description: "APT SIMULATION: Threat actors have compromised temporary credentials and are using cross-region pivoting to evade detection. They're poisoning STS sessions, creating backdoor roles, and establishing persistence across 8 AWS regions. Hunt them down.",
+    briefing: "ADVANCED PERSISTENT THREAT: Nation-state actors have obtained valid STS tokens and are systematically establishing persistent access across your global infrastructure. They know your region monitoring gaps.",
+    scenario: "Your Tokyo region triggered an anomaly - but the attacker is already in Frankfurt, Sydney, and Sao Paulo. They're creating cross-account roles, modifying trust policies, and using region-hopping to stay ahead of your response. This is a global hunt.",
+    difficulty: "Challenge",
+    category: "Cloud Security Analyst",
+    estimatedTime: "55-85 minutes",
+    initialState: {
+      compromisedRegions: ["ap-northeast-1", "eu-central-1", "ap-southeast-2", "sa-east-1"],
+      backdoorRoles: 12,
+      poisonedSessions: 47,
+      persistenceMechanisms: "multiple"
+    },
+    steps: [
+      { number: 1, title: "Global Threat Hunt", description: "Conduct a multi-region threat hunt. Identify all compromised credentials, backdoor roles, poisoned STS sessions, and persistence mechanisms. Coordinate containment across 8 regions simultaneously. APT-level challenge.", hint: "Think globally, correlate regionally." }
+    ],
+    resources: [
+      { type: "sts_session", name: "poisoned-session-1", config: { region: "ap-northeast-1", assumedRole: "AdminRole", duration: "12h", sourceIP: "suspicious" }, isVulnerable: true, status: "active" },
+      { type: "sts_session", name: "poisoned-session-2", config: { region: "eu-central-1", assumedRole: "BackdoorRole", crossAccount: true }, isVulnerable: true, status: "active" },
+      { type: "iam_role", name: "backdoor-role-global", config: { trustPolicy: "external-account", regions: 8, permissions: "AdministratorAccess" }, isVulnerable: true, status: "persistent" },
+      { type: "lambda", name: "persistence-function", config: { triggerType: "CloudWatch-scheduled", action: "refresh-backdoor-creds", regions: ["us-east-1", "eu-west-1"] }, isVulnerable: true, status: "running" },
+      { type: "eventbridge", name: "persistence-rule", config: { schedule: "rate(1 hour)", target: "persistence-function" }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["aws sts revoke-all-sessions", "aws iam delete-role backdoor-role-global", "aws lambda delete-function persistence-function", "aws events disable-rule persistence-rule", "aws organizations apply-scp deny-external-trust"]
+  },
+
+  // 6. Federated Identity Supply Chain Attack - IAM Security Expert Challenge
+  {
+    title: "Federated Identity Supply Chain Breach",
+    description: "SUPPLY CHAIN ATTACK: Your SAML identity provider has been compromised. Attackers are minting fraudulent SAML assertions to gain access to AWS. Detect the golden SAML attack, identify all compromised sessions, and rebuild trust.",
+    briefing: "GOLDEN SAML DETECTED: Threat intelligence confirms your IdP's signing certificate was stolen in a supply chain attack. Attackers can now forge any identity. Every federated session is suspect.",
+    scenario: "The SolarWinds-style attack has hit your identity infrastructure. Attackers have the SAML signing key and are creating admin sessions at will. They look exactly like legitimate users. You need to detect impossible travel, session anomalies, and rebuild your entire federation trust - fast.",
+    difficulty: "Challenge",
+    category: "IAM Security",
+    estimatedTime: "60-90 minutes",
+    initialState: {
+      compromisedIdP: true,
+      forgedAssertions: "unknown",
+      suspiciousSessions: 234,
+      trustChain: "broken"
+    },
+    steps: [
+      { number: 1, title: "Golden SAML Response", description: "Detect forged SAML assertions, identify all compromised federated sessions, revoke suspicious access, rotate the signing certificate, and rebuild federation trust. This is a supply chain incident - everything is suspect.", hint: "Trust nothing. Verify everything." }
+    ],
+    resources: [
+      { type: "saml_provider", name: "corporate-idp", config: { signingCertCompromised: true, assertionsForged: "confirmed", affectedUsers: "all-federated" }, isVulnerable: true, status: "compromised" },
+      { type: "federated_session", name: "suspicious-admin-sessions", config: { count: 47, sourceLocations: "impossible-travel", privilegeLevel: "admin" }, isVulnerable: true, status: "active" },
+      { type: "iam_role", name: "federated-admin-role", config: { assumedBySAML: true, trustCompromised: true, sessions: 156 }, isVulnerable: true, status: "exposed" },
+      { type: "cloudtrail_evidence", name: "saml-assertion-logs", config: { forgedSignatures: true, anomalousAttributes: true }, isVulnerable: false, status: "evidence" },
+      { type: "identity_provider", name: "idp-metadata", config: { certificateExpiry: "valid", lastRotation: "2 years ago" }, isVulnerable: true, status: "needs-rotation" }
+    ],
+    fixCommands: ["aws iam terminate-all-federated-sessions", "aws iam rotate-saml-certificate corporate-idp", "aws iam update-trust-policy federated-admin-role", "aws organizations enable-scps deny-federation-until-verified", "aws cloudtrail analyze-saml-anomalies"]
+  },
+
+  // 7. Multi-Cloud Ransomware Operations - Cloud Security Engineer Expert Challenge
+  {
+    title: "Multi-Cloud Ransomware Defense",
+    description: "RANSOMWARE ATTACK: A sophisticated ransomware group is simultaneously attacking your AWS, Azure, and GCP environments. They're encrypting data, deleting backups, and leaving ransom notes. Coordinate cross-cloud incident response and recovery.",
+    briefing: "RANSOMWARE EMERGENCY: The REvil successor group has hit all three of your cloud environments simultaneously. They've encrypted production databases, deleted 80% of backups, and are demanding 100 BTC. Business continuity is at stake.",
+    scenario: "Your multi-cloud strategy just became your biggest vulnerability. The attackers hit all three clouds at once, knowing you'd struggle to coordinate response. They've compromised your cross-cloud IAM federation and are using it to maintain access. Stop the bleeding across three platforms simultaneously.",
+    difficulty: "Challenge",
+    category: "Cloud Security Engineer",
+    estimatedTime: "70-100 minutes",
+    initialState: {
+      affectedClouds: ["AWS", "Azure", "GCP"],
+      encryptedSystems: 847,
+      backupsDeleted: "80%",
+      ransomDemand: "100 BTC",
+      businessImpact: "critical"
+    },
+    steps: [
+      { number: 1, title: "Multi-Cloud Crisis Response", description: "Coordinate incident response across AWS, Azure, and GCP simultaneously. Contain the ransomware spread, protect remaining backups, assess recovery options, and restore business operations. Cross-cloud federation is compromised. Expert crisis management required.", hint: "Parallel containment, prioritize business-critical systems." }
+    ],
+    resources: [
+      { type: "aws_ransomware", name: "aws-encrypted-systems", config: { rdsEncrypted: 12, s3ObjectsEncrypted: "2.3M", ec2Encrypted: 156 }, isVulnerable: true, status: "encrypted" },
+      { type: "azure_ransomware", name: "azure-encrypted-systems", config: { sqlDatabasesEncrypted: 8, blobContainersEncrypted: 47, vmsEncrypted: 234 }, isVulnerable: true, status: "encrypted" },
+      { type: "gcp_ransomware", name: "gcp-encrypted-systems", config: { cloudSQLEncrypted: 6, gcsObjectsEncrypted: "1.1M", gceEncrypted: 89 }, isVulnerable: true, status: "encrypted" },
+      { type: "backup_status", name: "backup-assessment", config: { awsBackupsSurviving: "20%", azureBackupsSurviving: "15%", gcpBackupsSurviving: "25%" }, isVulnerable: false, status: "critical" },
+      { type: "federation", name: "cross-cloud-iam", config: { compromised: true, usedForLateralMovement: true }, isVulnerable: true, status: "abused" }
+    ],
+    fixCommands: ["aws ransomware isolate-all-encrypted", "azure ransomware isolate-all-encrypted", "gcp ransomware isolate-all-encrypted", "cross-cloud revoke-federation", "aws backup restore-from-immutable", "notify-law-enforcement"]
+  },
+
+  // 8. Red Team Campaign Detection - Cross-Category Expert Challenge
+  {
+    title: "Full Spectrum Red Team Detection",
+    description: "RED TEAM EXERCISE: An elite red team has been operating in your environment for 30 days. They've established persistence, moved laterally, escalated privileges, and staged data for exfiltration. Hunt them across all security domains - storage, network, IAM, and SOC. Find every foothold.",
+    briefing: "RED TEAM DEBRIEF INCOMING: The red team engagement ends in 24 hours. Before the debrief, prove your detection capabilities by finding all their footholds independently. They've used techniques from every MITRE ATT&CK tactic.",
+    scenario: "This is the ultimate test. An experienced red team has spent 30 days establishing presence across your entire infrastructure. They've compromised IAM roles, created network tunnels, established storage persistence, and evaded your SOC. Find their complete attack chain before the debrief reveals what you missed.",
+    difficulty: "Challenge",
+    category: "Cloud Security Analyst",
+    estimatedTime: "90-120 minutes",
+    initialState: {
+      redTeamDuration: "30 days",
+      attackTactics: "all-mitre-tactics",
+      footholds: "multiple",
+      domainsAffected: ["IAM", "Network", "Storage", "Compute", "Serverless"]
+    },
+    steps: [
+      { number: 1, title: "Full Spectrum Hunt", description: "Conduct a comprehensive threat hunt across all security domains. Find every red team foothold, backdoor, persistence mechanism, and attack artifact. Map the complete kill chain. This is your final exam - prove you can find an APT.", hint: "Hunt across IAM, Network, Storage, Compute, and Serverless. Leave no stone unturned." }
+    ],
+    resources: [
+      { type: "iam_persistence", name: "rt-backdoor-role", config: { createdDaysAgo: 28, lastUsed: "today", permissions: "admin", trustPolicy: "external" }, isVulnerable: true, status: "hidden" },
+      { type: "network_persistence", name: "rt-covert-tunnel", config: { type: "reverse-ssh", destination: "rt-c2-server", established: "25 days ago" }, isVulnerable: true, status: "active" },
+      { type: "storage_persistence", name: "rt-hidden-bucket", config: { createdDaysAgo: 22, contents: "tooling + exfil staging", encryption: "attacker-key" }, isVulnerable: true, status: "hidden" },
+      { type: "compute_persistence", name: "rt-golden-ami", config: { backdoored: true, usedForAutoscaling: true, deployedInstances: 12 }, isVulnerable: true, status: "propagating" },
+      { type: "serverless_persistence", name: "rt-malicious-layer", config: { attachedToFunctions: 47, dataExfilOnInvoke: true }, isVulnerable: true, status: "active" },
+      { type: "credentials", name: "rt-stolen-keys", config: { accessKeyAge: "30 days", usedFromExternalIP: true }, isVulnerable: true, status: "in-use" }
+    ],
+    fixCommands: ["aws iam delete-role rt-backdoor-role", "aws ec2 terminate-tunnel rt-covert-tunnel", "aws s3 delete-bucket rt-hidden-bucket", "aws ec2 deregister-ami rt-golden-ami", "aws lambda delete-layer rt-malicious-layer", "aws iam delete-access-key rt-stolen-keys"]
   }
 ];
 

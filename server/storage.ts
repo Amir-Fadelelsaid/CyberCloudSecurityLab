@@ -241,7 +241,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(sql`COUNT(CASE WHEN ${userProgress.completed} = true THEN 1 END)`));
 
     const calculateLevelInfo = (completed: number) => {
-      if (completed >= 89) return { level: 6, title: "Elite Defender" };
+      if (completed >= 97) return { level: 6, title: "Elite Defender" };
       if (completed >= 51) return { level: 5, title: "Architect" };
       if (completed >= 31) return { level: 4, title: "Engineer" };
       if (completed >= 16) return { level: 3, title: "Analyst" };

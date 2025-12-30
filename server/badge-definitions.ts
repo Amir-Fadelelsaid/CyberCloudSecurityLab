@@ -11,7 +11,7 @@ export interface BadgeDefinition {
 }
 
 // Level-based badges (earned by completing X total labs)
-// Thresholds match calculateLevel: Recruit(0-6), Operator(7-15), Analyst(16-30), Engineer(31-50), Architect(51-88), Elite Defender(89)
+// Thresholds match calculateLevel: Recruit(0-6), Operator(7-15), Analyst(16-30), Engineer(31-50), Architect(51-96), Elite Defender(97)
 export const levelBadges: BadgeDefinition[] = [
   {
     name: "Operator",
@@ -47,10 +47,10 @@ export const levelBadges: BadgeDefinition[] = [
   },
   {
     name: "Elite Defender",
-    description: "Complete all 89 labs and achieve elite status",
+    description: "Complete all 97 labs and achieve elite status",
     icon: "Crown",
     category: "Level",
-    requirement: JSON.stringify({ type: "total_labs", count: 89 }),
+    requirement: JSON.stringify({ type: "total_labs", count: 97 }),
     level: 5
   }
 ];
@@ -157,7 +157,7 @@ export const achievementBadges: BadgeDefinition[] = [
     description: "Complete every single lab in CloudShieldLab",
     icon: "Trophy",
     category: "Achievement",
-    requirement: JSON.stringify({ type: "total_labs", count: 89 })
+    requirement: JSON.stringify({ type: "total_labs", count: 97 })
   }
 ];
 
@@ -169,10 +169,10 @@ export const allBadgeDefinitions = [
 
 // Helper to calculate user level based on completed labs
 export function calculateLevel(completedLabsCount: number): { level: number; title: string; nextLevel: number | null; progress: number } {
-  if (completedLabsCount >= 89) {
+  if (completedLabsCount >= 97) {
     return { level: 5, title: "Elite Defender", nextLevel: null, progress: 100 };
   } else if (completedLabsCount >= 51) {
-    return { level: 4, title: "Architect", nextLevel: 89, progress: Math.round(((completedLabsCount - 51) / (89 - 51)) * 100) };
+    return { level: 4, title: "Architect", nextLevel: 97, progress: Math.round(((completedLabsCount - 51) / (97 - 51)) * 100) };
   } else if (completedLabsCount >= 31) {
     return { level: 3, title: "Engineer", nextLevel: 51, progress: Math.round(((completedLabsCount - 31) / (51 - 31)) * 100) };
   } else if (completedLabsCount >= 16) {

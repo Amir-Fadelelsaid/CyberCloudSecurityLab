@@ -43,17 +43,17 @@ As a SOC Analyst and Cybersecurity professional, I noticed a critical gap in clo
 
 ## Features
 
-### 89 Interactive Labs Across 7 Categories
+### 97 Interactive Labs Across 7 Categories
 
 | Category | Beginner | Intermediate | Advanced | Challenge | **Total** |
 |----------|----------|--------------|----------|-----------|-----------|
-| **Storage Security** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
-| **Network Security** | 3 labs | 6 labs | 6 labs | 1 lab | **16** |
-| **SOC Operations** | 3 labs | 4 labs | 3 labs | 1 lab | **11** |
-| **SOC Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
-| **Cloud Security Analyst** | 4 labs | 4 labs | 4 labs | - | **12** |
-| **IAM Security** | 5 labs | 5 labs | 5 labs | - | **15** |
-| **Cloud Security Engineer** | 4 labs | 4 labs | 4 labs | - | **12** |
+| **Storage Security** | 3 labs | 4 labs | 3 labs | 2 labs | **12** |
+| **Network Security** | 3 labs | 6 labs | 6 labs | 2 labs | **17** |
+| **SOC Operations** | 3 labs | 4 labs | 3 labs | 2 labs | **12** |
+| **SOC Engineer** | 4 labs | 4 labs | 4 labs | 1 lab | **13** |
+| **Cloud Security Analyst** | 4 labs | 4 labs | 4 labs | 2 labs | **14** |
+| **IAM Security** | 5 labs | 5 labs | 5 labs | 1 lab | **16** |
+| **Cloud Security Engineer** | 4 labs | 4 labs | 4 labs | 1 lab | **13** |
 
 ### Enterprise SOC Simulation Platform
 
@@ -80,13 +80,13 @@ Earn certificates upon completing all labs in a category:
 
 | Certificate | Labs Required |
 |-------------|---------------|
-| Storage Security | 11 labs |
-| Network Security | 16 labs |
-| SOC Operations | 11 labs |
-| SOC Engineer | 12 labs |
-| Cloud Security Analyst | 12 labs |
-| IAM Security | 15 labs |
-| Cloud Security Engineer | 12 labs |
+| Storage Security | 12 labs |
+| Network Security | 17 labs |
+| SOC Operations | 12 labs |
+| SOC Engineer | 13 labs |
+| Cloud Security Analyst | 14 labs |
+| IAM Security | 16 labs |
+| Cloud Security Engineer | 13 labs |
 
 ### Dynamic Leveling System
 
@@ -97,7 +97,7 @@ Earn certificates upon completing all labs in a category:
 | 2 | Analyst | 16+ labs | Analyst Badge |
 | 3 | Engineer | 31+ labs | Engineer Badge |
 | 4 | Architect | 51+ labs | Architect Badge |
-| 5 | Elite Defender | All 89 labs | Elite Defender Badge |
+| 5 | Elite Defender | All 97 labs | Elite Defender Badge |
 
 ### 19 Unlockable Badges
 
@@ -112,7 +112,7 @@ Earn certificates upon completing all labs in a category:
 | **Beginner** | 5-10 min | 3 steps | Quick fixes, single resource |
 | **Intermediate** | 15-25 min | 6-7 steps | Multi-phase remediation with verification |
 | **Advanced** | 30-55 min | 10-12 steps | Complex investigations, multiple resources, forensics |
-| **Challenge** | 20-45 min | 1 step | No guidance - practice independently with multiple resources |
+| **Challenge** | 20-120 min | 1 step | Expert-level APT scenarios, no guidance, multi-domain attacks |
 
 ### Smart Learning System
 - **Step-by-Step Guidance**: Detailed instructions for each lab with numbered steps

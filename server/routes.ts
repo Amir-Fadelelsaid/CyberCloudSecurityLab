@@ -2574,7 +2574,7 @@ async function seedDatabase() {
   }
   
   const finalCount = (await storage.getLabs()).length;
-  console.log(`Labs synced. Total: ${finalCount} labs (expected: 89)`);
+  console.log(`Labs synced. Total: ${finalCount} labs (expected: 97)`);
   
   // Seed and sync badges
   const existingBadges = await storage.getBadges();

@@ -45,7 +45,15 @@ export default function LabsList() {
   };
 
   const filteredLabs = labs?.filter(lab => {
-    const matchesFilter = filter === 'All' || lab.difficulty === filter;
+    let matchesFilter = false;
+    if (filter === 'All') {
+      matchesFilter = true;
+    } else if (filter === 'Completed') {
+      matchesFilter = isLabCompleted(lab.id);
+    } else {
+      matchesFilter = lab.difficulty === filter;
+    }
+    
     const searchLower = search.toLowerCase().trim();
     if (!searchLower) return matchesFilter;
     
@@ -81,16 +89,19 @@ export default function LabsList() {
           />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-          {['All', 'Beginner', 'Intermediate', 'Advanced', 'Challenge'].map((lvl) => (
+          {['All', 'Beginner', 'Intermediate', 'Advanced', 'Challenge', 'Completed'].map((lvl) => (
             <button
               key={lvl}
               onClick={() => setFilter(lvl)}
               className={clsx(
                 "px-4 py-2 rounded-lg text-sm font-mono whitespace-nowrap transition-all border",
                 filter === lvl 
-                  ? "bg-primary/10 text-primary border-primary/30" 
+                  ? lvl === 'Completed' 
+                    ? "bg-green-500/10 text-green-400 border-green-500/30"
+                    : "bg-primary/10 text-primary border-primary/30" 
                   : "bg-transparent text-muted-foreground border-transparent hover:bg-white/5 hover:text-white"
               )}
+              data-testid={`filter-${lvl.toLowerCase()}`}
             >
               {lvl.toUpperCase()}
             </button>

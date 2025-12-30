@@ -29,7 +29,7 @@ export default function HiringManager() {
               CloudShieldLab Platform Overview
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              CloudShieldLab is a production-grade cloud security training platform with 89 hands-on labs, 
+              CloudShieldLab is a production-grade cloud security training platform with 97 hands-on labs, 
               an enterprise SOC simulation environment, and certificate-based skill validation. 
               Here's what a candidate practicing on this platform has demonstrated.
             </p>
@@ -53,7 +53,7 @@ export default function HiringManager() {
             <CardContent className="py-6">
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
                 <div>
-                  <p className="text-3xl font-bold text-primary">89</p>
+                  <p className="text-3xl font-bold text-primary">97</p>
                   <p className="text-sm text-muted-foreground">Labs</p>
                 </div>
                 <div>
@@ -89,7 +89,7 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <p className="text-2xl font-bold text-white">11</p>
+                <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">S3, encryption</p>
               </CardContent>
             </Card>
@@ -102,7 +102,7 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <p className="text-2xl font-bold text-white">16</p>
+                <p className="text-2xl font-bold text-white">17</p>
                 <p className="text-xs text-muted-foreground">VPC, SGs, WAF</p>
               </CardContent>
             </Card>
@@ -115,7 +115,7 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <p className="text-2xl font-bold text-white">11</p>
+                <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">CloudTrail, alerts</p>
               </CardContent>
             </Card>
@@ -128,7 +128,7 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <p className="text-2xl font-bold text-white">12</p>
+                <p className="text-2xl font-bold text-white">13</p>
                 <p className="text-xs text-muted-foreground">SIEM, SOAR</p>
               </CardContent>
             </Card>
@@ -141,7 +141,7 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <p className="text-2xl font-bold text-white">12</p>
+                <p className="text-2xl font-bold text-white">14</p>
                 <p className="text-xs text-muted-foreground">CSPM, compliance</p>
               </CardContent>
             </Card>
@@ -154,7 +154,7 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <p className="text-2xl font-bold text-white">15</p>
+                <p className="text-2xl font-bold text-white">16</p>
                 <p className="text-xs text-muted-foreground">Roles, policies, MFA</p>
               </CardContent>
             </Card>
@@ -167,7 +167,7 @@ export default function HiringManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <p className="text-2xl font-bold text-white">12</p>
+                <p className="text-2xl font-bold text-white">13</p>
                 <p className="text-xs text-muted-foreground">Security Hub, IaC</p>
               </CardContent>
             </Card>

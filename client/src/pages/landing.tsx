@@ -55,7 +55,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              89 hands-on labs across 7 security domains. Enterprise SOC simulation with SIEM alerts, 
+              97 hands-on labs across 7 security domains. Enterprise SOC simulation with SIEM alerts, 
               detection rules, and case management. Earn certificates and level up from Recruit to Elite Defender.
             </p>
           </motion.div>
@@ -97,7 +97,7 @@ export default function Landing() {
             className="flex justify-center gap-8 pt-8 flex-wrap"
           >
             {[
-              { value: "89", label: "Labs" },
+              { value: "97", label: "Labs" },
               { value: "7", label: "Categories" },
               { value: "19", label: "Badges" },
               { value: "7", label: "Certificates" },
