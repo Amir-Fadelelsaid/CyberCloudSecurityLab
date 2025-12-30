@@ -13,6 +13,7 @@ Core principle: Matrix-meets-modern-SaaS - dark, techy, but clean and profession
 **Font Families:**
 - Primary: Inter (UI elements, body text)
 - Monospace: JetBrains Mono (terminals, code snippets, tech labels)
+- Display: Orbitron (mission briefings, lab titles)
 
 **Hierarchy:**
 - Hero: 4xl-6xl, font-bold, tracking-tight
@@ -70,6 +71,23 @@ Core principle: Matrix-meets-modern-SaaS - dark, techy, but clean and profession
 - Completed steps with checkmark icons
 - Each step expandable with content area
 
+**Intel Boxes (Beginner Labs Only):**
+- Cyan/blue background (bg-cyan-950/30) with cyan border (border-cyan-500/20)
+- Blue shield icon with "INTEL:" label in cyan-400 text
+- MITRE ATT&CK technique references highlighted with cyan-600/30 badge background
+- Appears inline within step when step is NOT completed
+- Provides contextual guidance explaining "what" and "why" before taking action
+- Example: "INTEL: Start with HIGH severity alerts - they have the shortest SLA. MITRE ATT&CK T1078: Monitor for unusual account activity."
+
+**Completion Feedback (All Labs):**
+- Gold/primary background (bg-primary/10) with primary border (border-primary/30)
+- Trophy icon (Trophy icon from lucide-react) in primary color
+- "COMPLETED!" label in primary color, bold text
+- 1-2 sentence feedback explaining what was accomplished
+- Appears inline within step when step IS completed
+- Animated entrance with spring transition (stiffness: 300, damping: 25)
+- Example: "You identified the vulnerability. Understanding exposure scope helps prioritize remediation and determine if data was accessed."
+
 **Interactive Elements:**
 - Code input areas with syntax highlighting
 - Validation feedback (green/red accent glows)
@@ -85,6 +103,8 @@ Core principle: Matrix-meets-modern-SaaS - dark, techy, but clean and profession
 - Card hover lift (transform translate-y-1)
 - Progress bar fill animations on load
 - Fade-in on scroll for section reveals (subtle)
+- Intel/Completion Feedback entrance: Fade and scale (0.95 to 1.0)
+- Trophy feedback spring animation for emphasis
 - NO complex scroll-triggered animations
 
 ---
@@ -119,11 +139,44 @@ YES - Large hero image depicting abstract cybersecurity visualization (network n
 - Main area: Welcome header + active labs grid (2-3 cols) + recent progress timeline
 - Terminal overlay: Expandable terminal window for active simulations
 
+**Lab Workspace:**
+- Left panel: Mission Briefing tab (scenario context) + Steps tab (objectives with Intel and Feedback)
+- Right panel: Terminal interface and resource visualization
+- Progress summary: Bar showing completed steps out of total
+- Tab switching: Intel/Brief shows mission context; Steps shows interactive objectives
+
 **Lab Detail:**
 - Breadcrumb navigation
 - Split view: Instructions (left) + Terminal/sandbox (right)
 - Progress stepper (top or left sidebar)
 - Submit/validate buttons (bottom)
+
+---
+
+## Lab Workspace UI Specifics
+
+**Mission Briefing/Intel Tab:**
+- Mission Briefing section with scenario description
+- Your Goal section (lab description in primary accent box)
+- What You'll Learn section (for Beginner labs, showing learning objectives)
+- Difficulty and estimated time badges
+
+**Steps Tab:**
+- Progress summary box showing X/Y steps completed
+- Interactive step cards (clickable to expand)
+- For each step:
+  - Step number circle (highlighted when completed with checkmark)
+  - Step title and description
+  - Command hint box (bg-black/40 with primary text)
+  - Intel box (ONLY for Beginner labs, only when NOT completed) - cyan styling
+  - Completion feedback (trophy icon, only when step IS completed) - primary styling
+- Step cards have hover states showing border/background elevation
+
+**Color Scheme for Step Components:**
+- Intel boxes: Cyan accent (cyan-950/30 bg, cyan-500/20 border, cyan-400 text)
+- Completion feedback: Primary accent (primary/10 bg, primary/30 border, primary text)
+- Step cards (active): primary/10 bg, primary/40 border
+- Step cards (inactive): black/20 bg, white/10 border
 
 ---
 
@@ -134,3 +187,28 @@ YES - Large hero image depicting abstract cybersecurity visualization (network n
 - Accents: Cyan/blue primary, pink/purple secondary (neon palette)
 - Shadows: Colored glows instead of traditional shadows
 - Icons: Heroicons for UI, custom tech icons for labs (placeholder comments)
+- Feedback elements: Trophy icon for completion, Shield icon for MITRE ATT&CK references, BookOpen for Intel/Mission Briefing
+- Text hierarchy: Primary/default for main content, secondary for supporting info, tertiary for least important
+
+---
+
+## Lab Completion Flow
+
+1. User selects a lab and enters workspace
+2. Left panel shows Mission Briefing tab initially
+3. User clicks "Steps" tab to see objectives
+4. Each step shows:
+   - **Beginner Labs**: Intel box (before action) → User completes step → Completion feedback (after action)
+   - **Intermediate/Advanced/Challenge Labs**: Step instructions → User completes step → Completion feedback (after action)
+5. Trophy feedback animates in with spring effect when step is marked complete
+6. Progress bar updates showing X/Y steps complete
+
+---
+
+## Accessibility Notes
+
+- All interactive elements have data-testid attributes for testing
+- Icon labels include aria-labels where needed
+- Color alone doesn't convey information (use text labels with icons)
+- Sufficient contrast ratios maintained between text and backgrounds
+- Keyboard navigation supported for all controls
