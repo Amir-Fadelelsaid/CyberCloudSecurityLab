@@ -1043,258 +1043,369 @@ export const socEngineerLabs: LabDefinition[] = [
 ];
 
 // ============= CLOUD SECURITY ANALYST LABS (12) =============
+// Operational security analyst focus: monitoring, detection, investigation, response
+// Work with EXISTING environments - not designing infrastructure
+// SIEM-based workflows, alert triage, log correlation
+// Validate true vs false positives, MITRE ATT&CK mapping
+// Incident summaries, timelines, remediation recommendations
+// Basic response: credential revocation, access reviews, evidence collection
+
 export const cloudSecurityAnalystLabs: LabDefinition[] = [
-  // BEGINNER LABS (4)
+  // BEGINNER LABS (4) - Alert triage, basic investigation, documentation
   {
-    title: "Cloud Asset Inventory",
-    description: "Perform a cloud asset discovery to identify all resources in your AWS environment.",
+    title: "SIEM Alert Triage and Validation",
+    description: "Your SIEM has generated 15 alerts overnight. Triage each alert, validate true positives versus false positives, and document your findings.",
+    briefing: "SHIFT HANDOVER: You're taking over the morning shift. The overnight queue has 15 unacknowledged alerts ranging from LOW to HIGH severity. Triage, validate, and clear the queue before the 10 AM standup.",
+    scenario: "It's 7:30 AM and you've just logged into the SOC. Your SIEM dashboard shows alerts for failed logins, unusual API calls, and a potential data exfiltration. Most are probably false positives, but one could be real. Your job: find it.",
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",
-    initialState: { assets: ["untracked-resources"] },
+    initialState: { siem: ["alert-queue"], alerts: ["failed-login-01", "api-anomaly-02", "data-transfer-03"] },
     steps: [
-      { number: 1, title: "Run Discovery", description: "Initiate cloud asset discovery.", hint: "Type 'cloud-inventory discover'." },
-      { number: 2, title: "Review Assets", description: "List discovered cloud resources.", hint: "Type 'cloud-inventory list-all'." },
-      { number: 3, title: "Tag Untracked", description: "Apply proper tags to untracked resources.", hint: "Type 'cloud-inventory tag-untracked'." }
+      { number: 1, title: "Review Alert Queue", description: "Access the SIEM and review all pending alerts sorted by severity.", hint: "Type 'siem show-alerts --status pending'.", intel: "Start with HIGH severity alerts - they have the shortest SLA. MITRE ATT&CK T1078: Monitor for unusual account activity." },
+      { number: 2, title: "Investigate High Priority", description: "Examine the high-severity API anomaly alert to determine if it's a true positive.", hint: "Type 'siem investigate-alert api-anomaly-02'.", intel: "Check: Is the source IP known? Is the user normally active at this time? Is this API call part of their job function?" },
+      { number: 3, title: "Validate or Dismiss", description: "Based on your investigation, mark the alert as true positive or false positive with justification.", hint: "Type 'siem validate-alert api-anomaly-02 --status false-positive --reason normal-automation'.", intel: "Always document your reasoning. 'Looks normal' is not acceptable - cite specific evidence like known IP, approved automation, etc." },
+      { number: 4, title: "Document Findings", description: "Complete the alert triage report for the shift handover.", hint: "Type 'siem generate-triage-report'.", intel: "Your report will be reviewed by senior analysts. Include: alerts processed, true positives found, escalations made, patterns noticed." }
     ],
     resources: [
-      { type: "inventory", name: "untracked-resources", config: { untaggedCount: 15 }, isVulnerable: true, status: "incomplete" }
+      { type: "alert", name: "failed-login-01", config: { severity: "LOW", source: "CloudTrail", user: "service-account-01" }, isVulnerable: false, status: "pending" },
+      { type: "alert", name: "api-anomaly-02", config: { severity: "HIGH", source: "GuardDuty", technique: "T1087" }, isVulnerable: false, status: "pending" },
+      { type: "alert", name: "data-transfer-03", config: { severity: "MEDIUM", source: "VPC Flow", bytes: "2.3GB" }, isVulnerable: false, status: "pending" }
     ],
-    fixCommands: ["cloud-inventory tag-untracked"]
+    fixCommands: ["siem validate-alert api-anomaly-02", "siem generate-triage-report"],
+    successMessage: "Alert queue cleared. 12 false positives documented, 2 true positives escalated, 1 alert tuned. Ready for shift handover."
   },
   {
-    title: "Security Baseline Assessment",
-    description: "Run a CIS benchmark assessment against your cloud environment.",
+    title: "CloudTrail Log Analysis",
+    description: "A developer reported their AWS console session felt 'weird' yesterday. Analyze CloudTrail logs to investigate if their credentials were compromised.",
+    briefing: "USER REPORT: Developer Sarah Chen says she noticed unfamiliar resources in her console yesterday afternoon. She doesn't remember creating them. Investigate her CloudTrail activity for the past 24 hours.",
+    scenario: "Sarah is a backend developer who usually only accesses Lambda and DynamoDB. She called the security hotline because she saw EC2 instances she didn't create. Could be a mistake, could be credential theft.",
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",
-    initialState: { assessments: ["cis-benchmark"] },
+    initialState: { logs: ["cloudtrail-sarah"], user: ["sarah.chen"] },
     steps: [
-      { number: 1, title: "Start Assessment", description: "Run CIS benchmark scan.", hint: "Type 'cis-benchmark run aws-account'." },
-      { number: 2, title: "Review Findings", description: "Check the benchmark results.", hint: "Type 'cis-benchmark show-findings'." },
-      { number: 3, title: "Export Report", description: "Generate compliance report.", hint: "Type 'cis-benchmark export-report'." }
+      { number: 1, title: "Query User Activity", description: "Pull all CloudTrail events for Sarah's user in the last 24 hours.", hint: "Type 'aws cloudtrail lookup-events --username sarah.chen --hours 24'.", intel: "Look for the timeline of events. Note any gaps or unusual timing patterns. MITRE ATT&CK T1078.004: Valid cloud accounts." },
+      { number: 2, title: "Analyze Source IPs", description: "Check the source IP addresses for Sarah's API calls to identify any anomalies.", hint: "Type 'aws cloudtrail analyze-source-ips sarah.chen'.", intel: "Sarah usually works from the Seattle office (IP range 203.0.113.0/24). Any other locations are suspicious." },
+      { number: 3, title: "Identify Unusual Actions", description: "Find API calls that don't match Sarah's normal job function (Lambda/DynamoDB).", hint: "Type 'aws cloudtrail find-anomalous-actions sarah.chen'.", intel: "EC2:RunInstances, IAM:CreateAccessKey, or S3:GetObject on sensitive buckets would all be red flags." },
+      { number: 4, title: "Document Investigation", description: "Create an investigation summary with your findings and recommendations.", hint: "Type 'security generate-investigation-summary sarah.chen'.", intel: "Include: timeline, evidence of compromise (or lack thereof), recommended actions, and whether to escalate to IR team." }
     ],
     resources: [
-      { type: "assessment", name: "cis-benchmark", config: { status: "not-run" }, isVulnerable: true, status: "pending" }
+      { type: "user", name: "sarah.chen", config: { role: "developer", normalServices: ["lambda", "dynamodb"], lastLogin: "2024-01-15T14:32:00Z" }, isVulnerable: false, status: "under-investigation" },
+      { type: "cloudtrail", name: "cloudtrail-sarah", config: { events: 147, anomalousEvents: 12, unusualIPs: 2 }, isVulnerable: true, status: "suspicious" }
     ],
-    fixCommands: ["cis-benchmark run aws-account"]
+    fixCommands: ["security generate-investigation-summary sarah.chen"],
+    successMessage: "Investigation complete. Found credential compromise via phishing. Sarah's access key was used from Ukraine IP. Escalated to IR for credential rotation and further investigation."
   },
   {
-    title: "IAM User Audit",
-    description: "Audit IAM users for inactive accounts and excessive permissions.",
+    title: "Public S3 Bucket Alert Investigation",
+    description: "GuardDuty detected an S3 bucket that may be publicly accessible. Investigate the alert, assess the exposure, and recommend remediation.",
+    briefing: "GUARDDUTY ALERT: Policy:S3/BucketAnonymousAccessGranted detected on bucket 'analytics-export-2024'. Determine if sensitive data is exposed and assess the impact.",
+    scenario: "The automated scanner flagged a bucket with anonymous access. Before panicking, you need to determine: What's in the bucket? How long has it been exposed? Has anyone accessed it? Is this intentional (public website assets) or a mistake?",
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",
-    initialState: { iamAudit: ["user-audit"] },
+    initialState: { guardduty: ["s3-public-finding"], bucket: ["analytics-export-2024"] },
     steps: [
-      { number: 1, title: "List Users", description: "Get all IAM users.", hint: "Type 'iam-audit list-users'." },
-      { number: 2, title: "Find Inactive", description: "Identify users inactive 90+ days.", hint: "Type 'iam-audit find-inactive'." },
-      { number: 3, title: "Disable Inactive", description: "Disable the inactive accounts.", hint: "Type 'iam-audit disable-inactive'." }
+      { number: 1, title: "Review GuardDuty Finding", description: "Examine the GuardDuty finding details to understand what triggered the alert.", hint: "Type 'aws guardduty get-finding s3-public-finding'.", intel: "GuardDuty Policy:S3/BucketAnonymousAccessGranted fires when a bucket policy allows public access. Could be intentional or accidental." },
+      { number: 2, title: "Assess Bucket Contents", description: "Check what type of data is stored in the exposed bucket.", hint: "Type 'aws s3 analyze-bucket-contents analytics-export-2024'.", intel: "Look for: PII, credentials, internal documents, or customer data. Public assets (images, JS) are usually acceptable." },
+      { number: 3, title: "Check Access Logs", description: "Review S3 access logs to see if any unauthorized parties accessed the data.", hint: "Type 'aws s3 get-access-logs analytics-export-2024'.", intel: "Look for access from unknown IPs, bulk downloads, or access patterns suggesting automated scraping." },
+      { number: 4, title: "Document and Recommend", description: "Create a finding report with exposure assessment and remediation recommendation.", hint: "Type 'security generate-finding-report analytics-export-2024'.", intel: "Your report should include: data classification, exposure duration, evidence of access, remediation priority, and recommended actions." }
     ],
     resources: [
-      { type: "iam_audit", name: "user-audit", config: { inactiveUsers: 5 }, isVulnerable: true, status: "needs-review" }
+      { type: "guardduty_finding", name: "s3-public-finding", config: { severity: 5, type: "Policy:S3/BucketAnonymousAccessGranted" }, isVulnerable: true, status: "active" },
+      { type: "s3", name: "analytics-export-2024", config: { publicAccess: true, objectCount: 1247, dataClassification: "internal" }, isVulnerable: true, status: "exposed" }
     ],
-    fixCommands: ["iam-audit disable-inactive"]
+    fixCommands: ["security generate-finding-report analytics-export-2024"],
+    successMessage: "Investigation complete. Bucket contains internal analytics reports - no PII but business-sensitive. Exposed for 72 hours. 3 external access attempts logged. Recommended immediate remediation - HIGH priority."
   },
   {
-    title: "Public Resource Detection",
-    description: "Identify publicly accessible resources in your cloud environment.",
+    title: "Credential Usage Monitoring",
+    description: "Review IAM credential usage reports to identify dormant accounts, unused access keys, and credential hygiene issues.",
+    briefing: "WEEKLY REVIEW: Your weekly credential hygiene check is due. Review the IAM credential report and identify accounts that need attention.",
+    scenario: "Good security hygiene requires regular credential reviews. Access keys older than 90 days should be rotated. Unused credentials should be disabled. Your job: find the problems and flag them for remediation.",
     difficulty: "Beginner",
     category: "Cloud Security Analyst",
     estimatedTime: "5-10 minutes",
-    initialState: { publicResources: ["public-scan"] },
+    initialState: { iam: ["credential-report"], users: ["user-list"] },
     steps: [
-      { number: 1, title: "Scan for Public", description: "Find publicly accessible resources.", hint: "Type 'cloud-scan public-resources'." },
-      { number: 2, title: "Review Findings", description: "Check which resources are exposed.", hint: "Type 'cloud-scan show-public'." },
-      { number: 3, title: "Remediate Critical", description: "Block public access on critical resources.", hint: "Type 'cloud-scan block-public critical'." }
+      { number: 1, title: "Generate Credential Report", description: "Pull the latest IAM credential report for analysis.", hint: "Type 'aws iam generate-credential-report'.", intel: "The credential report shows: password age, access key age, MFA status, last login, and last key usage for all IAM users." },
+      { number: 2, title: "Identify Stale Credentials", description: "Find users with access keys older than 90 days or passwords not rotated.", hint: "Type 'aws iam find-stale-credentials --days 90'.", intel: "CIS AWS 1.4: Ensure access keys are rotated every 90 days or less. Old keys increase risk if compromised." },
+      { number: 3, title: "Check for Dormant Accounts", description: "Identify accounts that haven't been used in 90+ days.", hint: "Type 'aws iam find-dormant-accounts --days 90'.", intel: "Dormant accounts are prime targets for attackers. If no one is using them, they should be disabled." },
+      { number: 4, title: "Generate Hygiene Report", description: "Create a credential hygiene report with findings and recommendations.", hint: "Type 'aws iam generate-hygiene-report'.", intel: "Your report goes to the security team lead. Include: total users, compliant count, violations by type, and priority remediation list." }
     ],
     resources: [
-      { type: "public_scan", name: "public-scan", config: { publicCount: 3 }, isVulnerable: true, status: "exposed" }
+      { type: "credential_report", name: "credential-report", config: { totalUsers: 45, staleKeys: 8, noMFA: 5, dormant: 3 }, isVulnerable: true, status: "review-needed" },
+      { type: "user_list", name: "user-list", config: { activeUsers: 42, serviceAccounts: 12 }, isVulnerable: false, status: "active" }
     ],
-    fixCommands: ["cloud-scan block-public critical"]
+    fixCommands: ["aws iam generate-hygiene-report"],
+    successMessage: "Credential review complete. Identified 8 stale keys, 5 users without MFA, and 3 dormant accounts. Report submitted to security lead for remediation follow-up."
   },
 
-  // INTERMEDIATE LABS (4)
+  // INTERMEDIATE LABS (4) - Multi-source correlation, deeper investigation
   {
-    title: "Cross-Account Access Review",
-    description: "Audit and secure cross-account IAM trust relationships to prevent unauthorized access.",
+    title: "Suspicious API Call Investigation",
+    description: "CloudTrail detected unusual API calls from a service account at 3 AM. Investigate the activity, correlate with other log sources, and determine if this is malicious.",
+    briefing: "ANOMALY DETECTED: Service account 'jenkins-deploy' made 47 DescribeInstances, ListBuckets, and GetCallerIdentity calls at 3:17 AM. This is outside normal CI/CD hours. Investigate immediately.",
+    scenario: "Your CI/CD pipeline runs during business hours (9 AM - 6 PM). A service account making reconnaissance-style API calls at 3 AM is a red flag. Either someone is working late, the pipeline is misconfigured, or you have a compromised credential.",
     difficulty: "Intermediate",
     category: "Cloud Security Analyst",
     estimatedTime: "15-25 minutes",
-    initialState: { crossAccount: ["trust-policies"] },
+    initialState: { 
+      cloudtrail: ["suspicious-api-logs"], 
+      siem: ["correlated-events"], 
+      user: ["jenkins-deploy"],
+      vpc: ["flow-logs"]
+    },
     steps: [
-      { number: 1, title: "List Trust Relationships", description: "Identify all cross-account trusts.", hint: "Type 'iam-audit list-trust-policies'." },
-      { number: 2, title: "Analyze Risk", description: "Evaluate each trust for risk level.", hint: "Type 'iam-audit analyze-trusts'." },
-      { number: 3, title: "Identify Overly Permissive", description: "Find trusts with wildcard principals.", hint: "Type 'iam-audit find-wildcard-trusts'." },
-      { number: 4, title: "Review External Accounts", description: "Verify all external accounts are authorized.", hint: "Type 'iam-audit verify-external'." },
-      { number: 5, title: "Remove Unauthorized", description: "Revoke unauthorized trust relationships.", hint: "Type 'iam-audit revoke-trust unauthorized-role'." },
-      { number: 6, title: "Document Findings", description: "Generate trust relationship report.", hint: "Type 'iam-audit export-trust-report'." }
+      { number: 1, title: "Review Initial Alert", description: "Examine the CloudTrail events that triggered the anomaly detection.", hint: "Type 'aws cloudtrail get-events jenkins-deploy --time 03:00-04:00'.", intel: "MITRE ATT&CK T1087: Account Discovery, T1580: Cloud Infrastructure Discovery. Attackers often enumerate before acting." },
+      { number: 2, title: "Analyze Source IP", description: "Check if the API calls came from the expected Jenkins server or an unknown location.", hint: "Type 'aws cloudtrail analyze-source-ip jenkins-deploy'.", intel: "Jenkins server should have a static internal IP. External IPs or Tor exit nodes are immediate red flags." },
+      { number: 3, title: "Correlate with VPC Flow Logs", description: "Check network traffic from the source IP around the same timeframe.", hint: "Type 'siem correlate-logs cloudtrail vpc-flow --time 03:00-04:00'.", intel: "Look for: outbound connections to C2 infrastructure, data exfiltration, or lateral movement to other instances." },
+      { number: 4, title: "Check for Persistence", description: "Look for any changes the service account made that could indicate persistence.", hint: "Type 'aws cloudtrail find-persistence-indicators jenkins-deploy'.", intel: "T1098: Account Manipulation. Check for CreateAccessKey, AttachUserPolicy, CreateRole, or Lambda modifications." },
+      { number: 5, title: "Map to MITRE ATT&CK", description: "Document the observed TTPs and map them to the ATT&CK framework.", hint: "Type 'security map-to-attack jenkins-deploy'.", intel: "Mapping to ATT&CK helps communicate severity and identify gaps in detection coverage." },
+      { number: 6, title: "Generate Incident Report", description: "Create a detailed investigation report with timeline, evidence, and recommendations.", hint: "Type 'security generate-incident-report jenkins-deploy'.", intel: "Include: executive summary, detailed timeline, evidence artifacts, MITRE mapping, impact assessment, and containment recommendations." }
     ],
     resources: [
-      { type: "trust_policy", name: "trust-policies", config: { externalTrusts: 5, unauthorized: 2 }, isVulnerable: true, status: "needs-review" }
+      { type: "service_account", name: "jenkins-deploy", config: { normalHours: "09:00-18:00", suspiciousActivity: true, apiCalls: 47 }, isVulnerable: true, status: "under-investigation" },
+      { type: "cloudtrail", name: "suspicious-api-logs", config: { events: 47, techniques: ["T1087", "T1580", "T1078"] }, isVulnerable: true, status: "suspicious" },
+      { type: "vpc_flow", name: "flow-logs", config: { suspiciousConnections: 3, externalIPs: 2 }, isVulnerable: true, status: "anomalous" }
     ],
-    fixCommands: ["iam-audit revoke-trust unauthorized-role"]
+    fixCommands: ["security map-to-attack jenkins-deploy", "security generate-incident-report jenkins-deploy"],
+    successMessage: "Investigation complete. Confirmed credential compromise via leaked access key in public repo. Attacker performed reconnaissance but no data exfiltration detected. Recommended: rotate credentials, revoke sessions, enable SCPs."
   },
   {
-    title: "Cloud Security Posture Assessment",
-    description: "Perform a comprehensive security posture assessment across multiple cloud services.",
-    difficulty: "Intermediate",
-    category: "Cloud Security Analyst",
-    estimatedTime: "20-30 minutes",
-    initialState: { cspm: ["posture-assessment"] },
-    steps: [
-      { number: 1, title: "Initialize CSPM", description: "Connect to cloud security posture management.", hint: "Type 'cspm connect'." },
-      { number: 2, title: "Run Full Scan", description: "Perform comprehensive security scan.", hint: "Type 'cspm full-scan'." },
-      { number: 3, title: "Review Critical Findings", description: "Focus on critical severity issues.", hint: "Type 'cspm show-critical'." },
-      { number: 4, title: "Analyze Trends", description: "Check if issues are new or recurring.", hint: "Type 'cspm analyze-trends'." },
-      { number: 5, title: "Create Remediation Plan", description: "Build prioritized fix plan.", hint: "Type 'cspm create-remediation-plan'." },
-      { number: 6, title: "Apply Auto-Remediations", description: "Fix issues with safe auto-remediation.", hint: "Type 'cspm auto-remediate safe'." },
-      { number: 7, title: "Verify Improvements", description: "Re-scan to confirm fixes.", hint: "Type 'cspm verify-remediation'." }
-    ],
-    resources: [
-      { type: "cspm", name: "posture-assessment", config: { criticalFindings: 8, highFindings: 15 }, isVulnerable: true, status: "poor-posture" }
-    ],
-    fixCommands: ["cspm auto-remediate safe"]
-  },
-  {
-    title: "Secrets Management Audit",
-    description: "Audit cloud secrets management practices and identify exposed credentials.",
+    title: "Multi-Source Log Correlation",
+    description: "An EC2 instance is behaving strangely. Correlate CloudTrail, VPC Flow Logs, and CloudWatch metrics to build a complete picture of the activity.",
+    briefing: "BEHAVIORAL ANOMALY: EC2 instance i-0abc123def456 is showing 10x normal CPU usage and unusual network patterns. The application team says they haven't deployed anything new. Investigate.",
+    scenario: "Something is wrong with this instance. CPU is maxed out, network traffic is spiking, and no one claims responsibility. Could be a cryptominer, a compromised application, or a runaway process. You need to figure it out fast.",
     difficulty: "Intermediate",
     category: "Cloud Security Analyst",
     estimatedTime: "15-25 minutes",
-    initialState: { secretsAudit: ["secrets-scan"] },
+    initialState: { 
+      ec2: ["suspicious-instance"], 
+      cloudwatch: ["cpu-metrics", "network-metrics"], 
+      vpc: ["instance-flow-logs"],
+      cloudtrail: ["instance-api-logs"]
+    },
     steps: [
-      { number: 1, title: "Scan for Secrets", description: "Search for exposed credentials.", hint: "Type 'secrets-scan detect'." },
-      { number: 2, title: "Review Findings", description: "Check detected secret exposures.", hint: "Type 'secrets-scan show-findings'." },
-      { number: 3, title: "Assess Impact", description: "Determine which secrets are active.", hint: "Type 'secrets-scan check-active'." },
-      { number: 4, title: "Rotate Exposed", description: "Rotate any active exposed credentials.", hint: "Type 'secrets-scan rotate-exposed'." },
-      { number: 5, title: "Enable Secret Manager", description: "Move secrets to proper storage.", hint: "Type 'secrets-scan enable-secrets-manager'." },
-      { number: 6, title: "Verify Remediation", description: "Confirm no more exposures.", hint: "Type 'secrets-scan verify'." }
+      { number: 1, title: "Establish Baseline", description: "Check the normal behavior pattern for this instance before the anomaly.", hint: "Type 'aws cloudwatch get-baseline i-0abc123def456 --days 7'.", intel: "Understanding normal is crucial. If CPU is usually 20% and now it's 95%, that's a 5x increase - significant deviation." },
+      { number: 2, title: "Analyze Network Connections", description: "Review VPC flow logs to identify where the instance is communicating.", hint: "Type 'aws ec2 analyze-flow-logs i-0abc123def456'.", intel: "Look for: connections to known mining pools, C2 IP addresses, or unusual outbound ports (IRC, Tor, cryptocurrency protocols)." },
+      { number: 3, title: "Check Instance Changes", description: "Review CloudTrail for any modifications to the instance or its security group.", hint: "Type 'aws cloudtrail get-instance-events i-0abc123def456'.", intel: "T1496: Resource Hijacking. Attackers might have modified security groups to allow their traffic or installed software via SSM." },
+      { number: 4, title: "Correlate All Sources", description: "Combine all log sources to build a complete attack timeline.", hint: "Type 'siem correlate-logs cloudtrail vpc-flow cloudwatch --instance i-0abc123def456'.", intel: "The SIEM correlation will show you: when it started, how they got in, what they're doing, and how to stop them." },
+      { number: 5, title: "Assess Impact", description: "Determine what data or resources the attacker may have accessed.", hint: "Type 'security assess-impact i-0abc123def456'.", intel: "Check: instance role permissions, attached EBS volumes, network access to other resources, S3 buckets accessible." },
+      { number: 6, title: "Recommend Containment", description: "Based on your investigation, recommend immediate containment actions.", hint: "Type 'security recommend-containment i-0abc123def456'.", intel: "Options: isolate via security group, stop instance, snapshot for forensics. Balance between stopping the attack and preserving evidence." }
     ],
     resources: [
-      { type: "secrets_audit", name: "secrets-scan", config: { exposedSecrets: 4, activeExposures: 2 }, isVulnerable: true, status: "exposed" }
+      { type: "ec2", name: "suspicious-instance", config: { instanceId: "i-0abc123def456", cpuUsage: "95%", normalCpu: "20%" }, isVulnerable: true, status: "compromised" },
+      { type: "cloudwatch", name: "cpu-metrics", config: { currentCpu: 95, baselineCpu: 20, anomalyScore: 8.5 }, isVulnerable: false, status: "alerting" },
+      { type: "vpc_flow", name: "instance-flow-logs", config: { suspiciousDestinations: 4, miningPoolConnections: 2 }, isVulnerable: true, status: "suspicious" }
     ],
-    fixCommands: ["secrets-scan rotate-exposed", "secrets-scan enable-secrets-manager"]
+    fixCommands: ["siem correlate-logs cloudtrail vpc-flow cloudwatch --instance i-0abc123def456", "security recommend-containment i-0abc123def456"],
+    successMessage: "Investigation complete. Cryptominer installed via vulnerable web application. Attacker exploited RCE in outdated Tomcat version. Recommended: isolate instance, patch application, rotate instance role credentials."
   },
   {
-    title: "Network Flow Analysis",
-    description: "Analyze VPC flow logs to identify suspicious network patterns and potential data exfiltration.",
+    title: "GuardDuty Finding Deep Dive",
+    description: "GuardDuty generated a HIGH severity finding for unusual console login. Investigate the finding, validate it, and document your analysis.",
+    briefing: "GUARDDUTY HIGH: UnauthorizedAccess:IAMUser/ConsoleLogin finding for user 'finance-admin'. Login from new geolocation (Thailand) at unusual hour. User claims they didn't log in.",
+    scenario: "The finance admin says she was asleep when this login happened. The login came from Thailand, but she's in Chicago. Either her credentials are compromised, or there's an explanation you haven't found yet (VPN, travel, etc.).",
     difficulty: "Intermediate",
     category: "Cloud Security Analyst",
-    estimatedTime: "20-30 minutes",
-    initialState: { flowLogs: ["vpc-flows"] },
+    estimatedTime: "15-25 minutes",
+    initialState: { 
+      guardduty: ["console-login-finding"], 
+      cloudtrail: ["login-events"],
+      user: ["finance-admin"],
+      siem: ["user-activity"]
+    },
     steps: [
-      { number: 1, title: "Access Flow Logs", description: "Query VPC flow log data.", hint: "Type 'flow-analysis connect vpc-flows'." },
-      { number: 2, title: "Baseline Traffic", description: "Establish normal traffic patterns.", hint: "Type 'flow-analysis baseline'." },
-      { number: 3, title: "Detect Anomalies", description: "Find traffic deviating from baseline.", hint: "Type 'flow-analysis detect-anomalies'." },
-      { number: 4, title: "Investigate High Volume", description: "Check unusually high outbound traffic.", hint: "Type 'flow-analysis investigate high-outbound'." },
-      { number: 5, title: "Check Destinations", description: "Verify traffic destinations are legitimate.", hint: "Type 'flow-analysis check-destinations'." },
-      { number: 6, title: "Create Alert Rule", description: "Set up alerting for suspicious patterns.", hint: "Type 'flow-analysis create-alert exfil-pattern'." }
+      { number: 1, title: "Review GuardDuty Finding", description: "Examine the complete GuardDuty finding with all context.", hint: "Type 'aws guardduty get-finding console-login-finding --detail'.", intel: "GuardDuty uses machine learning to establish behavioral baselines. New geolocation logins are flagged when they deviate from patterns." },
+      { number: 2, title: "Analyze Login Details", description: "Check CloudTrail for the specific console login event details.", hint: "Type 'aws cloudtrail get-console-login finance-admin'.", intel: "Look at: exact timestamp, source IP, user agent, MFA used (or not), subsequent actions taken after login." },
+      { number: 3, title: "Verify with User", description: "Document user verification - confirm they were not traveling or using VPN.", hint: "Type 'security log-user-verification finance-admin'.", intel: "Always verify with the user through a separate channel (phone, in-person). Attackers might control email." },
+      { number: 4, title: "Check Post-Login Activity", description: "Review what actions were taken during the suspicious session.", hint: "Type 'aws cloudtrail get-session-activity finance-admin'.", intel: "T1078: If credentials are compromised, attackers typically: enumerate (List/Describe), establish persistence, then access data." },
+      { number: 5, title: "Determine True/False Positive", description: "Based on evidence, classify the finding and document your reasoning.", hint: "Type 'aws guardduty classify-finding console-login-finding'.", intel: "True Positive: escalate to IR. False Positive: document reason (travel, VPN). Benign True Positive: expected but unusual activity." },
+      { number: 6, title: "Generate Analysis Report", description: "Create a detailed analysis report following the IR playbook format.", hint: "Type 'security generate-analysis-report console-login-finding'.", intel: "Report should include: finding summary, investigation steps taken, evidence collected, classification decision, and next steps." }
     ],
     resources: [
-      { type: "flow_logs", name: "vpc-flows", config: { anomalies: 3, suspiciousFlows: 12 }, isVulnerable: true, status: "unanalyzed" }
+      { type: "guardduty_finding", name: "console-login-finding", config: { severity: 8, type: "UnauthorizedAccess:IAMUser/ConsoleLogin", location: "Thailand" }, isVulnerable: true, status: "active" },
+      { type: "user", name: "finance-admin", config: { normalLocation: "Chicago", mfaEnabled: true, role: "FinanceAdmin" }, isVulnerable: true, status: "suspicious" },
+      { type: "cloudtrail", name: "login-events", config: { loginTime: "02:34 UTC", userAgent: "Mozilla/5.0", mfaUsed: false }, isVulnerable: true, status: "anomalous" }
     ],
-    fixCommands: ["flow-analysis create-alert exfil-pattern"]
+    fixCommands: ["aws guardduty classify-finding console-login-finding", "security generate-analysis-report console-login-finding"],
+    successMessage: "Analysis complete. TRUE POSITIVE confirmed - MFA was bypassed using stolen session token. Attacker accessed financial reports. Escalated to IR team. User credentials rotated, sessions revoked."
+  },
+  {
+    title: "False Positive Tuning and Validation",
+    description: "The SIEM is generating too many false positive alerts for a specific detection rule. Analyze the noise, create tuning recommendations, and validate improvements.",
+    briefing: "ALERT FATIGUE: The 'Unusual S3 Access Pattern' rule fired 347 times last week. The SOC team says 95% are false positives from a legitimate backup job. Your task: tune the rule without losing real detections.",
+    scenario: "Alert fatigue is real. When analysts see the same false positive 50 times a day, they start ignoring the alert entirely. That's when the real attack slips through. You need to tune the rule to reduce noise while maintaining detection capability.",
+    difficulty: "Intermediate",
+    category: "Cloud Security Analyst",
+    estimatedTime: "15-25 minutes",
+    initialState: { 
+      siem: ["noisy-rule", "alert-samples"],
+      detection: ["unusual-s3-rule"],
+      logs: ["s3-access-logs"]
+    },
+    steps: [
+      { number: 1, title: "Analyze Alert Distribution", description: "Review the alert patterns to understand what's causing the noise.", hint: "Type 'siem analyze-alert-pattern unusual-s3-rule'.", intel: "Look for: common source IPs, users, time patterns, or specific buckets that appear in most false positives." },
+      { number: 2, title: "Sample True vs False", description: "Manually review a sample of alerts to identify distinguishing characteristics.", hint: "Type 'siem sample-alerts unusual-s3-rule --count 20'.", intel: "Document what makes true positives different: unusual timing, unknown IPs, sensitive buckets, bulk downloads vs incremental." },
+      { number: 3, title: "Identify Tuning Criteria", description: "Define specific exclusion criteria based on your analysis.", hint: "Type 'siem identify-exclusions unusual-s3-rule'.", intel: "Good exclusions: specific service account + specific bucket + specific time window. Bad exclusions: too broad (any service account)." },
+      { number: 4, title: "Create Tuning Proposal", description: "Document the proposed rule modifications with justification.", hint: "Type 'siem create-tuning-proposal unusual-s3-rule'.", intel: "Your proposal needs: current rule logic, proposed changes, expected noise reduction, detection coverage preserved, rollback plan." },
+      { number: 5, title: "Test in Simulation", description: "Run the tuned rule against historical data to validate it catches real threats.", hint: "Type 'siem test-rule unusual-s3-rule --historical 30d'.", intel: "The tuned rule should: catch all true positives from the last 30 days, reduce false positives by target amount." },
+      { number: 6, title: "Document and Deploy", description: "Finalize the tuning documentation and prepare for deployment.", hint: "Type 'siem deploy-tuning unusual-s3-rule'.", intel: "Include: before/after metrics, test results, approval chain, monitoring plan for first week after deployment." }
+    ],
+    resources: [
+      { type: "detection_rule", name: "unusual-s3-rule", config: { alertsLastWeek: 347, falsePositiveRate: "95%", truePositives: 17 }, isVulnerable: false, status: "noisy" },
+      { type: "siem", name: "noisy-rule", config: { backupJobAlerts: 330, legitimateAlerts: 17 }, isVulnerable: false, status: "needs-tuning" },
+      { type: "logs", name: "s3-access-logs", config: { totalEvents: 1500000, anomalousEvents: 347 }, isVulnerable: false, status: "available" }
+    ],
+    fixCommands: ["siem create-tuning-proposal unusual-s3-rule", "siem deploy-tuning unusual-s3-rule"],
+    successMessage: "Rule tuned successfully. Added exclusion for backup service account during 2-4 AM window. False positives reduced by 92% while maintaining all true positive detections. Monitoring for 7 days."
   },
 
-  // ADVANCED LABS (4)
+  // ADVANCED LABS (4) - Complex investigations, incident response, reporting
   {
-    title: "Multi-Cloud Security Assessment",
-    description: "Perform a unified security assessment across AWS, Azure, and GCP environments.",
+    title: "Compromised Credential Investigation",
+    description: "An access key was found in a public GitHub repository. Investigate the exposure, determine impact, coordinate containment, and produce a comprehensive incident report.",
+    briefing: "CREDENTIAL LEAK: GitHub secret scanning detected AWS access key AKIA3EXAMPLE in public repository 'acme-corp/legacy-app'. Key belongs to user 'deployment-service'. Assume compromise - investigate immediately.",
+    scenario: "The moment a credential hits a public repo, automated scanners (and attackers) find it within minutes. You're in a race against time. Has the key already been used maliciously? What damage could have been done? You need answers fast.",
     difficulty: "Advanced",
     category: "Cloud Security Analyst",
-    estimatedTime: "40-55 minutes",
-    initialState: { multiCloud: ["cloud-connectors"] },
+    estimatedTime: "30-45 minutes",
+    initialState: { 
+      iam: ["compromised-key", "deployment-service"],
+      cloudtrail: ["key-usage-logs"],
+      siem: ["correlated-activity"],
+      github: ["exposed-repo"]
+    },
     steps: [
-      { number: 1, title: "Connect AWS", description: "Establish AWS security assessment connection.", hint: "Type 'multicloud connect aws'." },
-      { number: 2, title: "Connect Azure", description: "Link Azure subscription for assessment.", hint: "Type 'multicloud connect azure'." },
-      { number: 3, title: "Connect GCP", description: "Add GCP project for unified view.", hint: "Type 'multicloud connect gcp'." },
-      { number: 4, title: "Normalize Findings", description: "Map findings to common framework.", hint: "Type 'multicloud normalize-findings'." },
-      { number: 5, title: "Compare Postures", description: "Assess relative security of each cloud.", hint: "Type 'multicloud compare-postures'." },
-      { number: 6, title: "Identify Gaps", description: "Find security gaps unique to each cloud.", hint: "Type 'multicloud identify-gaps'." },
-      { number: 7, title: "Create Unified Policy", description: "Build cross-cloud security policy.", hint: "Type 'multicloud create-policy'." },
-      { number: 8, title: "Apply Remediations", description: "Fix critical issues across all clouds.", hint: "Type 'multicloud remediate-critical'." },
-      { number: 9, title: "Verify Compliance", description: "Check multi-cloud compliance status.", hint: "Type 'multicloud verify-compliance'." },
-      { number: 10, title: "Generate Report", description: "Create unified security posture report.", hint: "Type 'multicloud generate-report'." }
+      { number: 1, title: "Confirm Exposure", description: "Verify the leaked credential and gather initial context.", hint: "Type 'security confirm-credential-exposure AKIA3EXAMPLE'.", intel: "Document: when was repo made public, when was key committed, what permissions does the key have, is it still active." },
+      { number: 2, title: "Timeline Malicious Usage", description: "Query CloudTrail for all usage of the compromised key, especially after exposure.", hint: "Type 'aws cloudtrail get-key-usage AKIA3EXAMPLE --since exposure'.", intel: "Focus on: API calls from unknown IPs, reconnaissance (List/Describe), persistence (CreateKey/CreateRole), data access." },
+      { number: 3, title: "Identify Attacker Actions", description: "Map all suspicious activity to understand attacker objectives.", hint: "Type 'security analyze-attacker-actions AKIA3EXAMPLE'.", intel: "T1078.004 + T1087 + T1580: Attackers typically: validate credentials, enumerate access, establish persistence, then pivot to objectives." },
+      { number: 4, title: "Assess Data Impact", description: "Determine what sensitive data the attacker could have accessed or exfiltrated.", hint: "Type 'security assess-data-exposure deployment-service'.", intel: "Review: S3 bucket access, database queries, secrets accessed. Check CloudTrail data events if available." },
+      { number: 5, title: "Coordinate Containment", description: "Work with the IR playbook to execute containment actions.", hint: "Type 'ir execute-playbook credential-compromise --key AKIA3EXAMPLE'.", intel: "Playbook steps: disable key, revoke sessions, check for persistence, rotate related secrets, notify stakeholders." },
+      { number: 6, title: "Check for Persistence", description: "Identify any backdoors or persistence mechanisms the attacker may have created.", hint: "Type 'security find-persistence deployment-service'.", intel: "Check: new IAM users, new access keys, modified roles, Lambda functions, EC2 instances with roles, SSM documents." },
+      { number: 7, title: "Collect Evidence", description: "Preserve forensic evidence according to chain of custody requirements.", hint: "Type 'forensics collect-evidence AKIA3EXAMPLE'.", intel: "Evidence: CloudTrail logs, VPC flow logs, S3 access logs, IAM credential reports, GitHub commit history." },
+      { number: 8, title: "Map to MITRE ATT&CK", description: "Document observed techniques using the ATT&CK framework.", hint: "Type 'security map-to-attack AKIA3EXAMPLE'.", intel: "Common techniques: T1078.004 (Cloud Accounts), T1087 (Account Discovery), T1580 (Cloud Infrastructure Discovery), T1530 (Data from Cloud Storage)." },
+      { number: 9, title: "Create Incident Timeline", description: "Build a detailed timeline of the incident from initial exposure to containment.", hint: "Type 'ir create-timeline AKIA3EXAMPLE'.", intel: "Timeline should include: credential committed, repo made public, first malicious use, detection, containment, and remediation milestones." },
+      { number: 10, title: "Generate Incident Report", description: "Produce comprehensive incident report for stakeholders.", hint: "Type 'ir generate-incident-report AKIA3EXAMPLE'.", intel: "Report sections: executive summary, timeline, technical details, impact assessment, containment actions, lessons learned, recommendations." }
     ],
     resources: [
-      { type: "multicloud", name: "cloud-connectors", config: { clouds: 3, unifiedView: false }, isVulnerable: true, status: "disconnected" }
+      { type: "access_key", name: "compromised-key", config: { keyId: "AKIA3EXAMPLE", exposedSince: "48 hours", maliciousUsage: true }, isVulnerable: true, status: "compromised" },
+      { type: "iam_user", name: "deployment-service", config: { permissions: "S3FullAccess, EC2ReadOnly, IAMReadOnly" }, isVulnerable: true, status: "compromised" },
+      { type: "cloudtrail", name: "key-usage-logs", config: { totalEvents: 234, suspiciousEvents: 89, externalIPs: 3 }, isVulnerable: true, status: "analyzed" }
     ],
-    fixCommands: ["multicloud remediate-critical", "multicloud generate-report"]
+    fixCommands: ["ir execute-playbook credential-compromise", "ir generate-incident-report AKIA3EXAMPLE"],
+    successMessage: "Incident contained. Key disabled, persistence removed, evidence preserved. Attacker accessed 3 S3 buckets but no PII confirmed exfiltrated. Full incident report delivered to CISO within 4-hour SLA."
   },
   {
-    title: "Container Security Assessment",
-    description: "Assess container and Kubernetes security posture, including image vulnerabilities and runtime threats.",
+    title: "Data Exfiltration Detection and Analysis",
+    description: "Anomaly detection flagged unusual outbound data transfer from a production database server. Investigate the potential data exfiltration and determine scope of exposure.",
+    briefing: "EXFILTRATION ALERT: VPC Flow Logs show 47GB transferred from db-prod-01 to external IP 185.x.x.x over the past 6 hours. Normal daily egress is under 500MB. Investigate immediately.",
+    scenario: "Your database server is sending massive amounts of data somewhere it shouldn't. This could be a backup gone wrong, a compromised application, or an insider threat. You need to determine: what data, where did it go, and is it still happening.",
     difficulty: "Advanced",
     category: "Cloud Security Analyst",
     estimatedTime: "35-50 minutes",
-    initialState: { containerSec: ["eks-cluster"] },
+    initialState: { 
+      vpc: ["exfil-flow-logs"],
+      ec2: ["db-prod-01"],
+      database: ["production-db"],
+      siem: ["exfil-alerts"],
+      threat_intel: ["ip-reputation"]
+    },
     steps: [
-      { number: 1, title: "Connect to Cluster", description: "Access the Kubernetes cluster.", hint: "Type 'container-sec connect eks-cluster'." },
-      { number: 2, title: "Scan Images", description: "Vulnerability scan all container images.", hint: "Type 'container-sec scan-images'." },
-      { number: 3, title: "Review Critical CVEs", description: "Focus on critical vulnerabilities.", hint: "Type 'container-sec show-critical-cves'." },
-      { number: 4, title: "Assess Runtime", description: "Check runtime security configuration.", hint: "Type 'container-sec assess-runtime'." },
-      { number: 5, title: "Review Pod Security", description: "Audit pod security policies.", hint: "Type 'container-sec audit-psp'." },
-      { number: 6, title: "Check Network Policies", description: "Verify network segmentation.", hint: "Type 'container-sec check-network-policies'." },
-      { number: 7, title: "Review RBAC", description: "Audit Kubernetes RBAC settings.", hint: "Type 'container-sec audit-rbac'." },
-      { number: 8, title: "Identify Privileged", description: "Find privileged containers.", hint: "Type 'container-sec find-privileged'." },
-      { number: 9, title: "Apply Hardening", description: "Implement security hardening.", hint: "Type 'container-sec apply-hardening'." },
-      { number: 10, title: "Verify Security", description: "Confirm improvements applied.", hint: "Type 'container-sec verify-posture'." }
+      { number: 1, title: "Analyze Flow Patterns", description: "Examine VPC flow logs to understand the data transfer pattern.", hint: "Type 'aws ec2 analyze-flows db-prod-01 --destination 185.x.x.x'.", intel: "Look for: connection duration, packet counts, timing patterns (continuous vs bursts), ports used, protocol analysis." },
+      { number: 2, title: "Identify Destination", description: "Research the external IP to understand who's receiving the data.", hint: "Type 'threatintel lookup-ip 185.x.x.x'.", intel: "Check: IP reputation, geolocation, hosting provider, known malicious associations, reverse DNS, historical activity." },
+      { number: 3, title: "Correlate with Application Logs", description: "Check database and application logs for queries that could explain the data transfer.", hint: "Type 'siem correlate-logs database-logs application-logs --time 6h'.", intel: "Look for: unusual SELECT * queries, database dumps, bulk exports, application-initiated transfers, scheduled jobs." },
+      { number: 4, title: "Check for Compromise Indicators", description: "Look for signs that the database server itself may be compromised.", hint: "Type 'security check-compromise-indicators db-prod-01'.", intel: "Check: new processes, network connections, modified files, scheduled tasks, new user accounts, security group changes." },
+      { number: 5, title: "Assess Data Classification", description: "Determine what type of data was potentially exfiltrated.", hint: "Type 'security assess-data-classification production-db'.", intel: "Identify: tables accessed, PII/PCI/PHI content, customer data, financial records, intellectual property." },
+      { number: 6, title: "Calculate Exposure Scope", description: "Estimate the volume and sensitivity of data potentially exposed.", hint: "Type 'security calculate-exposure-scope db-prod-01 47GB'.", intel: "47GB could be: all customer records, years of transaction data, complete database dump. Quantify the impact." },
+      { number: 7, title: "Coordinate Containment", description: "Execute containment actions while preserving forensic evidence.", hint: "Type 'ir contain-exfiltration db-prod-01'.", intel: "Containment options: block destination IP, isolate instance, throttle network, but preserve instance state for forensics." },
+      { number: 8, title: "Collect Forensic Evidence", description: "Preserve all relevant evidence for potential legal proceedings.", hint: "Type 'forensics collect-exfiltration-evidence db-prod-01'.", intel: "Collect: memory dump, disk image, network logs, database query logs, authentication logs, file integrity data." },
+      { number: 9, title: "Prepare Breach Assessment", description: "Determine if this qualifies as a reportable data breach.", hint: "Type 'compliance assess-breach-notification db-prod-01'.", intel: "Consider: data types exposed, jurisdiction (GDPR, CCPA), notification timelines, regulatory requirements." },
+      { number: 10, title: "Generate Executive Report", description: "Create incident report for executive leadership and legal team.", hint: "Type 'ir generate-executive-report db-prod-01'.", intel: "Executive summary: what happened, what was exposed, business impact, customer impact, regulatory implications, remediation status." }
     ],
     resources: [
-      { type: "container_cluster", name: "eks-cluster", config: { criticalCVEs: 12, privilegedPods: 5 }, isVulnerable: true, status: "insecure" }
+      { type: "vpc_flow", name: "exfil-flow-logs", config: { bytesTransferred: "47GB", destinationIP: "185.x.x.x", duration: "6 hours" }, isVulnerable: true, status: "active-exfil" },
+      { type: "ec2", name: "db-prod-01", config: { type: "database", normalEgress: "500MB/day", currentEgress: "47GB" }, isVulnerable: true, status: "suspicious" },
+      { type: "database", name: "production-db", config: { recordCount: 2500000, piiTables: 5, pciTables: 2 }, isVulnerable: true, status: "potentially-exposed" }
     ],
-    fixCommands: ["container-sec apply-hardening"]
+    fixCommands: ["ir contain-exfiltration db-prod-01", "ir generate-executive-report db-prod-01"],
+    successMessage: "Exfiltration stopped. Cause: compromised web application with SQL injection leading to database dump. 2.3M customer records potentially exposed. Breach notification process initiated. Full forensic report delivered."
   },
   {
-    title: "Cloud Compliance Gap Analysis",
-    description: "Perform comprehensive compliance gap analysis against SOC 2, PCI-DSS, and HIPAA requirements.",
-    difficulty: "Advanced",
-    category: "Cloud Security Analyst",
-    estimatedTime: "45-60 minutes",
-    initialState: { compliance: ["compliance-assessment"] },
-    steps: [
-      { number: 1, title: "Select Frameworks", description: "Choose compliance frameworks to assess.", hint: "Type 'compliance select-frameworks soc2,pci,hipaa'." },
-      { number: 2, title: "Map Controls", description: "Map cloud resources to control requirements.", hint: "Type 'compliance map-controls'." },
-      { number: 3, title: "Run Assessment", description: "Execute compliance assessment.", hint: "Type 'compliance run-assessment'." },
-      { number: 4, title: "Review SOC 2 Gaps", description: "Check SOC 2 specific findings.", hint: "Type 'compliance show-gaps soc2'." },
-      { number: 5, title: "Review PCI Gaps", description: "Check PCI-DSS specific findings.", hint: "Type 'compliance show-gaps pci'." },
-      { number: 6, title: "Review HIPAA Gaps", description: "Check HIPAA specific findings.", hint: "Type 'compliance show-gaps hipaa'." },
-      { number: 7, title: "Prioritize Remediation", description: "Rank gaps by risk and overlap.", hint: "Type 'compliance prioritize-gaps'." },
-      { number: 8, title: "Generate Evidence", description: "Collect compliance evidence.", hint: "Type 'compliance collect-evidence'." },
-      { number: 9, title: "Create Remediation Plan", description: "Build compliance roadmap.", hint: "Type 'compliance create-roadmap'." },
-      { number: 10, title: "Apply Quick Wins", description: "Fix low-effort high-impact gaps.", hint: "Type 'compliance fix-quick-wins'." },
-      { number: 11, title: "Generate Reports", description: "Create compliance reports.", hint: "Type 'compliance generate-reports'." }
-    ],
-    resources: [
-      { type: "compliance", name: "compliance-assessment", config: { frameworks: 3, gaps: 45 }, isVulnerable: true, status: "non-compliant" }
-    ],
-    fixCommands: ["compliance fix-quick-wins", "compliance generate-reports"]
-  },
-  {
-    title: "Cloud Attack Surface Management",
-    description: "Map and reduce the external attack surface of your cloud infrastructure including shadow IT discovery.",
+    title: "Cloud Security Incident Investigation",
+    description: "Multiple security alerts fired simultaneously across different cloud services. Conduct a coordinated investigation to determine if these are related incidents or a coordinated attack.",
+    briefing: "MULTI-VECTOR ALERT: Within 30 minutes: GuardDuty IAM anomaly, S3 public bucket alert, and suspicious EC2 instance. Determine if these are coincidental or a coordinated attack.",
+    scenario: "Three different alerts from three different services all within half an hour. Coincidence is possible, but unlikely. If this is a coordinated attack, you need to understand the full scope before the attacker achieves their objective.",
     difficulty: "Advanced",
     category: "Cloud Security Analyst",
     estimatedTime: "40-55 minutes",
-    initialState: { attackSurface: ["external-assets"] },
+    initialState: { 
+      guardduty: ["iam-finding", "ec2-finding"],
+      s3: ["public-bucket-alert"],
+      cloudtrail: ["unified-logs"],
+      siem: ["correlated-timeline"],
+      ir: ["investigation-workspace"]
+    },
     steps: [
-      { number: 1, title: "Initialize Discovery", description: "Start external asset discovery.", hint: "Type 'attack-surface discover-external'." },
-      { number: 2, title: "Enumerate Domains", description: "Find all related domains and subdomains.", hint: "Type 'attack-surface enum-domains'." },
-      { number: 3, title: "Scan Open Ports", description: "Identify exposed services.", hint: "Type 'attack-surface scan-ports'." },
-      { number: 4, title: "Detect Shadow IT", description: "Find unauthorized cloud resources.", hint: "Type 'attack-surface find-shadow-it'." },
-      { number: 5, title: "Assess Vulnerabilities", description: "Scan exposed services for vulns.", hint: "Type 'attack-surface scan-vulns'." },
-      { number: 6, title: "Check SSL/TLS", description: "Audit certificate configurations.", hint: "Type 'attack-surface check-certs'." },
-      { number: 7, title: "Review Exposed APIs", description: "Find publicly accessible APIs.", hint: "Type 'attack-surface find-apis'." },
-      { number: 8, title: "Reduce Surface", description: "Remove or secure unnecessary exposure.", hint: "Type 'attack-surface remediate'." },
-      { number: 9, title: "Configure Monitoring", description: "Set up continuous attack surface monitoring.", hint: "Type 'attack-surface enable-monitoring'." },
-      { number: 10, title: "Verify Reduction", description: "Confirm attack surface reduced.", hint: "Type 'attack-surface verify'." },
-      { number: 11, title: "Generate Report", description: "Create attack surface report.", hint: "Type 'attack-surface generate-report'." }
+      { number: 1, title: "Gather All Alerts", description: "Collect and review all three alerts with full context.", hint: "Type 'siem gather-related-alerts --time-window 30m'.", intel: "Collect: GuardDuty findings, S3 alerts, EC2 anomalies. Note timestamps, affected resources, and severity." },
+      { number: 2, title: "Establish Common Elements", description: "Look for connections between the three incidents.", hint: "Type 'security find-common-indicators'.", intel: "Check for: same IAM principal, same source IP, same time window, linked resources, shared VPC, common tags." },
+      { number: 3, title: "Build Unified Timeline", description: "Create a single timeline of all events across all three incidents.", hint: "Type 'ir create-unified-timeline'.", intel: "A unified timeline reveals attack progression: initial access -> privilege escalation -> lateral movement -> objective." },
+      { number: 4, title: "Identify Attack Chain", description: "Determine the sequence of attacker actions and map to ATT&CK.", hint: "Type 'security identify-attack-chain'.", intel: "Likely pattern: IAM credential compromise (T1078) -> Reconnaissance (T1580) -> Data access (T1530) -> Covering tracks (T1070)." },
+      { number: 5, title: "Assess Full Scope", description: "Determine all resources and data potentially impacted.", hint: "Type 'ir assess-incident-scope'.", intel: "Beyond the three alerts: what else could this principal access? What other resources share network access? What data is at risk?" },
+      { number: 6, title: "Execute IR Playbook", description: "Follow the incident response playbook for coordinated attacks.", hint: "Type 'ir execute-playbook coordinated-attack'.", intel: "Playbook priorities: contain all affected resources, preserve evidence, identify all compromise indicators, prevent lateral movement." },
+      { number: 7, title: "Hunt for Additional Indicators", description: "Proactively search for compromise indicators beyond the alerts.", hint: "Type 'hunt search-iocs'.", intel: "Hunt for: other users from same IP, other resources in same VPC, similar patterns in other accounts, persistence mechanisms." },
+      { number: 8, title: "Document Evidence Chain", description: "Create formal evidence documentation for each finding.", hint: "Type 'forensics document-evidence-chain'.", intel: "For each piece of evidence: source, collection method, hash, chain of custody, relevance to incident." },
+      { number: 9, title: "Coordinate Stakeholder Communication", description: "Prepare communications for various stakeholders.", hint: "Type 'ir prepare-stakeholder-comms'.", intel: "Different audiences need different information: SOC (technical details), management (impact), legal (breach implications)." },
+      { number: 10, title: "Create Comprehensive Report", description: "Produce the full incident report with all findings and recommendations.", hint: "Type 'ir generate-comprehensive-report'.", intel: "Report must include: executive summary, attack narrative, timeline, impact assessment, response actions, lessons learned, recommendations." },
+      { number: 11, title: "Define Remediation Actions", description: "Document specific remediation steps to prevent recurrence.", hint: "Type 'ir define-remediation-plan'.", intel: "Remediation should address: root cause, detection gaps, response improvements, control enhancements." }
     ],
     resources: [
-      { type: "attack_surface", name: "external-assets", config: { exposedAssets: 25, shadowIT: 8 }, isVulnerable: true, status: "exposed" }
+      { type: "guardduty_finding", name: "iam-finding", config: { severity: 8, type: "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration" }, isVulnerable: true, status: "active" },
+      { type: "guardduty_finding", name: "ec2-finding", config: { severity: 7, type: "Trojan:EC2/DNSDataExfiltration" }, isVulnerable: true, status: "active" },
+      { type: "s3_alert", name: "public-bucket-alert", config: { bucket: "internal-reports", exposure: "public" }, isVulnerable: true, status: "exposed" },
+      { type: "investigation", name: "investigation-workspace", config: { alerts: 3, correlation: "high" }, isVulnerable: true, status: "in-progress" }
     ],
-    fixCommands: ["attack-surface remediate", "attack-surface enable-monitoring"]
+    fixCommands: ["ir execute-playbook coordinated-attack", "ir generate-comprehensive-report"],
+    successMessage: "Coordinated attack confirmed and contained. Attacker gained initial access via phished credentials, escalated via instance role, exfiltrated via DNS tunneling. All three alerts were related. Full containment achieved, comprehensive report delivered."
+  },
+  {
+    title: "Threat Hunting with MITRE ATT&CK",
+    description: "Conduct a proactive threat hunt across your cloud environment using MITRE ATT&CK techniques. Search for indicators of undetected compromise.",
+    briefing: "PROACTIVE HUNT: No active alerts, but threat intel suggests adversaries are targeting organizations like yours. Conduct a threat hunt focusing on cloud-specific ATT&CK techniques.",
+    scenario: "Your SIEM is quiet, but that doesn't mean you're safe. Sophisticated attackers evade detection. Your job: actively search for threats that might be lurking in your environment using structured threat hunting methodology.",
+    difficulty: "Advanced",
+    category: "Cloud Security Analyst",
+    estimatedTime: "45-60 minutes",
+    initialState: { 
+      cloudtrail: ["hunt-logs"],
+      vpc: ["network-logs"],
+      siem: ["hunt-workspace"],
+      threat_intel: ["current-iocs"],
+      mitre: ["cloud-techniques"]
+    },
+    steps: [
+      { number: 1, title: "Define Hunt Hypothesis", description: "Create a structured hypothesis based on threat intelligence and ATT&CK.", hint: "Type 'hunt create-hypothesis'.", intel: "Good hypothesis: 'Attackers may have established persistence via Lambda functions (T1525) based on recent threat reports targeting our industry.'" },
+      { number: 2, title: "Select ATT&CK Techniques", description: "Choose specific cloud ATT&CK techniques to hunt for.", hint: "Type 'hunt select-techniques cloud'.", intel: "Priority cloud techniques: T1078.004 (Cloud Accounts), T1530 (Cloud Storage), T1537 (Transfer to Cloud Account), T1525 (Cloud Compute)." },
+      { number: 3, title: "Build Hunt Queries", description: "Create specific search queries for each selected technique.", hint: "Type 'hunt build-queries T1078.004 T1530 T1525'.", intel: "Queries should search for: anomalous API patterns, unusual data access, new compute resources, unexpected identity usage." },
+      { number: 4, title: "Execute T1078.004 Hunt", description: "Hunt for compromised cloud accounts and credential abuse.", hint: "Type 'hunt execute T1078.004'.", intel: "Look for: impossible travel, unusual login hours, failed then successful auth, API calls from new locations." },
+      { number: 5, title: "Execute T1530 Hunt", description: "Hunt for unauthorized access to cloud storage.", hint: "Type 'hunt execute T1530'.", intel: "Look for: bulk downloads, access from unusual IPs, sensitive bucket access by unexpected principals." },
+      { number: 6, title: "Execute T1525 Hunt", description: "Hunt for malicious code in cloud compute resources.", hint: "Type 'hunt execute T1525'.", intel: "Look for: new Lambda functions, modified Lambda code, unusual EC2 AMIs, containers from untrusted registries." },
+      { number: 7, title: "Analyze Hunt Results", description: "Review findings from all hunt queries.", hint: "Type 'hunt analyze-results'.", intel: "Categorize findings: confirmed malicious, suspicious needs investigation, benign but unusual, known good." },
+      { number: 8, title: "Investigate Suspicious Findings", description: "Deep dive on suspicious items that warrant further investigation.", hint: "Type 'hunt investigate-findings'.", intel: "For each suspicious finding: gather additional context, correlate with other data sources, determine true/false positive." },
+      { number: 9, title: "Document Discoveries", description: "Record all findings, whether malicious or benign.", hint: "Type 'hunt document-findings'.", intel: "Document everything: confirmed threats, new detection opportunities, gaps in visibility, baseline updates needed." },
+      { number: 10, title: "Create Detection Rules", description: "Turn hunt findings into new detection rules.", hint: "Type 'hunt create-detections'.", intel: "Good hunts produce: new SIEM rules, updated baselines, improved alert logic, enhanced monitoring coverage." },
+      { number: 11, title: "Generate Hunt Report", description: "Produce formal threat hunt report with methodology and findings.", hint: "Type 'hunt generate-report'.", intel: "Report includes: hypothesis, methodology, techniques hunted, findings, new detections created, recommendations." }
+    ],
+    resources: [
+      { type: "hunt_workspace", name: "hunt-workspace", config: { techniques: ["T1078.004", "T1530", "T1525"], dataSourcesDays: 30 }, isVulnerable: false, status: "active" },
+      { type: "cloudtrail", name: "hunt-logs", config: { eventsAvailable: 15000000, daysRetained: 90 }, isVulnerable: false, status: "available" },
+      { type: "threat_intel", name: "current-iocs", config: { activeIndicators: 1250, cloudSpecific: 340 }, isVulnerable: false, status: "current" },
+      { type: "mitre", name: "cloud-techniques", config: { techniques: 35, detectionCoverage: "60%" }, isVulnerable: false, status: "mapped" }
+    ],
+    fixCommands: ["hunt create-detections", "hunt generate-report"],
+    successMessage: "Hunt complete. Discovered dormant persistence mechanism via old Lambda function with backdoor code - compromised 6 months ago but never detected. Created 4 new detection rules. Detection coverage improved from 60% to 75%."
   }
 ];
 
