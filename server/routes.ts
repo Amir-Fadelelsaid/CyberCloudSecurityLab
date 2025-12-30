@@ -2794,6 +2794,939 @@ MITRE ATT&CK T1098: Account Manipulation - MITIGATED`;
     const alertId = lowerCmd.replace("aws siem get-alert ", "").trim();
     output = `=== Alert Details: ${alertId} ===\n\nTitle: Large Outbound Data Transfer\nSeverity: HIGH\nCategory: Data Exfiltration\nMITRE ATT&CK: T1048 - Exfiltration Over Alternative Protocol\n\nSource: analytics-server-01 (10.0.4.55)\nDestination: 185.220.101.42\nData Transferred: 47 GB\nDuration: 6 hours\n\nRecommended Actions:\n  1. Isolate affected server\n  2. Block destination IP\n  3. Analyze transferred data types`;
   }
+  // ============= ACCESS ANALYZER COMMANDS =============
+  else if (lowerCmd === "aws access-analyzer enable" || lowerCmd === "aws access-analyzer enable-monitoring") {
+    output = `=== IAM Access Analyzer Enabled ===
+
+[OK] Analyzer created: account-analyzer
+[OK] Scanning IAM policies...
+[OK] Scanning S3 bucket policies...
+[OK] Scanning KMS key policies...
+
+Initial findings will be available in 5-10 minutes.
+Use 'aws access-analyzer list-findings' to view results.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws access-analyzer list-findings") {
+    output = `=== Access Analyzer Findings ===
+
+CRITICAL:
+  [!] S3 Bucket 'prod-data' allows public access
+  [!] IAM Role 'DevRole' trusts external account
+  
+HIGH:
+  [!] KMS Key allows cross-account access
+  [!] Lambda function has overly permissive role
+  
+MEDIUM:
+  [!] S3 Bucket 'logs' allows cross-account read
+
+Total: 5 findings | 2 Critical | 2 High | 1 Medium`;
+    success = true;
+  }
+  else if (lowerCmd === "aws access-analyzer generate-report") {
+    output = `=== Access Analyzer Report Generated ===
+
+Report: access-analyzer-${new Date().toISOString().split('T')[0]}.pdf
+
+Summary:
+  Resources Analyzed: 147
+  Findings: 5
+  Remediated: 0
+
+Exported to S3: s3://security-reports/access-analyzer/`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws access-analyzer remediate-")) {
+    output = `=== Remediation Applied ===
+
+[OK] Finding remediated
+[OK] Policy updated to remove external access
+[OK] Change logged to CloudTrail
+
+Re-scan scheduled in 5 minutes.`;
+    success = true;
+  }
+  // ============= AWS SERVICE COMMANDS =============
+  else if (lowerCmd === "aws service list-active" || lowerCmd === "aws services") {
+    output = `=== Active AWS Services ===
+
+Compute:
+  [OK] EC2 - 12 instances running
+  [OK] Lambda - 45 functions deployed
+  [OK] ECS - 3 clusters active
+
+Storage:
+  [OK] S3 - 28 buckets
+  [OK] EBS - 50 volumes attached
+
+Database:
+  [OK] RDS - 4 instances
+  [OK] DynamoDB - 8 tables
+
+Security:
+  [OK] IAM - 45 users, 23 roles
+  [OK] KMS - 12 keys
+  [!] GuardDuty - Disabled in 2 regions`;
+    success = true;
+  }
+  // ============= CLOUDTRAIL ANALYZE COMMANDS =============
+  else if (lowerCmd.startsWith("aws cloudtrail analyze-attack-timeline") || lowerCmd.startsWith("aws cloudtrail analyze-timeline ")) {
+    output = `=== Attack Timeline Analysis ===
+
+Phase 1: Initial Access (03:00-03:15)
+  - ConsoleLogin from 198.51.100.45
+  - MFA not used
+  - Location: Netherlands (unusual)
+
+Phase 2: Reconnaissance (03:15-03:30)
+  - ListBuckets, ListUsers, DescribeInstances
+  - Enumerated 28 buckets, 45 users
+
+Phase 3: Privilege Escalation (03:30-03:45)
+  - AttachUserPolicy: AdministratorAccess
+  - CreateAccessKey for persistence
+
+Phase 4: Data Access (03:45-04:15)
+  - GetObject on sensitive buckets
+  - 2.3 TB downloaded
+
+MITRE ATT&CK: T1078 → T1087 → T1098 → T1530`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail analyze-source-ip")) {
+    const parts = lowerCmd.split(" ");
+    const target = parts[parts.length - 1];
+    output = `=== Source IP Analysis: ${target} ===
+
+Activity Summary:
+  First Seen: 03:00:15 UTC
+  Last Seen: 04:15:42 UTC
+  Total Events: 247
+  
+Top Actions:
+  GetObject: 156
+  DescribeInstances: 45
+  ListBuckets: 12
+  AssumeRole: 8
+  
+Risk Indicators:
+  [!] New IP - Never seen before
+  [!] Tor exit node
+  [!] Off-hours activity
+  [!] High-volume data access
+
+Verdict: HIGHLY SUSPICIOUS`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail find-anomalous-actions ") || lowerCmd.startsWith("aws cloudtrail find-persistence-indicators ")) {
+    output = `=== Anomalous Activity Detected ===
+
+Persistence Indicators:
+  [!] CreateAccessKey - New key for backdoor access
+  [!] CreateUser - Unauthorized user created
+  [!] AttachUserPolicy - Admin policy attached
+  [!] PutEventSelectors - Attempted logging bypass
+
+Lateral Movement:
+  [!] AssumeRole to 3 different roles
+  [!] Cross-account access attempts
+
+Credential Access:
+  [!] GetSecretValue - Secrets Manager accessed
+  [!] GetParameter - SSM parameters retrieved`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail get-console-login ") || lowerCmd.startsWith("aws cloudtrail get-session-activity ")) {
+    output = `=== Console Activity Analysis ===
+
+Login Details:
+  User: finance-admin
+  Time: 03:00:15 UTC
+  IP: 198.51.100.45
+  MFA: Not used
+  
+Session Activity:
+  Duration: 1h 15m
+  Actions: 247
+  Data Accessed: 2.3 TB
+  
+Geographic Analysis:
+  Expected: San Francisco, US
+  Actual: Amsterdam, Netherlands
+  
+[!] ALERT: Location anomaly detected`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudtrail get-events ") || lowerCmd.startsWith("aws cloudtrail get-instance-events ") || lowerCmd.startsWith("aws cloudtrail get-key-usage ")) {
+    output = `=== CloudTrail Event Details ===
+
+Events Retrieved: 47
+
+Sample Events:
+  [03:15:22] AssumeRole - AdminRole
+  [03:15:45] DescribeInstances - All regions
+  [03:16:02] ListBuckets - 28 found
+  [03:16:30] GetObject - customer-data/exports/*
+  [03:17:15] CreateAccessKey - backdoor-user
+
+Filter: Last 24 hours
+Source: All regions`;
+    success = true;
+  }
+  else if (lowerCmd === "aws cloudtrail create-escalation-detections") {
+    output = `=== Escalation Detection Rules Created ===
+
+[OK] Rule: IAM Policy Escalation
+     Trigger: AttachUserPolicy with Admin*
+     
+[OK] Rule: Role Assumption Chain
+     Trigger: 3+ AssumeRole in 5 minutes
+     
+[OK] Rule: Access Key Creation
+     Trigger: CreateAccessKey for any user
+     
+[OK] Rule: Trust Policy Modification
+     Trigger: UpdateAssumeRolePolicy
+
+4 detection rules deployed to CloudWatch.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws cloudtrail enable-comprehensive-logging" || lowerCmd === "aws cloudtrail enable-enhanced-logging") {
+    output = `=== Enhanced CloudTrail Logging Enabled ===
+
+[OK] Management events: All regions
+[OK] Data events: S3, Lambda, DynamoDB
+[OK] Insights: Enabled
+[OK] Log file validation: Enabled
+[OK] Multi-region: Enabled
+[OK] Organization trail: Configured
+
+All API activity now logged with full detail.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws cloudtrail enable-organization-trail") {
+    output = `=== Organization Trail Enabled ===
+
+[OK] Trail created: org-security-trail
+[OK] Applied to all accounts (47)
+[OK] Centralized logging to security account
+[OK] Immutable storage configured
+
+Organization-wide visibility achieved.`;
+    success = true;
+  }
+  // ============= EC2 NETWORK COMMANDS =============
+  else if (lowerCmd === "aws ec2 analyze-traffic-patterns") {
+    output = `=== Traffic Pattern Analysis ===
+
+Normal Patterns:
+  Web Tier → App Tier: 443/tcp (98%)
+  App Tier → DB Tier: 3306/tcp (95%)
+  All Tiers → NAT: 443/tcp (90%)
+
+Anomalies Detected:
+  [!] DB Tier → Internet: Direct egress (blocked)
+  [!] Web Tier → SSH/22: From 0.0.0.0/0
+  [!] Unknown → All: Port scan detected
+
+Recommendation: Implement network segmentation`;
+    success = true;
+  }
+  else if (lowerCmd === "aws ec2 plan-security-group-architecture") {
+    output = `=== Security Group Architecture Plan ===
+
+Proposed Structure:
+  1. web-tier-sg
+     - Inbound: 443 from ALB only
+     - Outbound: App tier on 8080
+     
+  2. app-tier-sg
+     - Inbound: 8080 from web-tier-sg
+     - Outbound: DB tier on 3306
+     
+  3. db-tier-sg
+     - Inbound: 3306 from app-tier-sg
+     - Outbound: None (deny all)
+     
+  4. bastion-sg
+     - Inbound: 22 from corporate IP
+     - Outbound: 22 to internal only
+
+Plan ready for implementation.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 configure-web-tier-sg") || lowerCmd.startsWith("aws ec2 configure-app-tier-sg") || lowerCmd.startsWith("aws ec2 configure-data-tier-sg") || lowerCmd.startsWith("aws ec2 configure-admin-access")) {
+    const tier = lowerCmd.includes("web") ? "Web" : lowerCmd.includes("app") ? "App" : lowerCmd.includes("data") ? "Data" : "Admin";
+    output = `=== ${tier} Tier Security Group Configured ===
+
+[OK] Removed overly permissive rules
+[OK] Applied least privilege access
+[OK] Logged changes to CloudTrail
+[OK] Security group updated
+
+${tier} tier now properly segmented.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws ec2 verify-network-segmentation") {
+    output = `=== Network Segmentation Verified ===
+
+Test Results:
+  [PASS] Web → App: Allowed on 8080
+  [PASS] App → DB: Allowed on 3306
+  [PASS] Web → DB: BLOCKED (as expected)
+  [PASS] DB → Internet: BLOCKED (as expected)
+  [PASS] Admin → All: Via bastion only
+
+All segmentation rules working correctly.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 analyze-flow-logs ") || lowerCmd.startsWith("aws ec2 analyze-flows ")) {
+    output = `=== VPC Flow Log Analysis ===
+
+Suspicious Flows:
+  10.0.1.50 → 185.220.101.42:443 | 2.4 GB | ALERT
+  10.0.2.100 → pool.minexmr.com:3333 | 156 MB | BLOCKED
+
+Normal Flows:
+  10.0.1.* → ALB:443 | 45 GB | OK
+  App tier → DB:3306 | 12 GB | OK
+
+Recommendations:
+  - Block 185.220.101.42 at NACL
+  - Investigate 10.0.1.50 for compromise`;
+    success = true;
+  }
+  else if (lowerCmd === "aws ec2 analyze-lateral-movement") {
+    output = `=== Lateral Movement Analysis ===
+
+Detected Movement:
+  [!] web-server-03 → app-server-01 (SSH)
+  [!] app-server-01 → db-server-01 (MySQL)
+  [!] bastion → ALL internal (unusual)
+
+Attack Path:
+  Entry: web-server-03 (compromised)
+  Pivot: app-server-01
+  Target: db-server-01 (data access)
+
+Recommendation: Isolate web-server-03 immediately`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-sg ") || lowerCmd === "aws ec2 ls-sg") {
+    const sgName = lowerCmd.replace("aws ec2 describe-sg ", "").trim();
+    output = `=== Security Group: ${sgName || "All"} ===
+
+Inbound Rules:
+  [!] 0.0.0.0/0 → 22 (SSH)    - OVERLY PERMISSIVE
+  [!] 0.0.0.0/0 → 3389 (RDP)  - OVERLY PERMISSIVE
+  [OK] 10.0.0.0/16 → 443      - Internal only
+
+Outbound Rules:
+  [OK] All → 443 (HTTPS)
+  [!] All → 0.0.0.0/0         - UNRESTRICTED
+
+Recommendation: Restrict SSH/RDP to bastion only`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 restrict-ssh ") || lowerCmd.startsWith("aws ec2 restrict-rdp ") || lowerCmd.startsWith("aws ec2 restrict-db ") || lowerCmd.startsWith("aws ec2 restrict-egress ")) {
+    const target = lowerCmd.split(" ").pop();
+    output = `=== Security Group Updated: ${target} ===
+
+[OK] Removed 0.0.0.0/0 rules
+[OK] Added bastion-only access
+[OK] Restricted egress to required ports
+[OK] Changes logged
+
+Security posture improved.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-vpc ") || lowerCmd === "aws ec2 describe-vpc-architecture") {
+    output = `=== VPC Architecture ===
+
+VPC: vpc-production (10.0.0.0/16)
+
+Subnets:
+  public-1a:  10.0.1.0/24  (NAT, ALB)
+  public-1b:  10.0.2.0/24  (NAT, ALB)
+  private-1a: 10.0.10.0/24 (App tier)
+  private-1b: 10.0.11.0/24 (App tier)
+  data-1a:    10.0.20.0/24 (DB tier)
+  data-1b:    10.0.21.0/24 (DB tier)
+
+Gateways:
+  igw-main: Internet Gateway
+  nat-prod-01: NAT Gateway (public-1a)
+
+Route Tables: 4 configured`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 enable-flow-logs ")) {
+    output = `=== VPC Flow Logs Enabled ===
+
+[OK] Flow logs created for VPC
+[OK] Destination: CloudWatch Logs
+[OK] Traffic type: ALL
+[OK] Capture format: Default + custom fields
+
+Flow logs now capturing all traffic.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-nat ") || lowerCmd.startsWith("aws ec2 describe-eips") || lowerCmd.startsWith("aws ec2 plan-nat-architecture ")) {
+    output = `=== NAT Gateway Configuration ===
+
+NAT Gateways:
+  nat-prod-01: 10.0.1.0/24 (Active)
+  nat-prod-02: 10.0.2.0/24 (Standby)
+
+Elastic IPs:
+  eip-nat-01: 52.1.2.3 (attached)
+  eip-nat-02: 52.1.2.4 (attached)
+  eip-unattached: 52.1.2.5 (unused - cost!)
+
+High availability: Enabled`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 create-nat ") || lowerCmd.startsWith("aws ec2 update-routes-multi-nat ")) {
+    output = `=== NAT Gateway Created ===
+
+[OK] NAT Gateway provisioned
+[OK] Elastic IP attached
+[OK] Route tables updated
+[OK] High availability configured
+
+Multi-AZ NAT architecture complete.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 release-eip ")) {
+    output = `=== Elastic IP Released ===
+
+[OK] EIP released: 52.1.2.5
+[OK] Cost savings: ~$3.60/month
+
+Unused resources cleaned up.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-vpn ") || lowerCmd.startsWith("aws ec2 describe-cgw ") || lowerCmd.startsWith("aws ec2 describe-tgw ")) {
+    output = `=== VPN/Transit Gateway Configuration ===
+
+VPN Connection:
+  Status: UP
+  Tunnels: 2/2 active
+  Encryption: AES-256
+  
+Customer Gateway:
+  IP: 203.0.113.50
+  BGP ASN: 65000
+  
+Transit Gateway:
+  Attachments: 5 VPCs
+  Routes: 12 propagated
+
+Connectivity: Healthy`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 reset-vpn ") || lowerCmd.startsWith("aws ec2 fix-tgw-routes ")) {
+    output = `=== VPN/TGW Configuration Fixed ===
+
+[OK] Tunnels renegotiated
+[OK] Routes corrected
+[OK] BGP sessions re-established
+[OK] Connectivity restored
+
+Hybrid connectivity operational.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-nacl ") || lowerCmd.startsWith("aws ec2 fix-nacl ")) {
+    output = `=== Network ACL Configuration ===
+
+[OK] NACL rules reviewed
+[OK] Deny rules added for malicious IPs
+[OK] Ephemeral ports configured
+[OK] Stateless rules optimized
+
+Network layer security enhanced.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-peering ") || lowerCmd.startsWith("aws ec2 restrict-peering ")) {
+    output = `=== VPC Peering Configuration ===
+
+[OK] Peering connection reviewed
+[OK] Route tables restricted
+[OK] Only required CIDRs allowed
+[OK] Cross-account access limited
+
+Peering security improved.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 implement-network-segmentation ") || lowerCmd === "aws ec2 assess-network-security") {
+    output = `=== Network Segmentation Implemented ===
+
+[OK] Micro-segmentation applied
+[OK] Zero-trust network model
+[OK] East-west traffic controlled
+[OK] North-south traffic filtered
+
+Defense-in-depth architecture complete.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 create-traffic-mirror ")) {
+    output = `=== Traffic Mirroring Configured ===
+
+[OK] Mirror session created
+[OK] Filter rules applied
+[OK] Target configured
+[OK] Packet capture ready
+
+Network forensics enabled.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws ec2 enable-ebs-encryption" || lowerCmd === "aws ec2 list-resource-placement") {
+    output = `=== EBS Encryption / Resource Status ===
+
+[OK] Default EBS encryption: Enabled
+[OK] KMS key: aws/ebs (AWS managed)
+[OK] All new volumes will be encrypted
+
+Resource Placement:
+  AZ-a: 6 instances, 12 volumes
+  AZ-b: 6 instances, 12 volumes
+  Multi-AZ: Properly distributed`;
+    success = true;
+  }
+  // ============= GUARDDUTY COMMANDS =============
+  else if (lowerCmd.startsWith("aws guardduty classify-finding ")) {
+    output = `=== GuardDuty Finding Classified ===
+
+[OK] Finding classified as: True Positive
+[OK] Severity: HIGH
+[OK] Investigation notes added
+[OK] Workflow triggered
+
+Finding archived after classification.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws guardduty configure-iam-findings") {
+    output = `=== GuardDuty IAM Findings Configured ===
+
+[OK] UnauthorizedAccess:IAMUser - Enabled
+[OK] PrivilegeEscalation - Enabled  
+[OK] Persistence - Enabled
+[OK] CredentialAccess - Enabled
+
+IAM-specific threat detection active.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws guardduty enable-organization") {
+    output = `=== GuardDuty Organization Enabled ===
+
+[OK] Delegated administrator set
+[OK] Auto-enable for new accounts
+[OK] 47 member accounts enrolled
+[OK] Centralized findings dashboard
+
+Organization-wide threat detection active.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws guardduty generate-sample-findings") {
+    output = `=== Sample Findings Generated ===
+
+Created 10 sample findings:
+  - UnauthorizedAccess:IAMUser/ConsoleLogin
+  - Recon:IAMUser/MaliciousIPCaller
+  - Exfiltration:S3/MaliciousIPCaller
+  - CryptoCurrency:EC2/BitcoinTool
+  - Impact:EC2/PortSweep
+
+Use these for testing detection workflows.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws guardduty get-finding ")) {
+    output = `=== GuardDuty Finding Details ===
+
+Finding: Console login from malicious IP
+Severity: HIGH (8.0)
+Type: UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B
+
+Resource:
+  User: admin-user
+  IP: 198.51.100.45
+  Location: Netherlands
+
+Threat Intel:
+  Known Tor exit node
+  Previously used in attacks
+
+Recommendation: Reset credentials immediately`;
+    success = true;
+  }
+  // ============= IAM ADVANCED COMMANDS =============
+  else if (lowerCmd === "aws iam list-privileged-users-mfa" || lowerCmd.startsWith("aws iam list-privileged")) {
+    output = `=== Privileged Users MFA Status ===
+
+User                 Privilege    MFA
+----                 ---------    ---
+root                 ROOT         [!] NONE
+cloud-admin          Admin        [!] NONE
+devops-lead          PowerUser    [OK] Enabled
+security-admin       Admin        [!] NONE
+emergency-access     Admin        [OK] Enabled
+
+WARNING: 3 admin users without MFA!`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam create-permission-boundary") || lowerCmd.startsWith("aws iam create-permission-boundaries")) {
+    output = `=== Permission Boundary Created ===
+
+[OK] Boundary policy created
+[OK] Maximum permissions defined
+[OK] Prevents privilege escalation
+[OK] Applied to developer roles
+
+Guardrails now in place.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam apply-permission-boundaries") || lowerCmd.startsWith("aws iam enforce-boundary ")) {
+    output = `=== Permission Boundaries Applied ===
+
+[OK] Boundary attached to 15 roles
+[OK] Developer permissions capped
+[OK] Service roles protected
+[OK] Audit logging enabled
+
+All roles now operate within boundaries.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam enforce-mfa-policy") {
+    output = `=== MFA Policy Enforced ===
+
+[OK] SCP created: RequireMFA
+[OK] Applied to all OUs
+[OK] Deny actions without MFA
+[OK] Grace period: 24 hours
+
+All privileged actions now require MFA.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws iam get-root-account-summary") {
+    output = `=== Root Account Summary ===
+
+MFA Status: [!] NOT ENABLED
+Access Keys: [!] 1 ACTIVE KEY FOUND
+Last Login: 2024-01-10 (30 days ago)
+
+CRITICAL ISSUES:
+  1. Root account lacks MFA
+  2. Access key should be deleted
+  3. Root should only be used for billing
+
+Immediate action required!`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam find-unused") || lowerCmd.startsWith("aws iam cleanup")) {
+    output = `=== Unused IAM Resources ===
+
+Unused Credentials (90+ days):
+  - contractor-alex (180 days)
+  - temp-deploy-key (120 days)
+  - old-service-account (95 days)
+
+Unused Roles:
+  - LegacyAppRole (never used)
+  - TestDeployRole (6 months)
+
+Cleanup recommended.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam simulate-escalation") || lowerCmd.startsWith("aws iam analyze-escalation")) {
+    output = `=== Privilege Escalation Analysis ===
+
+Escalation Paths Found: 12
+
+Critical Paths:
+  [!] dev-user → iam:PassRole → AdminLambda → Admin
+  [!] cicd-role → iam:CreatePolicy → Self-escalate
+  [!] service-role → sts:AssumeRole → CrossAccount
+
+Recommendations:
+  1. Add permission boundaries
+  2. Restrict iam:PassRole
+  3. Remove iam:CreatePolicy from developers`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws iam generate-escalation-runbook") || lowerCmd.startsWith("aws iam generate-security-report")) {
+    output = `=== Security Report Generated ===
+
+Report: iam-security-${new Date().toISOString().split('T')[0]}.pdf
+
+Contents:
+  - Permission analysis
+  - Escalation paths
+  - Remediation steps
+  - Compliance mapping
+
+Exported to security reports bucket.`;
+    success = true;
+  }
+  // ============= ORGANIZATIONS & SECURITY HUB =============
+  else if (lowerCmd.startsWith("aws organizations ") || lowerCmd === "aws organizations implement-scps") {
+    output = `=== Organizations Configuration ===
+
+[OK] Service Control Policies applied
+[OK] Guardrails enforced
+[OK] Account isolation verified
+[OK] Delegated administrators set
+
+Organization security posture improved.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws securityhub ") || lowerCmd === "aws securityhub enable-organization" || lowerCmd === "aws securityhub assess-compliance") {
+    output = `=== Security Hub Status ===
+
+[OK] Security Hub enabled organization-wide
+[OK] CIS AWS Foundations: 87% compliant
+[OK] AWS Foundational Security: 92% compliant
+[OK] PCI DSS: 78% compliant
+
+Findings aggregated from all accounts.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws config enable-organization") {
+    output = `=== AWS Config Organization Enabled ===
+
+[OK] Config rules deployed to all accounts
+[OK] Conformance packs applied
+[OK] Aggregator configured
+[OK] Remediation automation enabled
+
+Continuous compliance monitoring active.`;
+    success = true;
+  }
+  // ============= LOGGING & ASSESSMENT =============
+  else if (lowerCmd === "aws assess-data-protection" || lowerCmd === "aws assess-logging-coverage") {
+    output = `=== Security Assessment ===
+
+Data Protection:
+  [OK] S3: 95% encrypted
+  [!] EBS: 80% encrypted
+  [OK] RDS: 100% encrypted
+
+Logging Coverage:
+  [OK] CloudTrail: All regions
+  [!] VPC Flow Logs: 60% coverage
+  [OK] S3 Access Logs: 85%
+
+Recommendations provided in report.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws logs configure-siem-forwarding") || lowerCmd.startsWith("aws logs configure")) {
+    output = `=== Log Forwarding Configured ===
+
+[OK] CloudTrail → SIEM
+[OK] VPC Flow Logs → SIEM
+[OK] GuardDuty Findings → SIEM
+[OK] CloudWatch Logs → SIEM
+
+All security logs now forwarded.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws network implement-central-security")) {
+    output = `=== Central Network Security Implemented ===
+
+[OK] Network Firewall deployed
+[OK] VPC Flow Logs centralized
+[OK] DNS Firewall enabled
+[OK] Transit Gateway inspection
+
+Centralized network controls active.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws security configure-soc-integration" || lowerCmd === "aws security generate-architecture-docs" || lowerCmd === "aws security verify-encryption-compliance") {
+    output = `=== Security Configuration Complete ===
+
+[OK] SOC integration configured
+[OK] Architecture documented
+[OK] Encryption verified
+[OK] Compliance validated
+
+Security posture: GOOD`;
+    success = true;
+  }
+  // ============= CLOUDWATCH COMMANDS =============
+  else if (lowerCmd.startsWith("aws cloudwatch get-nat-metrics ") || lowerCmd.startsWith("aws cloudwatch get-vpn-metrics ") || lowerCmd.startsWith("aws cloudwatch get-baseline ")) {
+    output = `=== CloudWatch Metrics ===
+
+Resource Metrics (Last 24h):
+  CPU Utilization: 45% avg (normal)
+  Network In: 2.3 GB
+  Network Out: 1.8 GB
+  Connections: 1,247
+  
+Baseline Comparison:
+  [OK] Within normal parameters
+  [!] Network out 15% above baseline
+
+Alarm Status: No active alarms`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws cloudwatch create-nat-alarm ")) {
+    output = `=== CloudWatch Alarm Created ===
+
+[OK] Alarm: NAT-HighUtilization
+[OK] Threshold: 80%
+[OK] Period: 5 minutes
+[OK] Actions: SNS notification
+
+Alarm now monitoring NAT gateway.`;
+    success = true;
+  }
+  // ============= ECS/ELB COMMANDS =============
+  else if (lowerCmd.startsWith("aws ecs describe-task ")) {
+    output = `=== ECS Task Details ===
+
+Task: ecs-task-1
+Cluster: production
+Status: RUNNING
+CPU: 256
+Memory: 512
+
+Containers:
+  app-container: RUNNING
+  sidecar: RUNNING
+
+Network: awsvpc mode
+Security Group: ecs-tasks-sg`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws elbv2 describe-target-group ") || lowerCmd.startsWith("aws elbv2 describe-target-health ")) {
+    output = `=== Target Group Status ===
+
+Target Group: tg-api-containers
+Protocol: HTTP
+Port: 8080
+
+Targets:
+  10.0.10.15:8080 - healthy
+  10.0.10.16:8080 - healthy
+  10.0.11.15:8080 - healthy
+  10.0.11.16:8080 - unhealthy (timeout)
+
+Health Check: /api/health`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws elbv2 modify-target-group ")) {
+    output = `=== Target Group Updated ===
+
+[OK] Health check path updated
+[OK] Health check port configured
+[OK] Thresholds adjusted
+[OK] Changes applied
+
+Target group configuration optimized.`;
+    success = true;
+  }
+  // ============= EVENTBRIDGE COMMANDS =============
+  else if (lowerCmd.startsWith("aws events describe-rule ")) {
+    const ruleName = lowerCmd.replace("aws events describe-rule ", "").trim();
+    output = `=== EventBridge Rule: ${ruleName} ===
+
+State: ENABLED
+Schedule: None (event-based)
+Event Pattern: IAM policy changes
+
+Targets:
+  - Lambda: notify-security
+  - SNS: security-alerts
+
+[!] WARNING: Rule appears malicious`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws events delete-rule ")) {
+    output = `=== EventBridge Rule Deleted ===
+
+[OK] Rule disabled
+[OK] Targets removed
+[OK] Rule deleted
+[OK] Audit logged
+
+Malicious persistence removed.`;
+    success = true;
+  }
+  else if (lowerCmd === "aws events create-ir-triggers") {
+    output = `=== IR Trigger Rules Created ===
+
+[OK] GuardDuty findings → IR workflow
+[OK] Security Hub findings → IR workflow
+[OK] CloudWatch alarms → IR workflow
+
+Automated incident response enabled.`;
+    success = true;
+  }
+  // ============= WAF COMMANDS =============
+  else if (lowerCmd.startsWith("aws waf add-ip-blocklist ")) {
+    output = `=== WAF IP Blocklist Updated ===
+
+[OK] IP added to blocklist
+[OK] Rule priority: 1 (highest)
+[OK] Action: BLOCK
+[OK] Applied to web ACL
+
+Malicious IP now blocked at edge.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws waf associate ") || lowerCmd.startsWith("aws waf check-association ")) {
+    output = `=== WAF Association Status ===
+
+Web ACL: production-waf
+Resources:
+  [OK] alb-web-frontend - Associated
+  [OK] cloudfront-cdn - Associated
+
+Rules Active: 12
+Requests Blocked (24h): 1,247`;
+    success = true;
+  }
+  // ============= SSM COMMANDS =============
+  else if (lowerCmd.startsWith("aws ssm get-process-logs ")) {
+    output = `=== SSM Process Logs ===
+
+Instance: analytics-server-01
+
+Recent Processes:
+  [ALERT] xmrig - Crypto miner detected
+  [ALERT] curl - Downloading from C2
+  [OK] nginx - Web server
+  [OK] node - Application
+
+Suspicious activity detected.`;
+    success = true;
+  }
+  // ============= STEP FUNCTIONS =============
+  else if (lowerCmd.startsWith("aws stepfunctions ")) {
+    output = `=== Step Functions Configuration ===
+
+[OK] IR workflow created
+[OK] Approval gates added
+[OK] Notifications configured
+[OK] Audit logging enabled
+
+Automated workflow ready.`;
+    success = true;
+  }
+  // ============= SNS/SQS COMMANDS =============
+  else if (lowerCmd === "aws sns-sqs audit-policies") {
+    output = `=== SNS/SQS Policy Audit ===
+
+Topics/Queues Analyzed: 15
+
+Issues Found:
+  [!] alerts-topic: Public access
+  [!] processing-queue: Cross-account
+  [OK] audit-logs: Properly scoped
+
+Remediation recommended.`;
+    success = true;
+  }
   // ============= SOAR COMMANDS =============
   else if (lowerCmd === "soar connect" || lowerCmd === "soar login") {
     output = `=== SOAR Platform Connected ===
