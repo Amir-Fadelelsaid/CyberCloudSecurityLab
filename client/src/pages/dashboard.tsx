@@ -53,7 +53,7 @@ export default function Dashboard() {
             Welcome back, <span className="text-white">Level {levelInfo?.level || 0} {levelInfo?.title || 'Recruit'}</span> {user?.firstName || 'Guest'}
             <span className="text-primary ml-2">
               <Award className="w-3.5 h-3.5 inline-block mr-1" />
-              {badgeCount}/19
+              {badgeCount}/23
             </span>
           </p>
         </div>

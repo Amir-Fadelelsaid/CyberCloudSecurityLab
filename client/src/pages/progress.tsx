@@ -123,7 +123,7 @@ export default function MyProgress() {
 
   const completedLabs = progress?.filter(p => p.completed) || [];
   const totalScore = progress?.reduce((acc, p) => acc + (p.score || 0), 0) || 0;
-  const totalLabs = labs?.length || 81;
+  const totalLabs = labs?.length || 97;
 
   const categoryStats = labs?.reduce((acc, lab) => {
     const completed = progress?.some(p => p.labId === lab.id && p.completed);

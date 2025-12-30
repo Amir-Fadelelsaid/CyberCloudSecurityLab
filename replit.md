@@ -43,7 +43,7 @@ Preferred communication style: Simple, everyday language.
 - **Terminal Simulation**: Server-side command processor simulates AWS CLI responses without real cloud resources
 - **Resource State Management**: Labs have mutable resource states that change from "vulnerable" to "fixed" as users complete remediation steps
 - **Leveling System**: Dynamic user levels (Recruit to Elite Defender) based on completed lab count
-- **Badge System**: 19 unlockable badges across Level, Category, and Achievement types
+- **Badge System**: 23 unlockable badges across Level, Category, and Achievement types
 
 ### Build System
 - **Development**: Vite dev server with HMR, proxies API requests to Express
