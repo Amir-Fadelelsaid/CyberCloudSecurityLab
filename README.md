@@ -413,7 +413,7 @@ We welcome contributions! Please:
 - [x] Security framework mappings (MITRE ATT&CK, CIS Controls, AWS Well-Architected)
 - [x] Hiring Manager / Recruiter demonstration page
 - [x] Dynamic leveling system (Recruit to Elite Defender, plus Challenge Master)
-- [x] 23 unlockable badges (Level, Category, Achievement)
+- [x] 24 unlockable badges (Level, Category, Achievement)
 - [x] Hideable guide panel for self-challenge mode
 - [x] Live leaderboard with real-time WebSocket updates
 - [x] Enterprise SOC simulation dashboard (SIEM, logs, detections, cases)
