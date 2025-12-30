@@ -1102,6 +1102,580 @@ Your progress has been recorded.`;
   }
   // ============= SOC SIMULATION COMMANDS =============
   // SIEM Commands
+  else if (lowerCmd === "siem connect" || lowerCmd === "siem login") {
+    output = `=== SIEM Console Connection ===
+
+[OK] Authenticating to CloudShield SIEM...
+[OK] Loading user profile: soc-analyst-01
+[OK] Fetching dashboard configuration...
+[OK] Synchronizing alert queue...
+
+Connected to SIEM Dashboard
+  Workspace: Production SOC
+  Role: Tier 1 Analyst
+  Alert Queue: 5 pending alerts
+  Last Login: ${new Date(Date.now() - 86400000).toISOString()}
+
+Quick Actions:
+  siem list-rules     - View detection rules
+  siem alerts         - View alert queue
+  siem list-sources   - Check log sources`;
+    success = true;
+  }
+  else if (lowerCmd === "siem list-rules" || lowerCmd === "siem rules") {
+    output = `=== Detection Rules ===
+
+ACTIVE RULES (12):
+  [CRIT] R001 | Unauthorized Root Login
+         Trigger: root console login from new IP
+         Last Hit: 2h ago | Hits (24h): 3
+         
+  [HIGH] R002 | Failed Login Spike
+         Trigger: >5 failed logins in 5 minutes
+         Last Hit: 15m ago | Hits (24h): 7
+         
+  [HIGH] R003 | S3 Public Access Enabled
+         Trigger: bucket ACL set to public
+         Last Hit: 1d ago | Hits (24h): 1
+         
+  [MED]  R004 | Security Group Modified
+         Trigger: 0.0.0.0/0 ingress rule added
+         Last Hit: 3h ago | Hits (24h): 4
+         
+  [MED]  R005 | IAM Policy Attached
+         Trigger: Admin policy attached to user
+         Last Hit: 6h ago | Hits (24h): 2
+
+  ... and 7 more rules
+
+Commands:
+  siem create-rule <name>  - Create new detection rule
+  siem test-rule <name>    - Test rule against historical data`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem create-rule ")) {
+    const ruleName = lowerCmd.replace("siem create-rule ", "").trim();
+    output = `=== Creating Detection Rule: ${ruleName} ===
+
+[OK] Rule template initialized
+[OK] Setting trigger conditions...
+[OK] Configuring alert severity: HIGH
+[OK] Adding MITRE ATT&CK mapping: T1110
+
+Rule Created Successfully:
+  Name: ${ruleName}
+  Status: ACTIVE
+  Severity: HIGH
+  
+Trigger Conditions:
+  - Event type: Failed authentication
+  - Threshold: 5+ events
+  - Time window: 5 minutes
+  - Source: Any
+  
+Actions:
+  - Generate alert
+  - Notify SOC queue
+  - Log to audit trail
+
+Rule is now monitoring for matches.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem test-rule ")) {
+    const ruleName = lowerCmd.replace("siem test-rule ", "").trim().split(" ")[0];
+    output = `=== Testing Rule: ${ruleName} ===
+
+Running against historical data (30 days)...
+
+Results:
+  Total Matches: 147
+  True Positives: 89 (60.5%)
+  False Positives: 58 (39.5%)
+  
+Sample Matches:
+  [MATCH] 2024-01-15 03:22:15 - 8 failed logins from 45.33.22.11
+  [MATCH] 2024-01-14 14:55:02 - 12 failed logins from 192.168.1.50
+  [MATCH] 2024-01-12 22:10:33 - 6 failed logins from 10.0.0.15
+
+Recommendations:
+  - Consider increasing threshold to reduce false positives
+  - Add IP whitelist for internal testing systems
+  - Enable account lockout correlation`;
+    success = true;
+  }
+  else if (lowerCmd === "siem show-alerts --status pending" || lowerCmd === "siem pending-alerts") {
+    output = `=== Pending Alerts ===
+
+[CRIT] ALT-001 | API Key Abuse | 2m ago
+[HIGH] ALT-002 | S3 Policy Change | 5m ago  
+[HIGH] ALT-003 | EC2 Cryptomining | 10m ago
+[MED]  ALT-004 | Brute Force | 15m ago
+[MED]  ALT-005 | SG Rule Added | 20m ago
+
+Total Pending: 5 | Avg Age: 10.4 minutes
+SLA Status: 4 within SLA, 1 approaching breach`;
+    success = true;
+  }
+  else if (lowerCmd === "siem show-severity-config" || lowerCmd === "siem severity-config") {
+    output = `=== Severity Configuration ===
+
+CRITICAL:
+  SLA: 15 minutes
+  Notification: PagerDuty + Slack + Email
+  Auto-escalate: After 10 minutes
+  
+HIGH:
+  SLA: 1 hour
+  Notification: Slack + Email
+  Auto-escalate: After 45 minutes
+  
+MEDIUM:
+  SLA: 4 hours
+  Notification: Email
+  Auto-escalate: After 3 hours
+  
+LOW:
+  SLA: 24 hours
+  Notification: Daily digest
+  Auto-escalate: Never`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem fix-severity ") || lowerCmd === "siem configure-alert-severity") {
+    output = `=== Severity Configuration Updated ===
+
+[OK] Critical alerts: PagerDuty notification enabled
+[OK] High alerts: 1-hour SLA enforced
+[OK] Auto-escalation rules configured
+[OK] Notification channels verified
+
+Severity matrix aligned with incident response playbook.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem configure-alert-routing" || lowerCmd.startsWith("siem configure-alert-routing ")) {
+    output = `=== Alert Routing Configuration ===
+
+[OK] Critical -> Tier 2 + On-call
+[OK] High -> Tier 1 Queue
+[OK] Medium -> Tier 1 Queue (batched)
+[OK] Low -> Daily Review Queue
+
+Per-tenant routing (if applicable):
+[OK] Tenant alerts route to dedicated queues
+[OK] SLA tracking per tenant enabled
+
+Alert routing configuration complete.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem create-detection-rules") {
+    output = `=== Detection Rules Created ===
+
+Created 15 detection rules mapped to MITRE ATT&CK:
+
+Initial Access:
+  [OK] T1078 - Valid Accounts (Unusual login location)
+  [OK] T1190 - Exploit Public-Facing Application
+  
+Persistence:
+  [OK] T1098 - Account Manipulation
+  [OK] T1136 - Create Account
+  
+Privilege Escalation:
+  [OK] T1484 - Domain Policy Modification
+  
+Defense Evasion:
+  [OK] T1562 - Impair Defenses (CloudTrail disabled)
+  
+Credential Access:
+  [OK] T1110 - Brute Force
+  [OK] T1552 - Unsecured Credentials
+  
+Exfiltration:
+  [OK] T1537 - Transfer Data to Cloud Account
+  
+All rules are now active and monitoring.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem create-investigation-dashboards") {
+    output = `=== Investigation Dashboards Created ===
+
+[OK] SOC Overview Dashboard
+     - Alert volume trends
+     - MTTR metrics
+     - Analyst workload
+     
+[OK] Threat Hunting Dashboard
+     - Anomaly detection
+     - IOC matches
+     - Behavioral analytics
+     
+[OK] Incident Timeline Dashboard
+     - Event correlation view
+     - Attack chain visualization
+     - Evidence collection
+
+[OK] Compliance Dashboard
+     - SLA adherence
+     - Alert closure rates
+     - False positive trends
+
+Dashboards available in SIEM console.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem tune-detection-rules") {
+    output = `=== Detection Rule Tuning ===
+
+Analyzing alert patterns from past 30 days...
+
+Tuning Recommendations Applied:
+  [OK] R002 - Increased threshold from 5 to 10 failed logins
+       Reason: High false positives from automated testing
+       Expected FP reduction: 45%
+       
+  [OK] R004 - Added exclusion for known admin IPs
+       Reason: Legitimate security team testing
+       Expected FP reduction: 30%
+       
+  [OK] R007 - Reduced time window from 1h to 15m
+       Reason: Improve detection latency
+       
+Results:
+  Rules tuned: 8
+  Expected FP reduction: 35%
+  Detection coverage: Maintained`;
+    success = true;
+  }
+  else if (lowerCmd === "siem analyze-attack-coverage" || lowerCmd === "siem attack-coverage") {
+    output = `=== MITRE ATT&CK Coverage Analysis ===
+
+Tactics Coverage:
+  Initial Access:       ████████░░ 80%
+  Execution:            ██████░░░░ 60%
+  Persistence:          █████████░ 90%
+  Privilege Escalation: ████████░░ 80%
+  Defense Evasion:      ██████░░░░ 60%
+  Credential Access:    █████████░ 90%
+  Discovery:            ████░░░░░░ 40%
+  Lateral Movement:     █████░░░░░ 50%
+  Collection:           ████░░░░░░ 40%
+  Exfiltration:         ████████░░ 80%
+  Impact:               ███████░░░ 70%
+
+Overall Coverage: 67%
+
+Gaps Identified:
+  [!] T1046 - Network Service Scanning (no VPC flow analysis)
+  [!] T1087 - Account Discovery (limited IAM monitoring)
+  [!] T1083 - File and Directory Discovery (no endpoint agent)`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem correlate-logs ")) {
+    output = `=== Log Correlation Results ===
+
+Correlated Events (Last 24h):
+  CloudTrail + VPC Flow Logs + CloudWatch
+
+Timeline:
+  [03:15:22] Suspicious API call from 198.51.100.45
+  [03:15:24] VPC flow: Connection to 10.0.1.50:22
+  [03:15:30] CloudWatch: CPU spike on i-0abc123
+  [03:15:45] API: DescribeInstances from same IP
+  [03:16:02] VPC flow: Outbound 443 to external IP
+
+Correlation Analysis:
+  Pattern: Reconnaissance -> Access -> Execution
+  Confidence: 87%
+  MITRE Chain: T1595 -> T1190 -> T1059
+
+Recommended Actions:
+  1. Isolate affected instance
+  2. Block source IP
+  3. Review compromised credentials`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem analyze-pattern ")) {
+    const pattern = lowerCmd.replace("siem analyze-pattern ", "").trim();
+    output = `=== Pattern Analysis: ${pattern} ===
+
+Pattern detected in last 7 days:
+  Occurrences: 23
+  Affected Resources: 8
+  Success Rate: 35%
+
+Behavioral Indicators:
+  - Unusual timing (off-hours activity)
+  - Geographic anomalies
+  - Privilege escalation attempts
+  
+Associated MITRE Techniques:
+  T1021 - Remote Services
+  T1570 - Lateral Tool Transfer
+  T1018 - Remote System Discovery
+
+Risk Assessment: HIGH
+Recommendation: Implement network segmentation`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem create-correlation ")) {
+    const chainName = lowerCmd.replace("siem create-correlation ", "").trim();
+    output = `=== Correlation Rule Created: ${chainName} ===
+
+[OK] Rule ${chainName} created
+[OK] Event chain configured
+[OK] Time window: 5 minutes (default)
+[OK] Severity: HIGH
+
+Use 'siem set-window ${chainName} <seconds>' to adjust timing.
+Use 'siem add-chain-event ${chainName} <event>' to add events.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem set-window ")) {
+    const parts = lowerCmd.replace("siem set-window ", "").trim().split(" ");
+    output = `=== Time Window Updated ===
+
+Correlation: ${parts[0]}
+New Window: ${parts[1] || '300s'}
+
+Configuration applied.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem add-chain-event ")) {
+    const parts = lowerCmd.replace("siem add-chain-event ", "").trim().split(" ");
+    output = `=== Chain Event Added ===
+
+Correlation: ${parts[0]}
+Added Event: ${parts[1] || 'event'}
+
+Chain now monitors for this event sequence.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem generate-triage-report") || lowerCmd === "siem triage-report") {
+    output = `=== Triage Report Generated ===
+
+Report ID: TR-${Date.now().toString(36).toUpperCase()}
+Generated: ${new Date().toISOString()}
+
+Summary:
+  Total Alerts Analyzed: 47
+  Confirmed Incidents: 3
+  False Positives: 12
+  Pending Review: 32
+
+Key Findings:
+  1. Credential compromise detected (P1)
+  2. Data exfiltration attempt blocked
+  3. Cryptomining on EC2 instance
+
+Report exported to: /reports/triage-${new Date().toISOString().split('T')[0]}.pdf`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem investigate-alert ")) {
+    const alertId = lowerCmd.replace("siem investigate-alert ", "").trim();
+    output = `=== Alert Investigation: ${alertId} ===
+
+Status: Under Investigation
+Analyst: Current User
+Started: ${new Date().toISOString()}
+
+Evidence Collected:
+  - CloudTrail logs (47 events)
+  - VPC Flow logs (1,234 flows)
+  - GuardDuty findings (2 related)
+
+Timeline constructed. See 'siem gather-related-alerts' for context.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem gather-related-alerts")) {
+    output = `=== Related Alerts ===
+
+Primary Alert: ALT-001
+Time Window: ±30 minutes
+
+Related Alerts Found (3):
+  [HIGH] ALT-007 - Same source IP
+  [MED]  ALT-012 - Same target resource
+  [MED]  ALT-015 - Same user account
+
+Correlation Score: 89%
+Attack Chain Probability: HIGH`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem validate-alert ")) {
+    const parts = lowerCmd.replace("siem validate-alert ", "").trim();
+    output = `=== Alert Validation ===
+
+Alert validated as: FALSE POSITIVE
+Reason: Normal automation activity
+Analyst: Current User
+
+[OK] Alert closed
+[OK] Tuning recommendation created
+[OK] Similar future alerts will be auto-suppressed`;
+    success = true;
+  }
+  // Multi-tenant SIEM commands
+  else if (lowerCmd === "siem design-tenant-schema") {
+    output = `=== Multi-Tenant Schema Design ===
+
+[OK] Tenant isolation model: Index-per-tenant
+[OK] Naming convention: {tenant_id}_{log_type}_{date}
+[OK] Retention policy: Per-tenant configurable
+[OK] Access control: RBAC with tenant scoping
+
+Schema ready for implementation.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem configure-isolation ")) {
+    output = `=== Data Isolation Configured ===
+
+[OK] Index-level isolation enabled
+[OK] Query filters enforced
+[OK] Cross-tenant queries blocked
+[OK] Audit logging for all access
+
+Data isolation verified.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem configure-rbac ")) {
+    output = `=== RBAC Configuration ===
+
+[OK] Tenant admin role created
+[OK] Tenant analyst role created
+[OK] Tenant viewer role created
+[OK] Permission boundaries enforced
+
+Role-based access control active.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem create-tenant-dashboards") {
+    output = `=== Tenant Dashboards Created ===
+
+[OK] Tenant overview dashboard
+[OK] Tenant security posture
+[OK] Tenant-specific alerts
+[OK] Custom report templates
+
+Dashboards available per tenant.`;
+    success = true;
+  }
+  else if (lowerCmd === "siem configure-rate-limits") {
+    output = `=== Rate Limits Configured ===
+
+[OK] Query rate: 100/minute per tenant
+[OK] Ingestion rate: 10,000 events/second
+[OK] Storage quota: Per-tenant limits
+[OK] Alert throttling: Enabled
+
+Noisy neighbor protection active.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem onboard-tenant ")) {
+    const tenant = lowerCmd.replace("siem onboard-tenant ", "").trim();
+    output = `=== Tenant Onboarded: ${tenant} ===
+
+[OK] Tenant ID created: ${tenant}
+[OK] Indexes provisioned
+[OK] RBAC configured
+[OK] Dashboards deployed
+[OK] Welcome email sent
+
+Tenant ${tenant} is ready for log ingestion.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem test-isolation ")) {
+    const tenant = lowerCmd.replace("siem test-isolation ", "").trim();
+    output = `=== Isolation Test: ${tenant} ===
+
+Running cross-tenant access tests...
+
+[PASS] Direct query blocked: tenant-b indexes
+[PASS] API access denied: other tenant data
+[PASS] Dashboard isolation verified
+[PASS] Search results filtered correctly
+
+All isolation tests passed for ${tenant}.`;
+    success = true;
+  }
+  // Alert tuning commands
+  else if (lowerCmd.startsWith("siem sample-alerts ")) {
+    output = `=== Alert Samples ===
+
+Sampling 20 alerts from rule...
+
+Sample Results:
+  True Positives: 8 (40%)
+  False Positives: 12 (60%)
+  
+Common False Positive Patterns:
+  - Automated backup processes
+  - CI/CD pipeline activity
+  - Monitoring health checks
+
+Recommendation: Create exclusions for known-good patterns.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem analyze-alert-pattern ")) {
+    output = `=== Alert Pattern Analysis ===
+
+Analyzing false positive patterns...
+
+Identified Patterns:
+  1. Service account automation (45%)
+  2. Scheduled tasks (30%)
+  3. Monitoring systems (25%)
+
+Suggested Exclusions:
+  - Source: svc-automation@company.com
+  - Time: 02:00-04:00 (maintenance window)
+  - IP: Internal monitoring subnet`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem identify-exclusions ")) {
+    output = `=== Exclusion Candidates ===
+
+Based on historical analysis:
+
+Recommended Exclusions:
+  [1] Source IP: 10.0.0.0/8 (internal network)
+      Reduction: ~35% false positives
+      
+  [2] User: svc-* (service accounts)
+      Reduction: ~25% false positives
+      
+  [3] Time: Maintenance windows
+      Reduction: ~15% false positives
+
+Total expected FP reduction: 60%`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem create-tuning-proposal ")) {
+    output = `=== Tuning Proposal Created ===
+
+Proposal ID: TP-${Date.now().toString(36).toUpperCase()}
+
+Changes:
+  - Add 3 exclusion patterns
+  - Increase threshold from 5 to 10
+  - Add time-based suppression
+
+Expected Impact:
+  - FP reduction: 60%
+  - Detection rate: Maintained
+  
+Use 'siem deploy-tuning <rule>' to apply.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("siem deploy-tuning ")) {
+    const ruleName = lowerCmd.replace("siem deploy-tuning ", "").trim();
+    output = `=== Tuning Deployed: ${ruleName} ===
+
+[OK] Exclusion patterns applied
+[OK] Thresholds updated
+[OK] Rule recompiled
+[OK] Historical validation passed
+
+Tuning is now active.`;
+    success = true;
+  }
   else if (lowerCmd === "siem list-sources" || lowerCmd === "siem list source" || lowerCmd === "siem sources") {
     output = `=== Integrated Log Sources ===
 
@@ -2219,6 +2793,408 @@ MITRE ATT&CK T1098: Account Manipulation - MITIGATED`;
   else if (lowerCmd.startsWith("aws siem get-alert ")) {
     const alertId = lowerCmd.replace("aws siem get-alert ", "").trim();
     output = `=== Alert Details: ${alertId} ===\n\nTitle: Large Outbound Data Transfer\nSeverity: HIGH\nCategory: Data Exfiltration\nMITRE ATT&CK: T1048 - Exfiltration Over Alternative Protocol\n\nSource: analytics-server-01 (10.0.4.55)\nDestination: 185.220.101.42\nData Transferred: 47 GB\nDuration: 6 hours\n\nRecommended Actions:\n  1. Isolate affected server\n  2. Block destination IP\n  3. Analyze transferred data types`;
+  }
+  // ============= SOAR COMMANDS =============
+  else if (lowerCmd === "soar connect" || lowerCmd === "soar login") {
+    output = `=== SOAR Platform Connected ===
+
+[OK] Authenticating to CloudShield SOAR...
+[OK] Loading playbook library...
+[OK] Synchronizing case management...
+
+Connected to SOAR Dashboard
+  Active Playbooks: 12
+  Pending Cases: 3
+  Automation Rate: 78%
+
+Available Commands:
+  soar show-workflow <name>  - View playbook workflow
+  soar create-playbook <name> - Create new playbook
+  soar activate <name>       - Activate playbook`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("soar show-workflow ")) {
+    const playbook = lowerCmd.replace("soar show-workflow ", "").trim();
+    output = `=== Playbook Workflow: ${playbook} ===
+
+Steps:
+  1. [TRIGGER] Alert received from SIEM
+  2. [ENRICH] Lookup IP reputation
+  3. [ENRICH] Check user risk score
+  4. [DECIDE] If malicious -> quarantine
+  5. [ACTION] Block source IP
+  6. [ACTION] Reset user credentials
+  7. [NOTIFY] Alert SOC analyst
+  8. [CLOSE] Update ticket status
+
+Automation Level: Semi-automated
+Requires Approval: Steps 4, 6
+Average Runtime: 3 minutes`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("soar create-playbook ")) {
+    const name = lowerCmd.replace("soar create-playbook ", "").trim();
+    output = `=== Playbook Created: ${name} ===
+
+[OK] Playbook template initialized
+[OK] Default triggers configured
+[OK] Action library linked
+
+Playbook: ${name}
+Status: DRAFT
+Steps: 0
+
+Use 'soar add-step ${name} <action>' to add steps.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("soar add-step ")) {
+    const parts = lowerCmd.replace("soar add-step ", "").trim().split(" ");
+    const playbook = parts[0];
+    const step = parts.slice(1).join(" ") || "action";
+    output = `=== Step Added to ${playbook} ===
+
+[OK] Step added: ${step}
+[OK] Workflow updated
+
+Current steps in ${playbook}:
+  1. ${step}
+
+Use 'soar activate ${playbook}' when ready.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("soar activate ")) {
+    const name = lowerCmd.replace("soar activate ", "").trim();
+    output = `=== Playbook Activated: ${name} ===
+
+[OK] Validation passed
+[OK] Triggers armed
+[OK] Monitoring active
+
+Playbook ${name} is now LIVE.
+It will automatically respond to matching alerts.`;
+    success = true;
+  }
+  // ============= THREAT INTEL COMMANDS =============
+  else if (lowerCmd === "threat-intel list-feeds" || lowerCmd === "threatintel list-feeds") {
+    output = `=== Threat Intelligence Feeds ===
+
+ACTIVE FEEDS:
+  [OK] MISP Community Feed    - 45,231 IOCs
+  [OK] AlienVault OTX         - 128,456 IOCs
+  [OK] Abuse.ch URLhaus       - 12,890 URLs
+  [OK] EmergingThreats        - 8,456 rules
+
+AVAILABLE:
+  [ ] VirusTotal Premium     - Requires API key
+  [ ] Recorded Future        - Enterprise license
+  [ ] ThreatConnect          - Not configured
+
+Last Sync: ${new Date(Date.now() - 3600000).toISOString()}
+Next Sync: ${new Date(Date.now() + 3600000).toISOString()}`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("threat-intel configure ") || lowerCmd.startsWith("threatintel configure ")) {
+    const feed = lowerCmd.replace("threat-intel configure ", "").replace("threatintel configure ", "").trim();
+    output = `=== Configuring Feed: ${feed} ===
+
+[OK] Feed endpoint validated
+[OK] Authentication configured
+[OK] Sync schedule set (hourly)
+[OK] IOC types: IP, Domain, Hash, URL
+
+Feed ${feed} is now configured and syncing.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("threat-intel status ") || lowerCmd.startsWith("threatintel status ")) {
+    const feed = lowerCmd.replace("threat-intel status ", "").replace("threatintel status ", "").trim();
+    output = `=== Feed Status: ${feed} ===
+
+Status: HEALTHY
+Last Sync: ${new Date(Date.now() - 3600000).toISOString()}
+IOCs Loaded: 45,231
+Match Rate: 0.3%
+False Positive Rate: 2.1%`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("threat-intel analyze ") || lowerCmd.startsWith("threatintel analyze ")) {
+    const feed = lowerCmd.replace("threat-intel analyze ", "").replace("threatintel analyze ", "").trim();
+    output = `=== Feed Analysis: ${feed} ===
+
+IOC Distribution:
+  IP Addresses:  45% (20,354)
+  Domains:       30% (13,569)
+  File Hashes:   20% (9,046)
+  URLs:          5%  (2,262)
+
+Threat Categories:
+  Malware C2:    35%
+  Phishing:      25%
+  Botnets:       20%
+  Ransomware:    15%
+  Other:         5%
+
+Quality Score: 87/100`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("threat-intel create-alerts ") || lowerCmd.startsWith("threatintel create-alerts ")) {
+    const feed = lowerCmd.replace("threat-intel create-alerts ", "").replace("threatintel create-alerts ", "").trim();
+    output = `=== Alert Rules Created for ${feed} ===
+
+[OK] IP match -> HIGH alert
+[OK] Domain match -> MEDIUM alert
+[OK] Hash match -> CRITICAL alert
+[OK] URL match -> MEDIUM alert
+
+Rules active and monitoring traffic.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("threat-intel enable-matching ") || lowerCmd.startsWith("threatintel enable-matching ")) {
+    const feed = lowerCmd.replace("threat-intel enable-matching ", "").replace("threatintel enable-matching ", "").trim();
+    output = `=== IOC Matching Enabled for ${feed} ===
+
+[OK] Real-time matching active
+[OK] Log sources connected
+[OK] Alert pipeline configured
+
+IOC matching is now live for ${feed}.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("threatintel lookup-ip ")) {
+    const ip = lowerCmd.replace("threatintel lookup-ip ", "").trim();
+    output = `=== Threat Intel Lookup: ${ip} ===
+
+Reputation: MALICIOUS
+Confidence: 95%
+Category: Known C2 Infrastructure
+
+Sources:
+  [HIT] AlienVault OTX - APT-29 campaign
+  [HIT] Abuse.ch - Malware distribution
+  [HIT] EmergingThreats - Active C2
+
+First Seen: 2024-06-15
+Last Seen: ${new Date().toISOString().split('T')[0]}
+Reports: 1,247
+
+[!] HIGH RISK - Recommend blocking immediately`;
+    success = true;
+  }
+  // ============= THREAT HUNTING COMMANDS =============
+  else if (lowerCmd === "hunt create-hypothesis" || lowerCmd === "hunt hypothesis") {
+    output = `=== Threat Hunt Hypothesis ===
+
+Creating hypothesis based on threat intelligence...
+
+Hypothesis: Adversary has compromised cloud credentials and is 
+exfiltrating data via S3.
+
+Indicators to Hunt:
+  1. Unusual S3 API calls from new IPs
+  2. Large data transfers outside business hours
+  3. Access to sensitive buckets by non-standard users
+  4. AssumeRole from unknown locations
+
+MITRE ATT&CK Techniques:
+  T1078.004 - Cloud Accounts
+  T1530 - Data from Cloud Storage Object
+  T1537 - Transfer Data to Cloud Account
+
+Use 'hunt select-techniques cloud' to proceed.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("hunt select-techniques ")) {
+    const category = lowerCmd.replace("hunt select-techniques ", "").trim();
+    output = `=== Selected Techniques: ${category} ===
+
+Cloud-specific techniques selected:
+
+[X] T1078.004 - Cloud Accounts
+    Hunt for: Unusual login locations, time anomalies
+    
+[X] T1530 - Data from Cloud Storage Object
+    Hunt for: Bulk S3 GetObject from new principals
+    
+[X] T1525 - Implant Internal Image
+    Hunt for: Modified AMIs, container images
+    
+[X] T1537 - Transfer Data to Cloud Account
+    Hunt for: Cross-account data copies
+
+Use 'hunt build-queries T1078.004 T1530 T1525' to create queries.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("hunt build-queries ")) {
+    output = `=== Hunt Queries Built ===
+
+Generated queries for selected techniques:
+
+Query 1 (T1078.004):
+  SELECT * FROM cloudtrail_logs 
+  WHERE eventName = 'ConsoleLogin'
+  AND sourceIPAddress NOT IN (known_ips)
+  
+Query 2 (T1530):
+  SELECT * FROM cloudtrail_logs
+  WHERE eventName = 'GetObject'
+  GROUP BY userIdentity.arn
+  HAVING count(*) > 1000
+
+Query 3 (T1525):
+  SELECT * FROM cloudtrail_logs
+  WHERE eventName IN ('RegisterImage', 'PushImage')
+
+Use 'hunt execute T1078.004' to run queries.`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("hunt execute ")) {
+    const technique = lowerCmd.replace("hunt execute ", "").trim();
+    output = `=== Hunt Execution: ${technique} ===
+
+Running hunt query...
+
+Results Found: 23 events
+
+Suspicious Findings:
+  [!] 5 console logins from Tor exit nodes
+  [!] 3 API calls from new geographic locations
+  [!] 8 bulk S3 downloads after hours
+  [!] 7 AssumeRole from unusual principals
+
+Confidence: MEDIUM-HIGH (67%)
+
+Use 'hunt analyze-results' to investigate.`;
+    success = true;
+  }
+  else if (lowerCmd === "hunt analyze-results") {
+    output = `=== Hunt Results Analysis ===
+
+Aggregating findings across techniques...
+
+Timeline:
+  2024-01-15 03:00 - Unusual ConsoleLogin (T1078)
+  2024-01-15 03:15 - Bulk S3 GetObject (T1530)
+  2024-01-15 03:45 - Cross-region data copy (T1537)
+
+Attack Chain Identified:
+  Initial Access -> Data Collection -> Exfiltration
+
+Affected Resources:
+  - IAM User: compromised-admin
+  - S3 Buckets: customer-data, financial-reports
+  - Estimated Data: 2.3 TB
+
+Risk: CRITICAL
+
+Use 'hunt investigate-findings' for deep dive.`;
+    success = true;
+  }
+  else if (lowerCmd === "hunt investigate-findings") {
+    output = `=== Findings Investigation ===
+
+Deep dive on suspicious items...
+
+Finding 1: Compromised Credentials
+  Evidence: Login from known Tor exit node
+  User: compromised-admin
+  Verdict: TRUE POSITIVE
+  
+Finding 2: Data Exfiltration
+  Evidence: 2.3 TB transferred to external account
+  Timeframe: 03:00-05:00 UTC
+  Verdict: TRUE POSITIVE
+  
+Finding 3: Persistence Attempt
+  Evidence: New IAM user created with admin rights
+  User: backdoor-user
+  Verdict: TRUE POSITIVE
+
+Escalating to Incident Response.`;
+    success = true;
+  }
+  else if (lowerCmd === "hunt document-findings") {
+    output = `=== Hunt Documentation ===
+
+Recording findings...
+
+Hunt ID: HNT-${Date.now().toString(36).toUpperCase()}
+Date: ${new Date().toISOString()}
+Analyst: Current User
+
+Findings Documented:
+  - 3 True Positives
+  - 0 False Positives
+  - Attack chain confirmed
+
+Evidence preserved in case file.
+Handoff to IR team complete.`;
+    success = true;
+  }
+  else if (lowerCmd === "hunt create-detections") {
+    output = `=== Detection Rules Created ===
+
+Converting hunt findings to detections...
+
+[OK] Rule: Unusual ConsoleLogin Location
+     Technique: T1078.004
+     Severity: HIGH
+     
+[OK] Rule: Bulk S3 Data Access
+     Technique: T1530
+     Severity: CRITICAL
+     
+[OK] Rule: Cross-Account Data Transfer
+     Technique: T1537
+     Severity: CRITICAL
+
+3 new detection rules deployed.
+Future attacks using these techniques will be caught automatically.`;
+    success = true;
+  }
+  else if (lowerCmd === "hunt generate-report") {
+    output = `=== Threat Hunt Report Generated ===
+
+Report ID: THR-${Date.now().toString(36).toUpperCase()}
+
+Executive Summary:
+  Hunt Duration: 2 hours
+  Techniques Hunted: 3
+  Findings: 3 confirmed compromises
+  
+Key Discoveries:
+  1. Active data exfiltration detected
+  2. Compromised admin credentials identified
+  3. Persistence mechanism discovered
+  
+Remediation Status:
+  - Credentials rotated
+  - Backdoor user removed
+  - Data transfer blocked
+  
+Recommendations:
+  1. Implement stronger MFA
+  2. Enable CloudTrail data events
+  3. Deploy SIEM correlation rules
+
+Report exported to: /reports/threat-hunt-${new Date().toISOString().split('T')[0]}.pdf`;
+    success = true;
+  }
+  else if (lowerCmd === "hunt search-iocs") {
+    output = `=== IOC Search Results ===
+
+Searching for known indicators...
+
+Matches Found:
+  [HIT] IP 198.51.100.45 - Known C2 infrastructure
+  [HIT] IP 185.220.101.42 - Tor exit node
+  [HIT] Domain: evil-exfil.com - Data staging
+  
+No Matches:
+  [ ] File hashes - No malware detected
+  [ ] Email addresses - No phishing indicators
+
+2 high-confidence IOC matches found.
+Recommend immediate investigation.`;
+    success = true;
   }
   // Unknown command
   else {
