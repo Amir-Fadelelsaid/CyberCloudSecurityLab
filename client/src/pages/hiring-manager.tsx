@@ -81,92 +81,92 @@ export default function HiringManager() {
           </Card>
 
           <div className="grid md:grid-cols-4 lg:grid-cols-7 gap-3">
-            <Card className="bg-card/50 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 border-primary/20 text-center">
+              <CardHeader className="pb-2 flex flex-col items-center">
                 <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Database className="w-4 h-4 text-teal-400" />
                   Storage Security
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="flex flex-col items-center">
                 <p className="text-2xl font-bold text-white">11</p>
                 <p className="text-xs text-muted-foreground">S3, encryption</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/50 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 border-primary/20 text-center">
+              <CardHeader className="pb-2 flex flex-col items-center">
                 <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Network className="w-4 h-4 text-blue-400" />
                   Network Security
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="flex flex-col items-center">
                 <p className="text-2xl font-bold text-white">16</p>
                 <p className="text-xs text-muted-foreground">VPC, SGs, WAF</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/50 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 border-primary/20 text-center">
+              <CardHeader className="pb-2 flex flex-col items-center">
                 <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Eye className="w-4 h-4 text-violet-400" />
                   SOC Operations
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="flex flex-col items-center">
                 <p className="text-2xl font-bold text-white">11</p>
                 <p className="text-xs text-muted-foreground">CloudTrail, alerts</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/50 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 border-primary/20 text-center">
+              <CardHeader className="pb-2 flex flex-col items-center">
                 <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Activity className="w-4 h-4 text-orange-400" />
                   SOC Engineer
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="flex flex-col items-center">
                 <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">SIEM, SOAR</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/50 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 border-primary/20 text-center">
+              <CardHeader className="pb-2 flex flex-col items-center">
                 <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Cloud className="w-4 h-4 text-cyan-400" />
                   Cloud Security Analyst
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="flex flex-col items-center">
                 <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">CSPM, compliance</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/50 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 border-primary/20 text-center">
+              <CardHeader className="pb-2 flex flex-col items-center">
                 <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Users className="w-4 h-4 text-yellow-400" />
                   IAM Security
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="flex flex-col items-center">
                 <p className="text-2xl font-bold text-white">15</p>
                 <p className="text-xs text-muted-foreground">Roles, policies, MFA</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-card/50 border-primary/20">
-              <CardHeader className="pb-2">
+            <Card className="bg-card/50 border-primary/20 text-center">
+              <CardHeader className="pb-2 flex flex-col items-center">
                 <CardTitle className="flex items-center justify-center gap-2 text-sm">
                   <Shield className="w-4 h-4 text-rose-400" />
                   Cloud Security Engineer
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="flex flex-col items-center">
                 <p className="text-2xl font-bold text-white">12</p>
                 <p className="text-xs text-muted-foreground">Security Hub, IaC</p>
               </CardContent>
@@ -459,7 +459,7 @@ export default function HiringManager() {
 
           <div className="text-center space-y-4">
             <p className="text-muted-foreground text-sm">
-              Built by Amir Fadelelsaid - SOC Analyst & Cloud Security Professional
+              Built by Amir Fadelelsaid - SOC Professional & Cloud Security Enthusiast
             </p>
             <div className="flex justify-center gap-4">
               <a href="https://cloudshieldlab.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">

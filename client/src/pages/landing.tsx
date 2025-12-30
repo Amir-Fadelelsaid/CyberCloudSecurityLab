@@ -190,7 +190,7 @@ export default function Landing() {
       {/* Footer with Credit */}
       <footer className="relative z-10 container mx-auto px-6 py-8 text-center border-t border-white/10">
         <p className="text-sm text-muted-foreground font-mono">
-          Created by <span className="text-primary font-medium">Amir Fadelelsaid</span> - SOC Analyst & Cloud Security Professional
+          Created by <span className="text-primary font-medium">Amir Fadelelsaid</span> - SOC Professional & Cloud Security Enthusiast
         </p>
       </footer>
     </div>
