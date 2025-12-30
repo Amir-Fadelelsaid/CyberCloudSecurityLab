@@ -44,6 +44,10 @@ Preferred communication style: Simple, everyday language.
 - **Resource State Management**: Labs have mutable resource states that change from "vulnerable" to "fixed" as users complete remediation steps
 - **Leveling System**: Dynamic user levels (Recruit to Elite Defender) based on completed lab count
 - **Badge System**: 23 unlockable badges across Level, Category, and Achievement types
+- **Beginner Learning Support**: 
+  - Redesigned Intel tab with clear "Mission Briefing", "Your Goal", and "What You'll Learn" sections
+  - Step completion feedback explains what users accomplished and why it matters (Beginner labs only)
+  - Learning objectives displayed for each lab to set expectations
 
 ### Build System
 - **Development**: Vite dev server with HMR, proxies API requests to Express
