@@ -33,7 +33,90 @@ export function broadcastLeaderboardUpdate() {
   });
 }
 
-// Generic command handler for fixing resources
+// Remediation verification details by resource type
+const getRemediationDetails = (resourceType: string, resourceName: string, config: Record<string, any>): string => {
+  const details: Record<string, string[]> = {
+    s3: [
+      `Bucket: ${resourceName}`,
+      `Verification: Block Public Access enabled`,
+      `Verification: Server-side encryption configured`,
+      `CIS Control: 2.1.1 - Ensure S3 bucket access is restricted`,
+      `MITRE ATT&CK: T1530 - Data from Cloud Storage Object mitigated`
+    ],
+    security_group: [
+      `Security Group: ${resourceName}`,
+      `Verification: Ingress rules restricted to authorized CIDR ranges`,
+      `Verification: No 0.0.0.0/0 rules on sensitive ports`,
+      `CIS Control: 5.2 - Ensure no security groups allow ingress from 0.0.0.0/0`,
+      `MITRE ATT&CK: T1190 - Exploit Public-Facing Application mitigated`
+    ],
+    iam_role: [
+      `IAM Role: ${resourceName}`,
+      `Verification: Least privilege permissions applied`,
+      `Verification: Trust policy restricted to authorized principals`,
+      `CIS Control: 1.16 - Ensure IAM policies are attached only to groups or roles`,
+      `MITRE ATT&CK: T1078 - Valid Accounts mitigated`
+    ],
+    cloudtrail: [
+      `CloudTrail: ${resourceName}`,
+      `Verification: Multi-region logging enabled`,
+      `Verification: Log file validation active`,
+      `CIS Control: 3.1 - Ensure CloudTrail is enabled in all regions`,
+      `MITRE ATT&CK: T1562.008 - Disable Cloud Logs mitigated`
+    ],
+    vpc: [
+      `VPC: ${resourceName}`,
+      `Verification: Flow logs enabled`,
+      `Verification: Network segmentation validated`,
+      `CIS Control: 3.9 - Ensure VPC flow logging is enabled`,
+      `MITRE ATT&CK: T1046 - Network Service Discovery visibility improved`
+    ],
+    vpn_connection: [
+      `VPN Connection: ${resourceName}`,
+      `Verification: Both IPsec tunnels operational (UP/UP)`,
+      `Verification: IKE Phase 1 and Phase 2 negotiation successful`,
+      `Verification: BGP sessions established (if applicable)`,
+      `CIS Control: 12.4 - Establish and maintain network device configuration standards`,
+      `MITRE ATT&CK: T1016 - System Network Configuration Discovery blocked`
+    ],
+    nat_gateway: [
+      `NAT Gateway: ${resourceName}`,
+      `Verification: Port allocation errors resolved`,
+      `Verification: Multi-AZ architecture implemented for high availability`,
+      `Verification: Route tables updated for AZ-local routing`,
+      `CIS Control: 13.4 - Perform traffic filtering on network services`,
+      `MITRE ATT&CK: T1041 - Exfiltration Over C2 Channel detection enabled`
+    ],
+    resolver_endpoint: [
+      `Resolver Endpoint: ${resourceName}`,
+      `Verification: DNS forwarding operational`,
+      `Verification: Security group rules allow UDP/TCP 53`,
+      `Verification: Hybrid DNS resolution working`,
+      `CIS Control: 12.1 - Ensure Network Infrastructure is Up-to-Date`,
+      `MITRE ATT&CK: T1071.004 - DNS Protocol monitoring enabled`
+    ],
+    target_group: [
+      `Target Group: ${resourceName}`,
+      `Verification: Health check path and port corrected`,
+      `Verification: All targets reporting healthy`,
+      `Verification: Load balancer serving traffic`,
+      `CIS Control: 9.1 - Associate Active Ports, Services, and Protocols`,
+      `MITRE ATT&CK: T1190 - Exploit Public-Facing Application mitigated`
+    ],
+    ec2: [
+      `EC2 Instance: ${resourceName}`,
+      `Verification: Instance isolated from network`,
+      `Verification: Security group changed to deny-all`,
+      `Verification: Instance preserved for forensic analysis`,
+      `CIS Control: 7.7 - Remediate Vulnerabilities within Defined Timeframes`,
+      `MITRE ATT&CK: T1048 - Exfiltration Over Alternative Protocol blocked`
+    ]
+  };
+  
+  return (details[resourceType] || [`Resource: ${resourceName}`, `Verification: Security configuration applied`]).join('\n');
+};
+
+// Generic command handler for fixing resources with enhanced verification
 const handleFixCommand = async (
   resourceType: string,
   resourceName: string,
@@ -44,22 +127,43 @@ const handleFixCommand = async (
   const resource = resources.find(r => r.type === resourceType && r.name === resourceName);
   
   if (!resource) {
-    return { output: `Error: Resource ${resourceName} not found.`, success: false, labCompleted: false };
+    return { output: `[ERROR] Resource ${resourceName} not found.\n\nHint: Use 'scan' to list available resources.`, success: false, labCompleted: false };
   }
   
   if (!resource.isVulnerable) {
-    return { output: `Info: ${resourceName} is already secure.`, success: false, labCompleted: false };
+    return { output: `[INFO] ${resourceName} is already secure.\n\nNo further action required.`, success: false, labCompleted: false };
   }
   
   await storage.updateResource(resource.id, { isVulnerable: false, status: 'secured' });
   
   const remaining = resources.filter(r => r.id !== resource.id && r.isVulnerable);
   let labCompleted = false;
-  let output = `[SUCCESS] ${resourceName} has been secured.\n`;
   
-  if (remaining.length === 0) {
+  const remediationDetails = getRemediationDetails(resourceType, resourceName, resource.config || {});
+  
+  let output = `${'='.repeat(60)}
+[REMEDIATION VERIFIED]
+${'='.repeat(60)}
+${remediationDetails}
+${'='.repeat(60)}
+
+Status: SECURED
+Previous State: VULNERABLE
+Current State: COMPLIANT
+`;
+  
+  if (remaining.length > 0) {
+    output += `\n[REMAINING] ${remaining.length} vulnerable resource(s) require attention.`;
+  } else {
     labCompleted = true;
-    output += "\n[MISSION COMPLETE] All vulnerabilities remediated!";
+    output += `
+${'='.repeat(60)}
+[MISSION COMPLETE] All vulnerabilities remediated!
+${'='.repeat(60)}
+
+All security controls have been verified and validated.
+Your progress has been recorded.
+`;
     await storage.updateProgress(userId, labId, true);
     broadcastLeaderboardUpdate();
   }
@@ -655,13 +759,30 @@ const processCommand = async (command: string, labId: number, userId: string) =>
     const instance = resources.find(r => r.type === 'ec2' && r.name === instanceName);
     if (instance && instance.isVulnerable) {
       await storage.updateResource(instance.id, { isVulnerable: false, status: 'isolated' });
-      output = `[SUCCESS] Instance ${instanceName} isolated\n  - Network interfaces detached\n  - Security group changed to isolation-sg (no inbound/outbound)\n  - Instance preserved for forensics`;
+      const remediationDetails = getRemediationDetails('ec2', instanceName, instance.config || {});
+      output = `${'='.repeat(60)}
+[REMEDIATION VERIFIED]
+${'='.repeat(60)}
+${remediationDetails}
+${'='.repeat(60)}
+
+Status: ISOLATED
+Previous State: COMPROMISED
+Current State: CONTAINED`;
       success = true;
       const remaining = resources.filter(r => r.id !== instance.id && r.isVulnerable);
       if (remaining.length === 0) {
         labCompleted = true;
-        output += "\n\n[MISSION COMPLETE] Threat contained!";
+        output += `
+
+${'='.repeat(60)}
+[MISSION COMPLETE] Threat contained!
+${'='.repeat(60)}
+
+All security controls have been verified and validated.
+Your progress has been recorded.`;
         await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
       }
     } else {
       output = `Error: Instance ${instanceName} not found or already isolated.`;
@@ -1402,6 +1523,236 @@ Credentials revoked: ${resources.find(r => r.type === 'iam_user')?.isVulnerable 
     } else {
       output = "No incident data available for this lab.";
     }
+  }
+  // VPN Commands
+  else if (lowerCmd.startsWith("aws ec2 describe-vpn ")) {
+    const vpnName = lowerCmd.replace("aws ec2 describe-vpn ", "").trim();
+    const vpn = resources.find(r => r.type === 'vpn_connection' && r.name === vpnName);
+    if (vpn) {
+      const config = vpn.config as any;
+      output = `=== VPN Connection: ${vpnName} ===\n\nState: ${vpn.isVulnerable ? 'DOWN' : 'AVAILABLE'}\nType: ${config.type || 'ipsec.1'}\nTunnel 1: ${config.tunnel1 || 'UP'}\nTunnel 2: ${config.tunnel2 || 'UP'}\n\n${vpn.isVulnerable ? '[!] CRITICAL: VPN tunnels are DOWN. Connectivity to on-premises lost.' : '[OK] VPN connection is healthy.'}`;
+    } else {
+      output = `Error: VPN connection ${vpnName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 reset-vpn ")) {
+    const vpnName = lowerCmd.replace("aws ec2 reset-vpn ", "").trim();
+    const vpn = resources.find(r => r.type === 'vpn_connection' && r.name === vpnName);
+    if (vpn && vpn.isVulnerable) {
+      await storage.updateResource(vpn.id, { isVulnerable: false, status: 'available' });
+      output = `[SUCCESS] VPN connection ${vpnName} reset initiated\n  - IKE renegotiation in progress\n  - Tunnel 1: ESTABLISHING... UP\n  - Tunnel 2: ESTABLISHING... UP\n  - Connectivity restored`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== vpn.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] VPN connectivity restored!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `Error: VPN ${vpnName} not found or already operational.`;
+    }
+  }
+  // NAT Gateway Commands
+  else if (lowerCmd.startsWith("aws ec2 describe-nat ")) {
+    const natName = lowerCmd.replace("aws ec2 describe-nat ", "").trim();
+    const nat = resources.find(r => r.type === 'nat_gateway' && r.name === natName);
+    if (nat) {
+      const config = nat.config as any;
+      output = `=== NAT Gateway: ${natName} ===\n\nState: ${nat.isVulnerable ? 'DEGRADED' : 'AVAILABLE'}\nActive Connections: ${config.activeConnections || 0}\nError Port Allocation: ${config.errorPortAllocation || 0}\n\n${nat.isVulnerable ? `[!] WARNING: High port allocation errors detected (${config.errorPortAllocation}). Port exhaustion likely.` : '[OK] NAT Gateway operating normally.'}`;
+    } else {
+      output = `Error: NAT Gateway ${natName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 create-nat ")) {
+    const parts = lowerCmd.replace("aws ec2 create-nat ", "").trim().split(' ');
+    const natName = parts[0];
+    const subnetName = parts[1];
+    output = `[SUCCESS] NAT Gateway ${natName} created\n  - Subnet: ${subnetName || 'subnet-public-2'}\n  - Elastic IP allocated\n  - State: AVAILABLE`;
+    success = true;
+  }
+  else if (lowerCmd.startsWith("aws ec2 update-routes-multi-nat ")) {
+    const vpcName = lowerCmd.replace("aws ec2 update-routes-multi-nat ", "").trim();
+    // Fix ALL vulnerable NAT gateways as this is a multi-NAT architecture fix
+    const natGateways = resources.filter(r => r.type === 'nat_gateway' && r.isVulnerable);
+    if (natGateways.length > 0) {
+      for (const nat of natGateways) {
+        await storage.updateResource(nat.id, { isVulnerable: false, status: 'optimized' });
+      }
+      output = `[SUCCESS] Multi-NAT routing configured for ${vpcName}\n  - Route table rtb-private-1 updated to use nat-prod-01\n  - Route table rtb-private-2 updated to use nat-prod-02\n  - Traffic distribution optimized across AZs\n  - ${natGateways.length} NAT gateway(s) now operating efficiently`;
+      success = true;
+      const remaining = resources.filter(r => !natGateways.map(n => n.id).includes(r.id) && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] NAT Gateway architecture optimized!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `Error: VPC ${vpcName} not found or already configured.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 scale-nat ")) {
+    const natName = lowerCmd.replace("aws ec2 scale-nat ", "").trim();
+    const nat = resources.find(r => r.type === 'nat_gateway' && r.name === natName);
+    if (nat && nat.isVulnerable) {
+      await storage.updateResource(nat.id, { isVulnerable: false, status: 'optimized' });
+      output = `[SUCCESS] NAT Gateway ${natName} scaling initiated\n  - Additional NAT Gateway created in alternate AZ\n  - Route tables updated for AZ-local routing\n  - Port allocation pressure reduced`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== nat.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] NAT Gateway capacity restored!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `Error: NAT Gateway ${natName} not found or already optimized.`;
+    }
+  }
+  // Route 53 Resolver Commands
+  else if (lowerCmd.startsWith("aws route53resolver describe-endpoint ")) {
+    const endpointName = lowerCmd.replace("aws route53resolver describe-endpoint ", "").trim();
+    const endpoint = resources.find(r => r.type === 'resolver_endpoint' && r.name === endpointName);
+    if (endpoint) {
+      const config = endpoint.config as any;
+      output = `=== Resolver Endpoint: ${endpointName} ===\n\nDirection: ${config.direction || 'OUTBOUND'}\nStatus: ${endpoint.isVulnerable ? 'DEGRADED' : 'OPERATIONAL'}\nIP Addresses: ${(config.ips || []).join(', ')}\n\n${endpoint.isVulnerable ? '[!] WARNING: DNS resolution failures detected.' : '[OK] Resolver endpoint operational.'}`;
+    } else {
+      output = `Error: Resolver endpoint ${endpointName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 fix-resolver-sg ")) {
+    const sgName = lowerCmd.replace("aws ec2 fix-resolver-sg ", "").trim();
+    const sg = resources.find(r => r.type === 'security_group' && r.name === sgName);
+    const endpoint = resources.find(r => r.type === 'resolver_endpoint');
+    if (sg && sg.isVulnerable) {
+      await storage.updateResource(sg.id, { isVulnerable: false, status: 'secured' });
+      if (endpoint && endpoint.isVulnerable) {
+        await storage.updateResource(endpoint.id, { isVulnerable: false, status: 'operational' });
+      }
+      output = `[SUCCESS] Resolver security group ${sgName} fixed\n  - Inbound: UDP/TCP 53 from VPC CIDR allowed\n  - Outbound: UDP/TCP 53 to on-prem DNS (192.168.1.10, 192.168.1.11) allowed\n  - DNS resolution restored`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== sg.id && r.id !== (endpoint?.id || 0) && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Hybrid DNS resolution working!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `Error: Security group ${sgName} not found or already correct.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws route53resolver enable-logging ")) {
+    const endpointName = lowerCmd.replace("aws route53resolver enable-logging ", "").trim();
+    output = `[SUCCESS] Query logging enabled for ${endpointName}\n  - Log destination: CloudWatch Log Group /aws/route53resolver/queries\n  - Query logging active`;
+    success = true;
+  }
+  // ALB/ELBv2 Commands
+  else if (lowerCmd.startsWith("aws elbv2 describe-target-health ")) {
+    const tgName = lowerCmd.replace("aws elbv2 describe-target-health ", "").trim();
+    const tg = resources.find(r => r.type === 'target_group' && r.name === tgName);
+    if (tg) {
+      const config = tg.config as any;
+      output = `=== Target Health: ${tgName} ===\n\nHealthy Targets: ${config.healthyTargets || 0}\nUnhealthy Targets: ${tg.isVulnerable ? '2' : '0'}\n\nHealth Check Configuration:\n  Path: ${config.healthCheckPath || '/health'}\n  Port: ${config.healthCheckPort || 80}\n  Status: ${tg.isVulnerable ? 'FAILING' : 'PASSING'}\n\n${tg.isVulnerable ? '[!] WARNING: All targets failing health checks. Check path and port configuration.' : '[OK] All targets healthy.'}`;
+    } else {
+      output = `Error: Target group ${tgName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws elbv2 describe-target-group ")) {
+    const tgName = lowerCmd.replace("aws elbv2 describe-target-group ", "").trim();
+    const tg = resources.find(r => r.type === 'target_group' && r.name === tgName);
+    if (tg) {
+      const config = tg.config as any;
+      output = `=== Target Group: ${tgName} ===\n\nProtocol: HTTP\nPort: 80\nVPC: vpc-production\n\nHealth Check:\n  Protocol: HTTP\n  Path: ${config.healthCheckPath || '/health'}\n  Port: ${config.healthCheckPort || 80}\n  Interval: 30 seconds\n  Timeout: 5 seconds\n  Healthy Threshold: 5\n  Unhealthy Threshold: 2`;
+    } else {
+      output = `Error: Target group ${tgName} not found.`;
+    }
+  }
+  else if (lowerCmd.includes("aws elbv2 modify-target-group ")) {
+    const match = lowerCmd.match(/aws elbv2 modify-target-group (\S+)/);
+    const tgName = match ? match[1] : '';
+    const tg = resources.find(r => r.type === 'target_group' && r.name === tgName);
+    if (tg && tg.isVulnerable) {
+      await storage.updateResource(tg.id, { isVulnerable: false, status: 'healthy' });
+      output = `[SUCCESS] Target group ${tgName} modified\n  - Health check path updated to /api/health\n  - Health check port updated to 8080\n  - Targets becoming healthy...`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== tg.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All targets healthy, API serving traffic!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `Error: Target group ${tgName} not found or already configured correctly.`;
+    }
+  }
+  // Traffic Mirroring Commands
+  else if (lowerCmd.startsWith("aws ec2 create-traffic-mirror ")) {
+    const instanceName = lowerCmd.replace("aws ec2 create-traffic-mirror ", "").trim();
+    output = `[SUCCESS] Traffic mirror session created for ${instanceName}\n  - Mirror target: network-ids-interface\n  - Filter: Capture all traffic\n  - Session active`;
+    success = true;
+  }
+  // WAF IP Blocklist
+  else if (lowerCmd.startsWith("aws waf add-ip-blocklist ")) {
+    const ipAddress = lowerCmd.replace("aws waf add-ip-blocklist ", "").trim();
+    // Check if there are vulnerable security groups to fix as part of blocking
+    const vulnerableSg = resources.find(r => r.type === 'security_group' && r.isVulnerable);
+    if (vulnerableSg) {
+      await storage.updateResource(vulnerableSg.id, { isVulnerable: false, status: 'secured' });
+    }
+    output = `[SUCCESS] IP ${ipAddress} added to WAF blocklist\n  - Rule: BlockMaliciousIPs\n  - Action: BLOCK\n  - Applies to: All associated resources`;
+    success = true;
+    const remaining = resources.filter(r => r.id !== (vulnerableSg?.id || 0) && r.isVulnerable);
+    if (remaining.length === 0) {
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Threat blocked!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    }
+  }
+  // CloudWatch NAT metrics
+  else if (lowerCmd.startsWith("aws cloudwatch get-nat-metrics ")) {
+    const natName = lowerCmd.replace("aws cloudwatch get-nat-metrics ", "").trim();
+    const nat = resources.find(r => r.type === 'nat_gateway' && r.name === natName);
+    if (nat) {
+      const config = nat.config as any;
+      output = `=== NAT Gateway Metrics: ${natName} ===\n\nActiveConnectionCount: ${config.activeConnections || 48500}\nPacketsDropCount: ${config.errorPortAllocation ? 127 : 0}\nErrorPortAllocation: ${config.errorPortAllocation || 0}\nBytesOutToDestination: 2.3 TB\n\n${nat.isVulnerable ? '[!] HIGH ERROR PORT ALLOCATION - Port exhaustion in progress!' : '[OK] Metrics within normal range.'}`;
+    } else {
+      output = `Error: NAT Gateway ${natName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws cloudwatch get-vpn-metrics ")) {
+    const vpnName = lowerCmd.replace("aws cloudwatch get-vpn-metrics ", "").trim();
+    const vpn = resources.find(r => r.type === 'vpn_connection' && r.name === vpnName);
+    if (vpn) {
+      output = `=== VPN Metrics: ${vpnName} ===\n\nTunnelState:\n  Tunnel 1: ${vpn.isVulnerable ? '0 (DOWN)' : '1 (UP)'}\n  Tunnel 2: ${vpn.isVulnerable ? '0 (DOWN)' : '1 (UP)'}\nTunnelDataIn: ${vpn.isVulnerable ? '0 bytes' : '1.2 GB'}\nTunnelDataOut: ${vpn.isVulnerable ? '0 bytes' : '890 MB'}\n\n${vpn.isVulnerable ? '[!] CRITICAL: Both tunnels showing DOWN state since 03:47:22 UTC' : '[OK] VPN metrics healthy.'}`;
+    } else {
+      output = `Error: VPN connection ${vpnName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws ec2 describe-cgw ")) {
+    const cgwName = lowerCmd.replace("aws ec2 describe-cgw ", "").trim();
+    const cgw = resources.find(r => r.type === 'customer_gateway' && r.name === cgwName);
+    if (cgw) {
+      const config = cgw.config as any;
+      output = `=== Customer Gateway: ${cgwName} ===\n\nIP Address: ${config.ip || '203.0.113.50'}\nBGP ASN: ${config.bgpAsn || 65000}\nState: AVAILABLE\nType: ipsec.1`;
+    } else {
+      output = `Error: Customer gateway ${cgwName} not found.`;
+    }
+  }
+  else if (lowerCmd === "aws ec2 describe-route-tables --vpn" || lowerCmd === "aws ec2 describe-route-tables --nat") {
+    output = `=== Route Tables ===\n\nrtb-private-1:\n  Destination: 0.0.0.0/0\n  Target: nat-prod-01\n  Status: active\n  \nrtb-private-2:\n  Destination: 0.0.0.0/0\n  Target: nat-prod-01\n  Status: active (suboptimal - cross-AZ)\n\n[!] Both private subnets routing through single NAT Gateway`;
+  }
+  // SIEM Threat Intel
+  else if (lowerCmd.startsWith("aws siem lookup-ip ")) {
+    const ipAddress = lowerCmd.replace("aws siem lookup-ip ", "").trim();
+    output = `=== Threat Intelligence: ${ipAddress} ===\n\nReputation: MALICIOUS\nCategory: Data Exfiltration Infrastructure\nASN: AS50673 (Serverius Holding B.V.)\nCountry: Netherlands\nFirst Seen: 2024-09-15\nConfidence: 95%\n\nAssociated Campaigns:\n  - Operation DataHarvest (APT-41)\n  - Credential Theft Ring\n\n[!] CRITICAL: Known malicious infrastructure`;
+  }
+  else if (lowerCmd.startsWith("aws siem get-alert ")) {
+    const alertId = lowerCmd.replace("aws siem get-alert ", "").trim();
+    output = `=== Alert Details: ${alertId} ===\n\nTitle: Large Outbound Data Transfer\nSeverity: HIGH\nCategory: Data Exfiltration\nMITRE ATT&CK: T1048 - Exfiltration Over Alternative Protocol\n\nSource: analytics-server-01 (10.0.4.55)\nDestination: 185.220.101.42\nData Transferred: 47 GB\nDuration: 6 hours\n\nRecommended Actions:\n  1. Isolate affected server\n  2. Block destination IP\n  3. Analyze transferred data types`;
   }
   // Unknown command
   else {

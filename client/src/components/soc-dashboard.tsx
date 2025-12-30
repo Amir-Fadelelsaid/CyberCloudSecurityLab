@@ -883,6 +883,63 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                           </div>
                         )}
 
+                        {/* Incident Timeline */}
+                        <div className="bg-black/30 rounded-lg p-3 border border-white/5">
+                          <h4 className="text-[10px] font-mono text-cyan-400 mb-3 uppercase flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Attack Timeline
+                          </h4>
+                          <div className="relative pl-4 space-y-3 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-red-500 before:via-yellow-500 before:to-green-500">
+                            {[
+                              { time: "03:42:15", event: "Initial Access", type: "attack", mitre: "T1078.004", desc: "Credential used from anomalous location" },
+                              { time: "03:43:22", event: "Reconnaissance", type: "attack", mitre: "T1087", desc: "IAM user enumeration detected" },
+                              { time: "03:45:01", event: "Alert Generated", type: "detection", desc: "GuardDuty flagged anomalous API calls" },
+                              { time: "03:47:33", event: "Privilege Escalation Attempt", type: "attack", mitre: "T1098", desc: "Policy modification attempted" },
+                              { time: "NOW", event: "Awaiting Response", type: "pending", desc: "Analyst investigation required" }
+                            ].map((item, idx) => (
+                              <div key={idx} className="relative flex items-start gap-2">
+                                <div className={clsx(
+                                  "w-3 h-3 rounded-full border-2 mt-0.5 flex-shrink-0",
+                                  item.type === "attack" ? "bg-red-500/50 border-red-500" :
+                                  item.type === "detection" ? "bg-yellow-500/50 border-yellow-500" :
+                                  item.type === "remediation" ? "bg-green-500/50 border-green-500" :
+                                  "bg-blue-500/50 border-blue-500 animate-pulse"
+                                )} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[9px] font-mono text-muted-foreground">{item.time}</span>
+                                    <span className="text-[10px] font-semibold text-white">{item.event}</span>
+                                    {item.mitre && (
+                                      <Badge variant="outline" className="text-[7px] px-1 py-0 text-cyan-400 border-cyan-400/30">{item.mitre}</Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-[9px] text-muted-foreground truncate">{item.desc}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Correlated Evidence */}
+                        <div className="bg-purple-500/5 rounded-lg p-3 border border-purple-500/20">
+                          <h4 className="text-[10px] font-mono text-purple-400 mb-2 uppercase flex items-center gap-1">
+                            <Activity className="w-3 h-3" /> Correlated Evidence
+                          </h4>
+                          <div className="space-y-2 text-[9px]">
+                            <div className="flex items-center gap-2 bg-black/30 rounded p-2">
+                              <Badge className="bg-blue-500/20 text-blue-300 text-[7px]">CloudTrail</Badge>
+                              <span className="text-white">4 related API calls from same source IP</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-black/30 rounded p-2">
+                              <Badge className="bg-green-500/20 text-green-300 text-[7px]">VPC Flow</Badge>
+                              <span className="text-white">Outbound connection to known C2 IP</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-black/30 rounded p-2">
+                              <Badge className="bg-orange-500/20 text-orange-300 text-[7px]">GuardDuty</Badge>
+                              <span className="text-white">UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration</span>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Recommended Actions */}
                         <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
                           <h4 className="text-[10px] font-mono text-primary mb-2 uppercase flex items-center gap-1">
@@ -894,6 +951,7 @@ export function SOCDashboard({ labId, labCategory, onAlertSelect, selectedAlertI
                           <div className="space-y-1 font-mono text-[10px]">
                             <div className="bg-black/50 rounded px-2 py-1 text-primary">scan</div>
                             <div className="bg-black/50 rounded px-2 py-1 text-primary">aws cloudtrail lookup-events</div>
+                            <div className="bg-black/50 rounded px-2 py-1 text-primary">aws iam analyze-timeline {selectedAlert.sourceIp ? `--source-ip ${selectedAlert.sourceIp}` : ""}</div>
                           </div>
                         </div>
                       </div>

@@ -500,6 +500,138 @@ export const networkSecurityLabs: LabDefinition[] = [
       { type: "vpc", name: "vpc-security", config: { environment: "security", shouldConnect: ["vpc-prod"] }, isVulnerable: false, status: "info" }
     ],
     fixCommands: ["aws ec2 fix-tgw-routes tgw-central-hub"]
+  },
+  // ENTERPRISE NETWORKING LABS
+  {
+    title: "Site-to-Site VPN Tunnel Down",
+    description: "The VPN tunnel connecting your on-premises data center to AWS is down. Diagnose the issue and restore connectivity for critical business operations.",
+    briefing: "CONNECTIVITY OUTAGE: Finance team reports they cannot access on-premises SAP systems. VPN tunnel 'vpn-datacenter-east' shows DOWN status. Business operations are impacted.",
+    scenario: "Your hybrid architecture relies on this VPN for database replication and SAP access. Every minute of downtime costs the company money. The NOC is escalating - you need to fix this fast.",
+    difficulty: "Intermediate",
+    category: "Network Security",
+    estimatedTime: "20-30 minutes",
+    initialState: { vpn: ["vpn-datacenter-east"], vgw: ["vgw-prod-01"], cgw: ["cgw-datacenter"] },
+    steps: [
+      { number: 1, title: "Assess VPN Status", description: "Check current VPN tunnel status and identify which tunnel is down.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east'.", intel: "AWS VPN connections have two tunnels for redundancy. If both are down, check the customer gateway first." },
+      { number: 2, title: "Review Tunnel Metrics", description: "Examine CloudWatch metrics for tunnel health and identify when the outage started.", hint: "Type 'aws cloudwatch get-vpn-metrics vpn-datacenter-east'.", intel: "Look for TunnelState, TunnelDataIn/Out metrics. Sudden drops indicate configuration changes or network issues." },
+      { number: 3, title: "Check Customer Gateway", description: "Verify the on-premises customer gateway configuration and status.", hint: "Type 'aws ec2 describe-cgw cgw-datacenter'.", intel: "Common issues: IP address changes, expired certificates, or firewall rule modifications on-premises." },
+      { number: 4, title: "Verify Route Tables", description: "Ensure route propagation is enabled and routes are correctly configured.", hint: "Type 'aws ec2 describe-route-tables --vpn'.", intel: "VPN routes must propagate to the correct route tables. Static routes require manual updates if on-prem subnets change." },
+      { number: 5, title: "Reset VPN Connection", description: "Reset the VPN tunnels to re-establish connectivity.", hint: "Type 'aws ec2 reset-vpn vpn-datacenter-east'.", intel: "Tunnel reset forces IKE renegotiation. Both tunnels will be momentarily disrupted." },
+      { number: 6, title: "Verify Connectivity", description: "Confirm both tunnels are now UP and traffic is flowing.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east' to verify.", intel: "Monitor for 5 minutes to ensure stability. Consider implementing VPN monitoring alarms." }
+    ],
+    resources: [
+      { type: "vpn_connection", name: "vpn-datacenter-east", config: { tunnel1: "DOWN", tunnel2: "DOWN", type: "ipsec.1" }, isVulnerable: true, status: "down" },
+      { type: "virtual_gateway", name: "vgw-prod-01", config: { attachedVpc: "vpc-production" }, isVulnerable: false, status: "active" },
+      { type: "customer_gateway", name: "cgw-datacenter", config: { ip: "203.0.113.50", bgpAsn: 65000 }, isVulnerable: false, status: "available" }
+    ],
+    fixCommands: ["aws ec2 reset-vpn vpn-datacenter-east"],
+    successMessage: "VPN tunnels restored! Both tunnels are now UP. Consider implementing CloudWatch alarms for TunnelState to detect future outages proactively."
+  },
+  {
+    title: "NAT Gateway Exhaustion",
+    description: "Applications in private subnets are experiencing intermittent connectivity failures. Investigate NAT Gateway port exhaustion and implement a solution.",
+    briefing: "INTERMITTENT FAILURES: Microservices team reports random connection timeouts when calling external APIs. Load is normal but errors spike every few minutes. NAT Gateway suspected.",
+    scenario: "Your containerized applications make thousands of outbound connections per second. The single NAT Gateway is running out of ports. You need to diagnose and fix this before the next traffic spike.",
+    difficulty: "Advanced",
+    category: "Network Security",
+    estimatedTime: "25-40 minutes",
+    initialState: { nat: ["nat-prod-01"], vpc: ["vpc-production"], subnets: ["subnet-private-1", "subnet-private-2"] },
+    steps: [
+      { number: 1, title: "Identify Symptoms", description: "Review application error patterns and correlate with NAT Gateway metrics.", hint: "Type 'aws cloudwatch get-nat-metrics nat-prod-01'.", intel: "ErrorPortAllocation metric indicates port exhaustion. Each connection needs a unique source port (65,535 max)." },
+      { number: 2, title: "Analyze Connection Patterns", description: "Examine ActiveConnectionCount and PacketsDropCount metrics.", hint: "Type 'aws ec2 describe-nat nat-prod-01'.", intel: "High connection counts to few destinations exhaust ports faster. Connections to the same destination share ports." },
+      { number: 3, title: "Check Current Architecture", description: "Review how private subnets route through NAT Gateways.", hint: "Type 'aws ec2 describe-route-tables --nat'.", intel: "All private subnets using one NAT Gateway creates a bottleneck. Each NAT supports ~55,000 concurrent connections per destination." },
+      { number: 4, title: "Design Multi-NAT Solution", description: "Plan NAT Gateway per Availability Zone for redundancy and capacity.", hint: "Type 'aws ec2 plan-nat-architecture vpc-production'.", intel: "Best practice: One NAT Gateway per AZ provides both HA and increased port capacity." },
+      { number: 5, title: "Deploy Additional NAT", description: "Create a second NAT Gateway in another AZ.", hint: "Type 'aws ec2 create-nat nat-prod-02 subnet-public-2'.", intel: "NAT Gateways scale automatically but port limits remain. Multiple NATs distribute the load." },
+      { number: 6, title: "Update Route Tables", description: "Configure each private subnet to use its local AZ NAT Gateway.", hint: "Type 'aws ec2 update-routes-multi-nat vpc-production'.", intel: "Route traffic to the NAT Gateway in the same AZ for optimal performance and cost." },
+      { number: 7, title: "Verify Configuration", description: "Confirm new routing is active and traffic is distributed.", hint: "Type 'aws ec2 describe-route-tables --nat' to verify.", intel: "Monitor both NAT Gateways for balanced traffic distribution." },
+      { number: 8, title: "Implement Monitoring", description: "Set up CloudWatch alarms for ErrorPortAllocation metric.", hint: "Type 'aws cloudwatch create-nat-alarm nat-prod-01 nat-prod-02'.", intel: "Alert at 80% port utilization to proactively prevent future exhaustion." }
+    ],
+    resources: [
+      { type: "nat_gateway", name: "nat-prod-01", config: { errorPortAllocation: 847, activeConnections: 48500 }, isVulnerable: true, status: "degraded" },
+      { type: "vpc", name: "vpc-production", config: { natGateways: 1, azs: 2 }, isVulnerable: true, status: "active" }
+    ],
+    fixCommands: ["aws ec2 create-nat nat-prod-02 subnet-public-2", "aws ec2 update-routes-multi-nat vpc-production"],
+    successMessage: "NAT Gateway architecture improved! Traffic now distributes across multiple NAT Gateways with per-AZ routing. Port exhaustion resolved."
+  },
+  {
+    title: "DNS Resolution Failures",
+    description: "Private DNS queries to on-premises resources are failing. Configure Route 53 Resolver rules and endpoints for hybrid DNS resolution.",
+    briefing: "DNS OUTAGE: Applications cannot resolve internal.corp.example.com. Private hosted zone queries work, but forwarding to on-premises DNS servers is broken.",
+    scenario: "Your hybrid environment requires DNS resolution between AWS and on-premises. Critical applications depend on resolving Active Directory domain names. The networking team is waiting for your fix.",
+    difficulty: "Advanced",
+    category: "Network Security",
+    estimatedTime: "30-45 minutes",
+    initialState: { resolver: ["rslvr-out-broken"], endpoints: ["rslvr-ep-outbound"], rules: ["fwd-rule-corp"] },
+    steps: [
+      { number: 1, title: "Diagnose DNS Failure", description: "Test DNS resolution and identify where it fails.", hint: "Type 'aws route53resolver test-dns internal.corp.example.com'.", intel: "Route 53 Resolver handles DNS for VPCs. Outbound endpoints forward queries to on-premises DNS." },
+      { number: 2, title: "Check Resolver Endpoints", description: "Verify outbound endpoint status and IP addresses.", hint: "Type 'aws route53resolver describe-endpoint rslvr-ep-outbound'.", intel: "Outbound endpoints need ENIs in subnets that can reach on-premises DNS via VPN/Direct Connect." },
+      { number: 3, title: "Review Forwarding Rules", description: "Examine the resolver rule configuration for corp.example.com domain.", hint: "Type 'aws route53resolver describe-rule fwd-rule-corp'.", intel: "Rules specify which domains forward to which DNS servers. Check target IP addresses are correct." },
+      { number: 4, title: "Check Security Groups", description: "Verify endpoint security groups allow DNS traffic (UDP/TCP 53).", hint: "Type 'aws ec2 describe-sg rslvr-sg'.", intel: "Both inbound (from VPC) and outbound (to on-prem DNS) rules must allow DNS traffic." },
+      { number: 5, title: "Fix Security Group Rules", description: "Add missing rules to allow DNS resolution traffic.", hint: "Type 'aws ec2 fix-resolver-sg rslvr-sg'.", intel: "Resolver endpoints need: inbound UDP/TCP 53 from VPC CIDR, outbound UDP/TCP 53 to on-prem DNS." },
+      { number: 6, title: "Verify VPN Connectivity", description: "Ensure the VPN to on-premises is healthy for DNS traffic.", hint: "Type 'aws ec2 describe-vpn vpn-datacenter-east'.", intel: "DNS forwarding requires network path to on-premises DNS servers. VPN issues affect DNS resolution." },
+      { number: 7, title: "Test Resolution", description: "Verify DNS queries now resolve correctly.", hint: "Type 'aws route53resolver test-dns internal.corp.example.com' to verify.", intel: "Test multiple internal hostnames to confirm consistent resolution." },
+      { number: 8, title: "Enable Query Logging", description: "Configure resolver query logging for troubleshooting.", hint: "Type 'aws route53resolver enable-logging rslvr-ep-outbound'.", intel: "Query logs help diagnose future DNS issues and provide security visibility into DNS traffic." }
+    ],
+    resources: [
+      { type: "resolver_endpoint", name: "rslvr-ep-outbound", config: { direction: "OUTBOUND", ips: ["10.0.1.10", "10.0.2.10"] }, isVulnerable: true, status: "degraded" },
+      { type: "resolver_rule", name: "fwd-rule-corp", config: { domain: "corp.example.com", targetIps: ["192.168.1.10", "192.168.1.11"] }, isVulnerable: false, status: "active" },
+      { type: "security_group", name: "rslvr-sg", config: { ingressDns: false, egressDns: false }, isVulnerable: true, status: "misconfigured" }
+    ],
+    fixCommands: ["aws ec2 fix-resolver-sg rslvr-sg", "aws route53resolver enable-logging rslvr-ep-outbound"],
+    successMessage: "Hybrid DNS resolution restored! Resolver endpoints can now forward queries to on-premises DNS. Query logging enabled for troubleshooting."
+  },
+  {
+    title: "Application Load Balancer Health Check Failures",
+    description: "All targets behind an ALB are showing unhealthy despite the application running correctly. Diagnose and fix the health check configuration.",
+    briefing: "SERVICE DEGRADED: Customer-facing API is returning 503 errors. ALB shows 0 healthy targets but application containers are running. Health checks failing.",
+    scenario: "Your production API serves 10,000 requests per minute. The ALB thinks all targets are dead, but containers are healthy. Something is misconfigured - find it before customers notice.",
+    difficulty: "Intermediate",
+    category: "Network Security",
+    estimatedTime: "15-25 minutes",
+    initialState: { alb: ["alb-api-prod"], tg: ["tg-api-containers"], instances: ["ecs-task-1", "ecs-task-2"] },
+    steps: [
+      { number: 1, title: "Check Target Health", description: "Review target group health status and failure reasons.", hint: "Type 'aws elbv2 describe-target-health tg-api-containers'.", intel: "Health check failure reasons: timeout, connection refused, or unexpected HTTP status code." },
+      { number: 2, title: "Review Health Check Config", description: "Examine the current health check settings.", hint: "Type 'aws elbv2 describe-target-group tg-api-containers'.", intel: "Check: path, port, protocol, timeout, interval, healthy/unhealthy thresholds." },
+      { number: 3, title: "Identify Mismatch", description: "Health check is hitting /health on port 80, but app runs on port 8080 with /api/health endpoint.", hint: "Type 'aws ecs describe-task ecs-task-1' to see container config.", intel: "Container port != health check port is a common misconfiguration after containerization." },
+      { number: 4, title: "Fix Health Check Path", description: "Update health check to use correct port and path.", hint: "Type 'aws elbv2 modify-target-group tg-api-containers --health-check-path /api/health --health-check-port 8080'.", intel: "Ensure path returns 200 OK. Some apps return 204 or 301 which fail default checks." },
+      { number: 5, title: "Verify Target Health", description: "Confirm targets are now showing healthy.", hint: "Type 'aws elbv2 describe-target-health tg-api-containers' to verify.", intel: "Targets need to pass healthy threshold (default 5 checks) before receiving traffic." },
+      { number: 6, title: "Monitor Recovery", description: "Verify API is serving traffic normally.", hint: "Type 'scan' to confirm all systems operational.", intel: "Monitor ALB RequestCount and HTTPCode_ELB_5XX metrics to confirm recovery." }
+    ],
+    resources: [
+      { type: "target_group", name: "tg-api-containers", config: { healthCheckPath: "/health", healthCheckPort: 80, healthyTargets: 0 }, isVulnerable: true, status: "unhealthy" },
+      { type: "alb", name: "alb-api-prod", config: { httpCode503: true }, isVulnerable: false, status: "active" }
+    ],
+    fixCommands: ["aws elbv2 modify-target-group tg-api-containers --health-check-path /api/health --health-check-port 8080"],
+    successMessage: "ALB health checks fixed! All targets now healthy and serving traffic. Consider adding health check monitoring alarms."
+  },
+  {
+    title: "Network Traffic Analysis and Anomaly Detection",
+    description: "VPC Flow Logs indicate unusual traffic patterns. Analyze the logs to identify potential data exfiltration or lateral movement, and implement appropriate controls.",
+    briefing: "ANOMALY DETECTED: Automated analysis flagged unusual outbound traffic from 'analytics-server-01'. 47GB transferred to external IP over 6 hours. Investigate immediately.",
+    scenario: "Your SIEM detected a traffic anomaly. The analytics server usually sends 500MB/day externally, but last night it sent 47GB to an IP in Eastern Europe. Is this legitimate or a breach?",
+    difficulty: "Advanced",
+    category: "Network Security",
+    estimatedTime: "35-50 minutes",
+    initialState: { flowlogs: ["fl-vpc-prod"], instances: ["analytics-server-01"], siem: ["traffic-alert-7721"] },
+    steps: [
+      { number: 1, title: "Review SIEM Alert", description: "Examine the traffic anomaly alert details.", hint: "Type 'aws siem get-alert traffic-alert-7721'.", intel: "MITRE ATT&CK T1048: Exfiltration Over Alternative Protocol. Large outbound transfers are red flags." },
+      { number: 2, title: "Query Flow Logs", description: "Pull VPC Flow Log data for the analytics server during the anomaly window.", hint: "Type 'aws logs query-flow-logs analytics-server-01 --hours 12'.", intel: "Look for: destination IPs, ports used, bytes transferred, connection duration." },
+      { number: 3, title: "Identify Destination", description: "Research the destination IP and determine if it's legitimate.", hint: "Type 'aws siem lookup-ip 185.220.101.42'.", intel: "Threat intel shows IP is associated with known data exfiltration infrastructure. This is likely malicious." },
+      { number: 4, title: "Check Process Activity", description: "Review what process initiated these connections.", hint: "Type 'aws ssm get-process-logs analytics-server-01'.", intel: "Correlate network connections with process execution. Legitimate analytics exports vs. unauthorized transfers." },
+      { number: 5, title: "Analyze Data Types", description: "Determine what data may have been exfiltrated based on the server's role.", hint: "Type 'aws describe-instance-role analytics-server-01'.", intel: "Analytics server has read access to customer-data-lake. Potential PII exposure." },
+      { number: 6, title: "Contain the Threat", description: "Isolate the compromised server to stop ongoing exfiltration.", hint: "Type 'aws ec2 isolate analytics-server-01'.", intel: "Replace security group with deny-all rules. Preserve instance for forensics." },
+      { number: 7, title: "Block Malicious IP", description: "Add the destination IP to network deny lists.", hint: "Type 'aws waf add-ip-blocklist 185.220.101.42'.", intel: "Block at multiple layers: NACL, security group, and WAF for defense-in-depth." },
+      { number: 8, title: "Enable Enhanced Monitoring", description: "Implement Traffic Mirroring for deep packet inspection on critical servers.", hint: "Type 'aws ec2 create-traffic-mirror analytics-server-01'.", intel: "Traffic Mirroring sends copies to IDS for analysis without impacting application performance." },
+      { number: 9, title: "Create Detection Rule", description: "Build a SIEM rule to detect similar anomalies in the future.", hint: "Type 'aws siem create-rule outbound-anomaly-detection'.", intel: "Alert on: outbound > 5GB to new destination, connections to threat intel IPs, unusual ports." },
+      { number: 10, title: "Document Incident", description: "Generate incident report with timeline, impact assessment, and recommendations.", hint: "Type 'aws siem generate-incident-report traffic-alert-7721'.", intel: "Include: data classification of potentially exposed data, regulatory notification requirements, remediation steps." }
+    ],
+    resources: [
+      { type: "ec2", name: "analytics-server-01", config: { outboundGB: 47, normalOutboundGB: 0.5, destIP: "185.220.101.42" }, isVulnerable: true, status: "suspicious" },
+      { type: "flow_logs", name: "fl-vpc-prod", config: { anomalyDetected: true, alertId: "traffic-alert-7721" }, isVulnerable: false, status: "active" },
+      { type: "siem_alert", name: "traffic-alert-7721", config: { severity: "HIGH", type: "DATA_EXFILTRATION", mitre: "T1048" }, isVulnerable: false, status: "open" }
+    ],
+    fixCommands: ["aws ec2 isolate analytics-server-01", "aws waf add-ip-blocklist 185.220.101.42", "aws ec2 create-traffic-mirror analytics-server-01"],
+    successMessage: "Threat contained! Server isolated, malicious IP blocked, and enhanced monitoring deployed. Incident documented for regulatory reporting."
   }
 ];
 
