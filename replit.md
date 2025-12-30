@@ -4,16 +4,49 @@
 
 CloudShieldLab is a gamified cloud security training platform where users practice identifying and fixing cloud infrastructure vulnerabilities through realistic terminal-based simulations. The application provides 97 interactive labs across 7 categories covering Storage Security (12 labs including 1 expert Challenge), Network Security (17 labs including 1 expert Challenge), SOC Operations (12 labs including 1 expert Challenge), SOC Engineer (13 labs including 1 expert Challenge), Cloud Security Analyst (14 labs including 2 expert Challenges), IAM Security (16 labs including 1 expert Challenge with Identity Graph visualization), and Cloud Security Engineer (13 labs including 1 expert Challenge) scenarios. Users learn through hands-on practice with simulated AWS CLI commands and receive real-time feedback mapped to security frameworks like MITRE ATT&CK and CIS Controls.
 
+**Target Audience**: Aspiring SOC analysts, cloud security engineers, IAM/SecOps professionals.
+
+## Application Features
+
+### Navigation Pages
+1. **Mission Control** (`/`) - Dashboard with overview of labs, progress stats, and quick access to training
+2. **Active Labs** (`/labs`) - Browse and filter all 97 labs by category, difficulty, and completion status
+3. **Leaderboard** (`/leaderboard`) - Live ranking of users by completed labs and scores
+4. **Badges** (`/badges`) - 23 unlockable achievements across Level, Category, and Achievement types
+5. **Certificates** (`/certificates`) - Downloadable certificates for completed categories
+6. **My Progress** (`/progress`) - Personal analytics, level progression, and completion statistics
+7. **Community** (`/community`) - Discussion forum to connect with fellow security learners
+
+### Lab Experience
+- **Mission Briefings**: Each lab starts with a realistic scenario and urgent briefing
+- **Terminal Simulation**: Practice AWS CLI commands in a safe, simulated environment
+- **Intel Boxes**: Beginner labs include contextual guidance explaining MITRE ATT&CK techniques
+- **Step Completion Feedback**: All labs provide feedback explaining what was accomplished and why it matters
+- **Progress Tracking**: Scores, completion status, and reset functionality
+
+### Gamification
+- **Leveling System**: 6 levels from Recruit to Elite Defender based on completed labs
+- **Badge System**: 23 badges for achievements, category mastery, and milestones
+- **Leaderboard**: Compete with other users on lab completions and scores
+- **Certificates**: Generate shareable certificates for category completion
+
+### Community Features
+- Discussion forum for asking questions and sharing knowledge
+- Threaded replies with real-time updates (30-second polling)
+- Profanity filter with 70+ blocked words/phrases and leet speak detection
+- Code of conduct enforcement
+- Users can delete their own posts
+
 ## Recent Changes (December 2024)
 
 ### Community Discussion Feature
 - Added dedicated Community page accessible from sidebar navigation
 - Users can post questions, share insights, and reply to discussions
-- Profanity filter with 70+ blocked words/phrases and leet speak detection
-- Code of conduct enforcement before posting
-- Real-time updates with 30-second polling
+- Profanity filter with comprehensive word list and bypass detection
+- Code of conduct modal with enforcement before posting
+- Real-time updates with automatic refresh
 - Threaded replies with collapsible reply forms
-- Users can delete their own posts
+- Post deletion for post owners
 
 ## User Preferences
 
@@ -90,3 +123,15 @@ Preferred communication style: Simple, everyday language.
 - `SESSION_SECRET`: Secret for session encryption
 - `ISSUER_URL`: Replit OIDC issuer (defaults to https://replit.com/oidc)
 - `REPL_ID`: Automatically set by Replit environment
+
+## File Structure
+
+### Key Files
+- `client/src/App.tsx` - Main routing and app structure
+- `client/src/components/layout.tsx` - Sidebar navigation with 7 nav items
+- `client/src/pages/` - All page components (dashboard, labs-list, lab-workspace, progress, badges, leaderboard, certificates, community)
+- `server/routes.ts` - API endpoints
+- `server/storage.ts` - Database operations interface
+- `server/lab-definitions.ts` - All 97 lab definitions with steps and feedback
+- `server/profanity-filter.ts` - Content moderation for community posts
+- `shared/schema.ts` - Drizzle ORM schema definitions
