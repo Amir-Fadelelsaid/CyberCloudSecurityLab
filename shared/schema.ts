@@ -84,6 +84,19 @@ export const certificates = pgTable("certificates", {
   totalScore: integer("total_score").default(0),
 });
 
+// === DISCUSSION POSTS ===
+export const discussionPosts = pgTable("discussion_posts", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  category: text("category").default("general"),
+  parentId: integer("parent_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  isHidden: boolean("is_hidden").default(false),
+  hideReason: text("hide_reason"),
+});
+
 // === RELATIONS ===
 export const labsRelations = relations(labs, ({ many }) => ({
   resources: many(resources),
@@ -131,6 +144,18 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
   }),
 }));
 
+export const discussionPostsRelations = relations(discussionPosts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [discussionPosts.userId],
+    references: [users.id],
+  }),
+  parent: one(discussionPosts, {
+    fields: [discussionPosts.parentId],
+    references: [discussionPosts.id],
+  }),
+  replies: many(discussionPosts),
+}));
+
 // === SCHEMAS ===
 export const insertLabSchema = createInsertSchema(labs);
 export const insertResourceSchema = createInsertSchema(resources);
@@ -139,6 +164,7 @@ export const insertLogSchema = createInsertSchema(terminalLogs);
 export const insertBadgeSchema = createInsertSchema(badges);
 export const insertUserBadgeSchema = createInsertSchema(userBadges);
 export const insertCertificateSchema = createInsertSchema(certificates);
+export const insertDiscussionPostSchema = createInsertSchema(discussionPosts).omit({ id: true, createdAt: true, updatedAt: true, isHidden: true, hideReason: true });
 
 // === TYPES ===
 export type Lab = typeof labs.$inferSelect;
@@ -148,6 +174,8 @@ export type UserProgress = typeof userProgress.$inferSelect;
 export type TerminalLog = typeof terminalLogs.$inferSelect;
 export type Badge = typeof badges.$inferSelect;
 export type UserBadge = typeof userBadges.$inferSelect;
+export type DiscussionPost = typeof discussionPosts.$inferSelect;
+export type InsertDiscussionPost = z.infer<typeof insertDiscussionPostSchema>;
 
 export type InsertLab = z.infer<typeof insertLabSchema>;
 export type InsertResource = z.infer<typeof insertResourceSchema>;
