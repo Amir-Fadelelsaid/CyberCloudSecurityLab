@@ -372,7 +372,7 @@ export default function LabWorkspace() {
                                 <span className="text-primary font-bold">CMD:</span> {step.hint?.replace("Type '", "").replace("'", "").replace(" to ", " ").split('.')[0]}
                               </div>
                               
-                              {step.intel && (
+                              {step.intel && !isCompleted && (
                                 <motion.div 
                                   className="mt-2 text-[10px] font-mono bg-cyan-950/30 p-2 rounded border border-cyan-500/20 space-y-1"
                                   initial={{ height: 0, opacity: 0 }}
@@ -389,6 +389,24 @@ export default function LabWorkspace() {
                                       ) : part
                                     )}
                                   </span>
+                                </motion.div>
+                              )}
+                              
+                              {/* Completion Feedback - Shows when step is done */}
+                              {isCompleted && step.completionFeedback && (
+                                <motion.div 
+                                  className="mt-2 text-[10px] font-mono bg-primary/10 p-2.5 rounded border border-primary/30"
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <Trophy className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <span className="text-primary font-bold block mb-1">COMPLETED!</span>
+                                      <span className="text-primary/80 leading-relaxed">{step.completionFeedback}</span>
+                                    </div>
+                                  </div>
                                 </motion.div>
                               )}
                             </div>

@@ -21,6 +21,7 @@ export interface LabDefinition {
     description: string;
     hint: string;
     intel?: string;
+    completionFeedback?: string;
   }>;
   resources: Array<{
     type: string;
