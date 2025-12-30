@@ -55,7 +55,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              81 hands-on labs across 7 security domains. Enterprise SOC simulation with SIEM alerts, 
+              89 hands-on labs across 7 security domains. Enterprise SOC simulation with SIEM alerts, 
               detection rules, and case management. Earn certificates and level up from Recruit to Elite Defender.
             </p>
           </motion.div>
@@ -97,7 +97,7 @@ export default function Landing() {
             className="flex justify-center gap-8 pt-8 flex-wrap"
           >
             {[
-              { value: "81", label: "Labs" },
+              { value: "89", label: "Labs" },
               { value: "7", label: "Categories" },
               { value: "19", label: "Badges" },
               { value: "7", label: "Certificates" },
@@ -171,11 +171,11 @@ export default function Landing() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {[
               { name: "Storage", count: 11, color: "from-teal-500/20 to-teal-600/10" },
-              { name: "Network", count: 11, color: "from-blue-500/20 to-blue-600/10" },
+              { name: "Network", count: 16, color: "from-blue-500/20 to-blue-600/10" },
               { name: "SOC Ops", count: 11, color: "from-violet-500/20 to-violet-600/10" },
               { name: "SOC Eng", count: 12, color: "from-orange-500/20 to-orange-600/10" },
               { name: "Cloud Analyst", count: 12, color: "from-cyan-500/20 to-cyan-600/10" },
-              { name: "IAM", count: 12, color: "from-yellow-500/20 to-yellow-600/10" },
+              { name: "IAM", count: 15, color: "from-yellow-500/20 to-yellow-600/10" },
               { name: "Cloud SecEng", count: 12, color: "from-rose-500/20 to-rose-600/10" },
             ].map((cat, i) => (
               <div key={i} className={`rounded-xl bg-gradient-to-br ${cat.color} border border-white/10 p-4 text-center`}>
