@@ -52,6 +52,14 @@ export const levelBadges: BadgeDefinition[] = [
     category: "Level",
     requirement: JSON.stringify({ type: "total_labs", count: 97 }),
     level: 5
+  },
+  {
+    name: "Challenge Master",
+    description: "Complete all 11 Challenge labs and prove elite-level threat response",
+    icon: "Swords",
+    category: "Level",
+    requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 11 }),
+    level: 6
   }
 ];
 
@@ -146,22 +154,22 @@ export const achievementBadges: BadgeDefinition[] = [
     requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 1 })
   },
   {
-    name: "Threat Hunter",
-    description: "Complete 3 Challenge labs and prove your APT detection skills",
+    name: "Threat Responder",
+    description: "Complete 3 Challenge labs - master storage, network, and SOC incident response",
     icon: "Crosshair",
     category: "Achievement",
     requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 3 })
   },
   {
-    name: "Red Team Rival",
-    description: "Complete 6 Challenge labs and match adversary tactics",
-    icon: "Swords",
+    name: "Incident Commander",
+    description: "Complete 6 Challenge labs - lead multi-vector attacks and insider threats",
+    icon: "RadioTower",
     category: "Achievement",
     requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 6 })
   },
   {
-    name: "APT Slayer",
-    description: "Complete all 11 Challenge labs and dominate elite scenarios",
+    name: "APT Hunter",
+    description: "Complete all 11 Challenge labs - defeat ransomware, supply chain, and red team attacks",
     icon: "Skull",
     category: "Achievement",
     requirement: JSON.stringify({ type: "difficulty_count", difficulty: "Challenge", count: 11 })

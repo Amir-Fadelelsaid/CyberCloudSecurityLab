@@ -61,7 +61,7 @@ export default function HiringManager() {
                   <p className="text-sm text-muted-foreground">Categories</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-primary">22</p>
+                  <p className="text-3xl font-bold text-primary">23</p>
                   <p className="text-sm text-muted-foreground">Badges</p>
                 </div>
                 <div>
