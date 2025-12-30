@@ -2475,6 +2475,76 @@ export async function registerRoutes(
     }
   });
 
+  // === COMMUNITY DISCUSSION ENDPOINTS ===
+  const { checkProfanity, CODE_OF_CONDUCT } = await import("./profanity-filter");
+
+  app.get("/api/discussions", async (req, res) => {
+    try {
+      const posts = await storage.getDiscussionPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching discussions:", error);
+      res.status(500).json({ message: "Failed to fetch discussions" });
+    }
+  });
+
+  app.get("/api/discussions/code-of-conduct", (req, res) => {
+    res.json({ content: CODE_OF_CONDUCT });
+  });
+
+  app.post("/api/discussions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { content, category, parentId } = req.body;
+
+      if (!content || typeof content !== "string") {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      const profanityCheck = checkProfanity(content);
+      if (!profanityCheck.isClean) {
+        return res.status(400).json({ 
+          message: profanityCheck.reason,
+          violation: profanityCheck.violation
+        });
+      }
+
+      const post = await storage.createDiscussionPost({
+        userId,
+        content: content.trim(),
+        category: category || "general",
+        parentId: parentId || null
+      });
+
+      const user = await storage.getUser(userId);
+      res.json({ ...post, user, replies: [] });
+    } catch (error) {
+      console.error("Error creating discussion post:", error);
+      res.status(500).json({ message: "Failed to create post" });
+    }
+  });
+
+  app.delete("/api/discussions/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const postId = parseInt(req.params.id);
+
+      if (isNaN(postId)) {
+        return res.status(400).json({ message: "Invalid post ID" });
+      }
+
+      const deleted = await storage.deleteDiscussionPost(postId, userId);
+      if (!deleted) {
+        return res.status(403).json({ message: "Cannot delete this post" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting discussion post:", error);
+      res.status(500).json({ message: "Failed to delete post" });
+    }
+  });
+
   // WebSocket for live leaderboard updates
   leaderboardClients = new Set<WebSocket>();
   const wss = new WebSocketServer({ server: httpServer, path: "/ws/leaderboard" });

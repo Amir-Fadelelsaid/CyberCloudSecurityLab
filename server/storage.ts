@@ -1,9 +1,9 @@
 import { db } from "./db";
 import {
-  labs, resources, userProgress, terminalLogs, badges, userBadges, users, certificates,
-  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource, type Badge, type UserBadge, type User, type Certificate
+  labs, resources, userProgress, terminalLogs, badges, userBadges, users, certificates, discussionPosts,
+  type Lab, type Resource, type UserProgress, type InsertLab, type InsertResource, type Badge, type UserBadge, type User, type Certificate, type DiscussionPost, type InsertDiscussionPost
 } from "@shared/schema";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, isNull } from "drizzle-orm";
 
 export type LeaderboardEntry = {
   rank: number;
@@ -59,6 +59,12 @@ export interface IStorage {
   getCertificate(userId: string, category: string): Promise<Certificate | undefined>;
   createCertificate(userId: string, category: string, labsCompleted: number, totalScore: number): Promise<Certificate>;
   getCategoryCompletion(userId: string, category: string): Promise<{ completed: number; total: number }>;
+  
+  // Discussions
+  getDiscussionPosts(category?: string): Promise<(DiscussionPost & { user: User; replies: (DiscussionPost & { user: User })[] })[]>;
+  createDiscussionPost(post: InsertDiscussionPost): Promise<DiscussionPost>;
+  deleteDiscussionPost(id: number, userId: string): Promise<boolean>;
+  hideDiscussionPost(id: number, reason: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -316,6 +322,53 @@ export class DatabaseStorage implements IStorage {
     const completed = labIds.filter(id => completedLabIds.has(id)).length;
 
     return { completed, total: labIds.length };
+  }
+
+  async getDiscussionPosts(category?: string): Promise<(DiscussionPost & { user: User; replies: (DiscussionPost & { user: User })[] })[]> {
+    const allPosts = await db.select()
+      .from(discussionPosts)
+      .innerJoin(users, eq(discussionPosts.userId, users.id))
+      .where(eq(discussionPosts.isHidden, false))
+      .orderBy(desc(discussionPosts.createdAt));
+
+    const postsWithUser = allPosts.map(row => ({
+      ...row.discussion_posts,
+      user: row.users
+    }));
+
+    const topLevelPosts = postsWithUser.filter(p => p.parentId === null);
+    const repliesByParent = postsWithUser.reduce((acc, post) => {
+      if (post.parentId !== null) {
+        if (!acc[post.parentId]) acc[post.parentId] = [];
+        acc[post.parentId].push(post);
+      }
+      return acc;
+    }, {} as Record<number, typeof postsWithUser>);
+
+    return topLevelPosts.map(post => ({
+      ...post,
+      replies: repliesByParent[post.id] || []
+    }));
+  }
+
+  async createDiscussionPost(post: InsertDiscussionPost): Promise<DiscussionPost> {
+    const [newPost] = await db.insert(discussionPosts).values(post).returning();
+    return newPost;
+  }
+
+  async deleteDiscussionPost(id: number, userId: string): Promise<boolean> {
+    const [post] = await db.select().from(discussionPosts).where(eq(discussionPosts.id, id));
+    if (!post || post.userId !== userId) return false;
+    
+    await db.delete(discussionPosts).where(eq(discussionPosts.parentId, id));
+    await db.delete(discussionPosts).where(eq(discussionPosts.id, id));
+    return true;
+  }
+
+  async hideDiscussionPost(id: number, reason: string): Promise<void> {
+    await db.update(discussionPosts)
+      .set({ isHidden: true, hideReason: reason })
+      .where(eq(discussionPosts.id, id));
   }
 }
 
