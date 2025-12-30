@@ -1232,6 +1232,43 @@ Classification Options:
 Alert classification recorded for ML model training.`;
     success = true;
   }
+  else if (lowerCmd.startsWith("siem add-source ")) {
+    const sourceName = lowerCmd.replace("siem add-source ", "").trim();
+    const siemRes = resources.find(r => r.type === 'siem_config' || r.type === 'siem_alert');
+    if (siemRes && siemRes.isVulnerable) {
+      await storage.updateResource(siemRes.id, { isVulnerable: false, status: 'configured' });
+      output = `[SUCCESS] Log source "${sourceName}" integrated with SIEM
+
+Configuration:
+  Source Type: ${sourceName}
+  Parser: Auto-detected
+  Normalization: Enabled
+  Indexing: Real-time
+
+Log Categories Enabled:
+  - Connection events
+  - Blocked traffic
+  - Policy violations
+  - Threat detections
+
+[i] Log correlation now active for ${sourceName}. Alerts will be generated based on cross-source analysis.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== siemRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] SIEM integration complete!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `[SUCCESS] Log source "${sourceName}" added to SIEM
+
+Source Status: CONNECTED
+Events Received: Streaming...
+Parser: Auto-configured`;
+      success = true;
+    }
+  }
   // Log Search Commands
   else if (lowerCmd.startsWith("logs search ")) {
     const query = lowerCmd.replace("logs search ", "").trim();
