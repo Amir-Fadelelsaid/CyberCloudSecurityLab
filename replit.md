@@ -12,7 +12,7 @@ CloudShieldLab is a gamified cloud security training platform where users practi
 1. **Mission Control** (`/`) - Dashboard with overview of labs, progress stats, and quick access to training
 2. **Active Labs** (`/labs`) - Browse and filter all 97 labs by category, difficulty, and completion status
 3. **Leaderboard** (`/leaderboard`) - Live ranking of users by completed labs and scores
-4. **Badges** (`/badges`) - 23 unlockable achievements across Level, Category, and Achievement types
+4. **Badges** (`/badges`) - 24 unlockable achievements across Level, Category, and Achievement types
 5. **Certificates** (`/certificates`) - Downloadable certificates for completed categories
 6. **My Progress** (`/progress`) - Personal analytics, level progression, and completion statistics
 7. **Community** (`/community`) - Discussion forum to connect with fellow security learners
@@ -26,9 +26,9 @@ CloudShieldLab is a gamified cloud security training platform where users practi
 
 ### Gamification
 - **Leveling System**: 6 levels from Recruit to Elite Defender based on completed labs
-- **Badge System**: 23 badges for achievements, category mastery, and milestones
+- **Badge System**: 24 badges for achievements, category mastery, and milestones (including the elite "Warlord" badge)
 - **Leaderboard**: Compete with other users on lab completions and scores
-- **Certificates**: Generate shareable certificates for category completion
+- **Certificates**: Generate shareable certificates for category completion (with disclaimer noting these are completion certificates, not industry certifications)
 
 ### Community Features
 - Discussion forum for asking questions and sharing knowledge
@@ -36,13 +36,26 @@ CloudShieldLab is a gamified cloud security training platform where users practi
 - Profanity filter with 70+ blocked words/phrases and leet speak detection
 - Code of conduct enforcement
 - Users can delete their own posts
+- Creator badge with shield emblem for platform developer posts
 
 ## Recent Changes (December 2024)
+
+### Warlord Badge
+- Added elite "Warlord" achievement badge requiring completion of all 97 labs AND 5 community discussion posts
+- Encourages users to both master content and help others in the community
+
+### Creator Badge
+- Platform developer posts display a special "Creator" badge with shield emblem
+- Badge appears on both posts and replies in the community section
+
+### Certificate Updates
+- Changed certificate signature from "Founder & Lead Instructor" to "Founder & Developer"
+- Added disclaimer on Certificates page clarifying these are completion certificates, not industry certifications
 
 ### Community Discussion Feature
 - Added dedicated Community page accessible from sidebar navigation
 - Users can post questions, share insights, and reply to discussions
-- Profanity filter with comprehensive word list and bypass detection
+- Profanity filter with exact word matching to prevent false positives
 - Code of conduct modal with enforcement before posting
 - Real-time updates with automatic refresh
 - Threaded replies with collapsible reply forms
@@ -88,7 +101,7 @@ Preferred communication style: Simple, everyday language.
 - **Terminal Simulation**: Server-side command processor simulates AWS CLI responses without real cloud resources
 - **Resource State Management**: Labs have mutable resource states that change from "vulnerable" to "fixed" as users complete remediation steps
 - **Leveling System**: Dynamic user levels (Recruit to Elite Defender) based on completed lab count
-- **Badge System**: 23 unlockable badges across Level, Category, and Achievement types
+- **Badge System**: 24 unlockable badges across Level, Category, and Achievement types (including Warlord badge for community engagement)
 - **Step Completion Feedback** (All Labs): 
   - Beginner labs feature Intel boxes (blue contextual guidance) that explain concepts and MITRE ATT&CK techniques before action
   - All labs (Beginner, Intermediate, Advanced, Challenge) include step completion feedback (trophy icon) that explains what was accomplished and why it matters for security
