@@ -187,6 +187,13 @@ export const achievementBadges: BadgeDefinition[] = [
     icon: "Trophy",
     category: "Achievement",
     requirement: JSON.stringify({ type: "total_labs", count: 97 })
+  },
+  {
+    name: "Warlord",
+    description: "Complete all 97 labs and help 5 users in community discussions",
+    icon: "Swords",
+    category: "Achievement",
+    requirement: JSON.stringify({ type: "warlord", labs: 97, posts: 5 })
   }
 ];
 

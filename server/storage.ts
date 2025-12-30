@@ -65,6 +65,7 @@ export interface IStorage {
   createDiscussionPost(post: InsertDiscussionPost): Promise<DiscussionPost>;
   deleteDiscussionPost(id: number, userId: string): Promise<boolean>;
   hideDiscussionPost(id: number, reason: string): Promise<void>;
+  getUserPostCount(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -369,6 +370,13 @@ export class DatabaseStorage implements IStorage {
     await db.update(discussionPosts)
       .set({ isHidden: true, hideReason: reason })
       .where(eq(discussionPosts.id, id));
+  }
+
+  async getUserPostCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(discussionPosts)
+      .where(and(eq(discussionPosts.userId, userId), eq(discussionPosts.isHidden, false)));
+    return result[0]?.count || 0;
   }
 }
 

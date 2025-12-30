@@ -2301,6 +2301,9 @@ export async function registerRoutes(
           const diffLabIds = difficultyLabs.filter(l => l.difficulty === req.difficulty).map(l => l.id);
           const completedDiff = completedLabs.filter(p => diffLabIds.includes(p.labId)).length;
           earned = completedDiff >= req.count;
+        } else if (req.type === "warlord") {
+          const userPostCount = await storage.getUserPostCount(userId);
+          earned = completedLabs.length >= req.labs && userPostCount >= req.posts;
         }
         
         if (earned) {
