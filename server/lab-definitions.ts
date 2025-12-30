@@ -290,9 +290,9 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "5-10 minutes",
     initialState: { instances: ["db-prod-01"] },
     steps: [
-      { number: 1, title: "Scan for Issues", description: "Identify exposed network ports.", hint: "Type 'scan' to find vulnerabilities.", intel: "Exposed SSH is the #1 attack vector for cloud compromises. Most attacks are automated and happen within hours of exposure." },
-      { number: 2, title: "Review Security Group", description: "Check the security group rules.", hint: "Type 'aws ec2 describe-sg db-prod-01'.", intel: "Look for 0.0.0.0/0 - this means 'everyone on the internet'. Never use this for management ports." },
-      { number: 3, title: "Restrict SSH Access", description: "Limit SSH to internal networks only.", hint: "Type 'aws ec2 restrict-ssh db-prod-01'.", intel: "Best practice: Use Systems Manager Session Manager instead of SSH. It provides audit trails and doesn't require open ports." }
+      { number: 1, title: "Scan for Issues", description: "Identify exposed network ports.", hint: "Type 'scan' to find vulnerabilities.", intel: "Exposed SSH is the #1 attack vector for cloud compromises. Most attacks are automated and happen within hours of exposure.", completionFeedback: "You identified the exposed SSH port. Fast detection is critical - attackers scan for open ports within minutes of exposure." },
+      { number: 2, title: "Review Security Group", description: "Check the security group rules.", hint: "Type 'aws ec2 describe-sg db-prod-01'.", intel: "Look for 0.0.0.0/0 - this means 'everyone on the internet'. Never use this for management ports.", completionFeedback: "You confirmed the 0.0.0.0/0 rule. Understanding exactly what's exposed helps you make informed remediation decisions." },
+      { number: 3, title: "Restrict SSH Access", description: "Limit SSH to internal networks only.", hint: "Type 'aws ec2 restrict-ssh db-prod-01'.", intel: "Best practice: Use Systems Manager Session Manager instead of SSH. It provides audit trails and doesn't require open ports.", completionFeedback: "SSH secured! You blocked internet access to a critical management port. This stops brute-force attacks at the network layer." }
     ],
     resources: [
       { type: "security_group", name: "sg-db-prod-01", config: { ingress: [{ port: 22, source: "0.0.0.0/0" }] }, isVulnerable: true, status: "active" }
@@ -310,9 +310,9 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "5-10 minutes",
     initialState: { instances: ["win-admin-01"] },
     steps: [
-      { number: 1, title: "Identify Risk", description: "Scan for exposed RDP ports.", hint: "Type 'scan' to find issues.", intel: "RDP (port 3389) is the most commonly exploited port. Ransomware operators actively buy access to exposed RDP servers." },
-      { number: 2, title: "List Security Groups", description: "Review current configurations.", hint: "Type 'aws ec2 ls-sg'.", intel: "BlueKeep (CVE-2019-0708) made RDP exploitation trivial. Even patched systems are vulnerable to credential attacks." },
-      { number: 3, title: "Restrict RDP", description: "Allow RDP only from VPN.", hint: "Type 'aws ec2 restrict-rdp win-admin-01'.", intel: "After restricting, enable NLA (Network Level Authentication) for an additional security layer." }
+      { number: 1, title: "Identify Risk", description: "Scan for exposed RDP ports.", hint: "Type 'scan' to find issues.", intel: "RDP (port 3389) is the most commonly exploited port. Ransomware operators actively buy access to exposed RDP servers.", completionFeedback: "You found the exposed RDP port. RDP is the #1 ransomware entry point - identifying it quickly is essential." },
+      { number: 2, title: "List Security Groups", description: "Review current configurations.", hint: "Type 'aws ec2 ls-sg'.", intel: "BlueKeep (CVE-2019-0708) made RDP exploitation trivial. Even patched systems are vulnerable to credential attacks.", completionFeedback: "You reviewed the security group rules. Understanding your current exposure helps prioritize remediation." },
+      { number: 3, title: "Restrict RDP", description: "Allow RDP only from VPN.", hint: "Type 'aws ec2 restrict-rdp win-admin-01'.", intel: "After restricting, enable NLA (Network Level Authentication) for an additional security layer.", completionFeedback: "RDP secured! You closed the most common ransomware entry vector. This single fix prevents countless attack attempts." }
     ],
     resources: [
       { type: "security_group", name: "sg-win-admin", config: { ingress: [{ port: 3389, source: "0.0.0.0/0" }] }, isVulnerable: true, status: "active" }
@@ -330,9 +330,9 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "5-10 minutes",
     initialState: { instances: ["mysql-prod-01"] },
     steps: [
-      { number: 1, title: "Find Exposed Ports", description: "Scan for database exposure.", hint: "Type 'scan' to identify.", intel: "Database ports should NEVER be internet-facing. Always place databases in private subnets." },
-      { number: 2, title: "Check Database SG", description: "Review MySQL security group.", hint: "Type 'aws ec2 describe-sg mysql-prod-01'.", intel: "The 2017 MongoDB apocalypse happened because thousands of databases were internet-exposed with no authentication." },
-      { number: 3, title: "Restrict Access", description: "Allow only app server security group.", hint: "Type 'aws ec2 restrict-db mysql-prod-01'.", intel: "Use security group references (sg-xxxxx) instead of IP ranges when possible. This ensures only authorized instances can connect." }
+      { number: 1, title: "Find Exposed Ports", description: "Scan for database exposure.", hint: "Type 'scan' to identify.", intel: "Database ports should NEVER be internet-facing. Always place databases in private subnets.", completionFeedback: "You found the exposed database port. Databases are high-value targets - detecting exposure quickly prevents data theft." },
+      { number: 2, title: "Check Database SG", description: "Review MySQL security group.", hint: "Type 'aws ec2 describe-sg mysql-prod-01'.", intel: "The 2017 MongoDB apocalypse happened because thousands of databases were internet-exposed with no authentication.", completionFeedback: "You verified the security group configuration. Confirming the issue helps you understand the full exposure scope." },
+      { number: 3, title: "Restrict Access", description: "Allow only app server security group.", hint: "Type 'aws ec2 restrict-db mysql-prod-01'.", intel: "Use security group references (sg-xxxxx) instead of IP ranges when possible. This ensures only authorized instances can connect.", completionFeedback: "Database secured! You restricted access to only application servers. This network segmentation is fundamental to database security." }
     ],
     resources: [
       { type: "security_group", name: "sg-mysql-prod", config: { ingress: [{ port: 3306, source: "0.0.0.0/0" }] }, isVulnerable: true, status: "active" }
@@ -350,12 +350,12 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { nacls: ["acl-public-subnet"] },
     steps: [
-      { number: 1, title: "Identify NACL Issue", description: "Scan for overly permissive network ACLs.", hint: "Type 'scan' to find issues." },
-      { number: 2, title: "Understand NACLs", description: "NACLs are stateless and process rules in order. They provide subnet-level security.", hint: "NACLs work with security groups for defense-in-depth." },
-      { number: 3, title: "Review NACL Rules", description: "Check current NACL configuration.", hint: "Type 'aws ec2 describe-nacl acl-public-subnet'." },
-      { number: 4, title: "Analyze the Risk", description: "The NACL allows all traffic (0.0.0.0/0), making security groups the only protection layer.", hint: "Defense-in-depth requires multiple security layers." },
-      { number: 5, title: "Apply Restrictive Rules", description: "Configure deny-by-default with specific allows.", hint: "Type 'aws ec2 fix-nacl acl-public-subnet'." },
-      { number: 6, title: "Verify Configuration", description: "Confirm NACL is now properly configured.", hint: "Type 'aws ec2 describe-nacl acl-public-subnet' to verify." }
+      { number: 1, title: "Identify NACL Issue", description: "Scan for overly permissive network ACLs.", hint: "Type 'scan' to find issues.", completionFeedback: "You identified the permissive NACL. NACLs provide subnet-level filtering - when misconfigured, entire subnets are exposed." },
+      { number: 2, title: "Understand NACLs", description: "NACLs are stateless and process rules in order. They provide subnet-level security.", hint: "NACLs work with security groups for defense-in-depth.", completionFeedback: "You understand NACL fundamentals. Knowing that NACLs are stateless helps you write correct inbound and outbound rules." },
+      { number: 3, title: "Review NACL Rules", description: "Check current NACL configuration.", hint: "Type 'aws ec2 describe-nacl acl-public-subnet'.", completionFeedback: "You reviewed the NACL rules. Seeing the allow-all configuration confirms why defense-in-depth is broken." },
+      { number: 4, title: "Analyze the Risk", description: "The NACL allows all traffic (0.0.0.0/0), making security groups the only protection layer.", hint: "Defense-in-depth requires multiple security layers.", completionFeedback: "You analyzed the risk. Without NACL filtering, a security group misconfiguration means immediate exposure." },
+      { number: 5, title: "Apply Restrictive Rules", description: "Configure deny-by-default with specific allows.", hint: "Type 'aws ec2 fix-nacl acl-public-subnet'.", completionFeedback: "NACL secured! You implemented deny-by-default, adding a critical second layer of network protection." },
+      { number: 6, title: "Verify Configuration", description: "Confirm NACL is now properly configured.", hint: "Type 'aws ec2 describe-nacl acl-public-subnet' to verify.", completionFeedback: "You verified the fix. Defense-in-depth is now restored - both NACLs and security groups protect your subnet." }
     ],
     resources: [
       { type: "nacl", name: "acl-public-subnet", config: { inbound: "allow-all" }, isVulnerable: true, status: "active" }
@@ -370,12 +370,12 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { vpcs: ["vpc-production"] },
     steps: [
-      { number: 1, title: "Detect Missing Logs", description: "Scan for VPCs without flow logs.", hint: "Type 'scan' to identify issues." },
-      { number: 2, title: "Understand Flow Logs", description: "VPC Flow Logs capture network traffic metadata for security analysis and troubleshooting.", hint: "Essential for detecting lateral movement and data exfiltration." },
-      { number: 3, title: "Check VPC Config", description: "Review current VPC flow log settings.", hint: "Type 'aws ec2 describe-vpc vpc-production'." },
-      { number: 4, title: "Enable Flow Logs", description: "Turn on VPC Flow Logs with CloudWatch destination.", hint: "Type 'aws ec2 enable-flow-logs vpc-production'." },
-      { number: 5, title: "Verify Logging", description: "Confirm flow logs are now active.", hint: "Type 'aws ec2 describe-vpc vpc-production' to verify." },
-      { number: 6, title: "Document Configuration", description: "Flow logs configured. Traffic metadata now available for security analysis.", hint: "Type 'scan' to confirm." }
+      { number: 1, title: "Detect Missing Logs", description: "Scan for VPCs without flow logs.", hint: "Type 'scan' to identify issues.", completionFeedback: "You found the VPC without flow logs. Without network visibility, you're blind to lateral movement and data exfiltration." },
+      { number: 2, title: "Understand Flow Logs", description: "VPC Flow Logs capture network traffic metadata for security analysis and troubleshooting.", hint: "Essential for detecting lateral movement and data exfiltration.", completionFeedback: "You understand flow log capabilities. This metadata is crucial for threat hunting and incident investigation." },
+      { number: 3, title: "Check VPC Config", description: "Review current VPC flow log settings.", hint: "Type 'aws ec2 describe-vpc vpc-production'.", completionFeedback: "You verified flow logs are disabled. Confirming the gap helps you understand what visibility you're missing." },
+      { number: 4, title: "Enable Flow Logs", description: "Turn on VPC Flow Logs with CloudWatch destination.", hint: "Type 'aws ec2 enable-flow-logs vpc-production'.", completionFeedback: "Flow logs enabled! You now have network visibility for detecting anomalies, intrusions, and policy violations." },
+      { number: 5, title: "Verify Logging", description: "Confirm flow logs are now active.", hint: "Type 'aws ec2 describe-vpc vpc-production' to verify.", completionFeedback: "You confirmed logging is active. Traffic metadata will now flow to CloudWatch for analysis." },
+      { number: 6, title: "Document Configuration", description: "Flow logs configured. Traffic metadata now available for security analysis.", hint: "Type 'scan' to confirm.", completionFeedback: "Configuration documented! With flow logs, your SOC can now investigate network-based attacks effectively." }
     ],
     resources: [
       { type: "vpc", name: "vpc-production", config: { flowLogs: false }, isVulnerable: true, status: "active" }
@@ -390,12 +390,12 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-25 minutes",
     initialState: { instances: ["app-server-01"] },
     steps: [
-      { number: 1, title: "Identify Egress Risk", description: "Scan for unrestricted outbound rules.", hint: "Type 'scan' to find issues." },
-      { number: 2, title: "Understand Egress Security", description: "Unrestricted egress allows compromised instances to exfiltrate data or communicate with C2 servers.", hint: "MITRE ATT&CK T1041: Exfiltration Over C2 Channel." },
-      { number: 3, title: "Check Egress Rules", description: "Review current outbound security group rules.", hint: "Type 'aws ec2 describe-egress app-server-01'." },
-      { number: 4, title: "Analyze Traffic Needs", description: "Application servers typically only need HTTPS to specific endpoints.", hint: "Principle of least privilege applies to network rules too." },
-      { number: 5, title: "Restrict Egress", description: "Allow only necessary outbound traffic.", hint: "Type 'aws ec2 restrict-egress app-server-01'." },
-      { number: 6, title: "Verify Egress Rules", description: "Confirm egress is now restricted.", hint: "Type 'aws ec2 describe-egress app-server-01' to verify." }
+      { number: 1, title: "Identify Egress Risk", description: "Scan for unrestricted outbound rules.", hint: "Type 'scan' to find issues.", completionFeedback: "You found unrestricted egress. Open outbound rules let attackers exfiltrate data or contact command-and-control servers." },
+      { number: 2, title: "Understand Egress Security", description: "Unrestricted egress allows compromised instances to exfiltrate data or communicate with C2 servers.", hint: "MITRE ATT&CK T1041: Exfiltration Over C2 Channel.", completionFeedback: "You understand egress risks. Most organizations focus on ingress but egress filtering stops data theft and C2 communication." },
+      { number: 3, title: "Check Egress Rules", description: "Review current outbound security group rules.", hint: "Type 'aws ec2 describe-egress app-server-01'.", completionFeedback: "You reviewed outbound rules. Seeing the 0.0.0.0/0 confirms why data exfiltration would be trivial for an attacker." },
+      { number: 4, title: "Analyze Traffic Needs", description: "Application servers typically only need HTTPS to specific endpoints.", hint: "Principle of least privilege applies to network rules too.", completionFeedback: "You analyzed legitimate traffic needs. Understanding required flows lets you block everything else." },
+      { number: 5, title: "Restrict Egress", description: "Allow only necessary outbound traffic.", hint: "Type 'aws ec2 restrict-egress app-server-01'.", completionFeedback: "Egress restricted! Compromised instances can no longer freely communicate with attacker infrastructure." },
+      { number: 6, title: "Verify Egress Rules", description: "Confirm egress is now restricted.", hint: "Type 'aws ec2 describe-egress app-server-01' to verify.", completionFeedback: "You verified the restrictions. Egress filtering is now blocking unauthorized outbound connections." }
     ],
     resources: [
       { type: "security_group", name: "sg-app-server", config: { egress: "0.0.0.0/0:all" }, isVulnerable: true, status: "active" }
@@ -410,12 +410,12 @@ export const networkSecurityLabs: LabDefinition[] = [
     estimatedTime: "15-20 minutes",
     initialState: { eips: ["eip-unattached"] },
     steps: [
-      { number: 1, title: "Find Unused EIPs", description: "Scan for unattached Elastic IPs.", hint: "Type 'scan' to identify issues." },
-      { number: 2, title: "Understand the Risk", description: "Unused EIPs waste money and can cause confusion during incident response.", hint: "AWS charges for unattached EIPs." },
-      { number: 3, title: "List All EIPs", description: "Review all allocated Elastic IPs.", hint: "Type 'aws ec2 describe-eips'." },
-      { number: 4, title: "Verify Not In Use", description: "Confirm the EIP is truly unused before releasing.", hint: "Check with application teams before removing." },
-      { number: 5, title: "Release Unused EIP", description: "Release the unattached Elastic IP.", hint: "Type 'aws ec2 release-eip eip-unattached'." },
-      { number: 6, title: "Document Cleanup", description: "Record the cleanup for audit purposes.", hint: "Type 'scan' to confirm." }
+      { number: 1, title: "Find Unused EIPs", description: "Scan for unattached Elastic IPs.", hint: "Type 'scan' to identify issues.", completionFeedback: "You found unused Elastic IPs. Orphaned resources create confusion during incidents and waste money." },
+      { number: 2, title: "Understand the Risk", description: "Unused EIPs waste money and can cause confusion during incident response.", hint: "AWS charges for unattached EIPs.", completionFeedback: "You understand the risk. Clean infrastructure makes incident response faster and reduces costs." },
+      { number: 3, title: "List All EIPs", description: "Review all allocated Elastic IPs.", hint: "Type 'aws ec2 describe-eips'.", completionFeedback: "You inventoried Elastic IPs. Knowing what you have is the first step to proper resource management." },
+      { number: 4, title: "Verify Not In Use", description: "Confirm the EIP is truly unused before releasing.", hint: "Check with application teams before removing.", completionFeedback: "You verified the EIP is unused. Always confirm before deleting - breaking production is worse than keeping an unused resource." },
+      { number: 5, title: "Release Unused EIP", description: "Release the unattached Elastic IP.", hint: "Type 'aws ec2 release-eip eip-unattached'.", completionFeedback: "EIP released! You cleaned up an orphaned resource, reducing costs and infrastructure complexity." },
+      { number: 6, title: "Document Cleanup", description: "Record the cleanup for audit purposes.", hint: "Type 'scan' to confirm.", completionFeedback: "Cleanup documented! Good hygiene practices make your cloud environment easier to secure and audit." }
     ],
     resources: [
       { type: "eip", name: "eip-unattached", config: { associated: false }, isVulnerable: true, status: "active" }
