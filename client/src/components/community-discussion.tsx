@@ -145,16 +145,7 @@ export function CommunityDiscussion() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Users className="w-6 h-6 text-primary" />
-          <div>
-            <h2 className="text-xl font-bold">Community Discussion</h2>
-            <p className="text-sm text-muted-foreground">
-              Connect, ask questions, and share knowledge with fellow security learners
-            </p>
-          </div>
-        </div>
+      <div className="flex justify-end">
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" data-testid="button-code-of-conduct">
