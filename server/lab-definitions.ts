@@ -1625,8 +1625,52 @@ export const iamSecurityLabs: LabDefinition[] = [
     ],
     fixCommands: ["aws iam cleanup-inactive-users"]
   },
+  {
+    title: "Service Account Credential Hygiene",
+    description: "A service account has access keys older than 90 days and permissions that haven't been used. Audit and remediate the credential lifecycle issues.",
+    briefing: "CREDENTIAL HYGIENE: Service account 'app-backend-svc' has a 180-day-old access key. Keys should be rotated every 90 days per CIS benchmarks.",
+    scenario: "Your application's service account was set up a year ago and forgotten. The access key has never been rotated, and it has more permissions than it needs. Time to clean it up.",
+    difficulty: "Beginner",
+    category: "IAM Security",
+    estimatedTime: "5-10 minutes",
+    initialState: { serviceAccounts: ["app-backend-svc"] },
+    steps: [
+      { number: 1, title: "Identify Credential Issues", description: "Scan for service accounts with old credentials.", hint: "Type 'scan' to identify issues.", intel: "CIS AWS 1.14: Ensure access keys are rotated every 90 days or less." },
+      { number: 2, title: "Check Key Age", description: "Review the age of access keys for the service account.", hint: "Type 'aws iam list-access-keys --user app-backend-svc'.", intel: "Keys older than 90 days are a compliance violation and security risk." },
+      { number: 3, title: "Review Permissions", description: "Check what permissions the service account actually uses.", hint: "Type 'aws iam get-service-last-accessed app-backend-svc'.", intel: "Compare granted permissions to actually used permissions to right-size access." },
+      { number: 4, title: "Rotate Credentials", description: "Create new access keys and deactivate the old ones.", hint: "Type 'aws iam rotate-service-credentials app-backend-svc'.", intel: "Coordinate with application teams before rotating - they need to update their configs." }
+    ],
+    resources: [
+      { type: "service_account", name: "app-backend-svc", config: { keyAge: 180, lastUsed: "2 hours ago", permissions: ["s3:GetObject", "dynamodb:Query"] }, isVulnerable: true, status: "key-rotation-overdue" }
+    ],
+    fixCommands: ["aws iam rotate-service-credentials app-backend-svc"]
+  },
 
-  // INTERMEDIATE LABS (4)
+  // INTERMEDIATE LABS (5)
+  {
+    title: "Multi-Role Trust Chain Analysis",
+    description: "Multiple IAM roles have complex trust relationships that could allow privilege escalation through role chaining. Map and secure the trust paths.",
+    briefing: "ROLE CHAIN ALERT: Security scanning detected that low-privilege roles can chain through intermediate roles to reach admin-level access. Investigate and break the escalation paths.",
+    scenario: "Your IAM roles have grown organically. Developers created roles that trust other roles. Now you have a web of trust relationships, and somewhere in there, a junior developer role can eventually become admin through role chaining.",
+    difficulty: "Intermediate",
+    category: "IAM Security",
+    estimatedTime: "15-25 minutes",
+    initialState: { roles: ["app-role", "deploy-role", "admin-role"] },
+    steps: [
+      { number: 1, title: "Scan for Trust Issues", description: "Identify roles with complex trust relationships.", hint: "Type 'scan' to find vulnerabilities.", intel: "Role chaining: A assumes B, B assumes C, A effectively becomes C." },
+      { number: 2, title: "List Role Trust Policies", description: "Review trust policies for all IAM roles.", hint: "Type 'aws iam list-roles --with-trust'.", intel: "Look for roles that trust other roles in the same account." },
+      { number: 3, title: "Map Role Chains", description: "Build a graph of which roles can assume which other roles.", hint: "Type 'aws iam trace-role-chains'.", intel: "Follow the chain: if A->B and B->C, then A can effectively become C." },
+      { number: 4, title: "Identify Escalation Paths", description: "Find paths from low-privilege to high-privilege roles.", hint: "Type 'aws iam find-escalation-paths'.", intel: "Critical paths end at admin roles or roles with iam:* permissions." },
+      { number: 5, title: "Review Most Dangerous Path", description: "Analyze the highest-risk escalation chain.", hint: "Type 'aws iam analyze-path app-role admin-role'.", intel: "Document each hop in the chain and why it exists." },
+      { number: 6, title: "Break Escalation Chain", description: "Modify trust policies to prevent unintended escalation.", hint: "Type 'aws iam break-role-chain deploy-role'.", intel: "Remove trust from intermediate roles or add conditions to restrict chaining." }
+    ],
+    resources: [
+      { type: "iam_role", name: "app-role", config: { canAssume: ["deploy-role"], permissions: "BasicAccess" }, isVulnerable: false, status: "active" },
+      { type: "iam_role", name: "deploy-role", config: { canAssume: ["admin-role"], permissions: "DeployAccess", trustedBy: ["app-role"] }, isVulnerable: true, status: "escalation-path" },
+      { type: "iam_role", name: "admin-role", config: { canAssume: [], permissions: "AdministratorAccess", trustedBy: ["deploy-role"] }, isVulnerable: true, status: "reachable-via-chain" }
+    ],
+    fixCommands: ["aws iam break-role-chain deploy-role"]
+  },
   {
     title: "Cross-Account Role Trust Policy",
     description: "An IAM role trusts an unknown external AWS account. Audit and restrict the trust relationship.",

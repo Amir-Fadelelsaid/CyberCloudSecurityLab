@@ -1745,6 +1745,87 @@ Credentials revoked: ${resources.find(r => r.type === 'iam_user')?.isVulnerable 
   else if (lowerCmd === "aws ec2 describe-route-tables --vpn" || lowerCmd === "aws ec2 describe-route-tables --nat") {
     output = `=== Route Tables ===\n\nrtb-private-1:\n  Destination: 0.0.0.0/0\n  Target: nat-prod-01\n  Status: active\n  \nrtb-private-2:\n  Destination: 0.0.0.0/0\n  Target: nat-prod-01\n  Status: active (suboptimal - cross-AZ)\n\n[!] Both private subnets routing through single NAT Gateway`;
   }
+  // Service Account Credential Commands
+  else if (lowerCmd.startsWith("aws iam list-access-keys --user ")) {
+    const userName = lowerCmd.replace("aws iam list-access-keys --user ", "").trim();
+    const account = resources.find(r => (r.type === 'service_account' || r.type === 'iam_user') && r.name === userName);
+    if (account) {
+      const config = account.config as any;
+      output = `=== Access Keys for ${userName} ===\n\nAccessKeyId: AKIA${userName.toUpperCase().replace(/-/g, '')}KEY1\nStatus: Active\nCreateDate: ${config.keyAge ? new Date(Date.now() - config.keyAge * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 'Unknown'}\nKey Age: ${config.keyAge || 0} days\n\n${config.keyAge > 90 ? '[!] KEY ROTATION OVERDUE - Keys should be rotated every 90 days (CIS AWS 1.14)' : '[OK] Key age within policy limits'}`;
+    } else {
+      output = `Error: User ${userName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws iam get-service-last-accessed ")) {
+    const serviceName = lowerCmd.replace("aws iam get-service-last-accessed ", "").trim();
+    const account = resources.find(r => (r.type === 'service_account' || r.type === 'iam_role') && r.name === serviceName);
+    if (account) {
+      const config = account.config as any;
+      const permissions = config.permissions || [];
+      output = `=== Service Last Accessed Report: ${serviceName} ===\n\nGranted Permissions Analysis:\n`;
+      if (Array.isArray(permissions)) {
+        permissions.forEach((p: string) => {
+          output += `  ${p}: Last used ${config.lastUsed || '1 hour ago'}\n`;
+        });
+      } else {
+        output += `  ${permissions}: Last used ${config.lastUsed || '1 hour ago'}\n`;
+      }
+      output += `\n[i] Use this data to right-size permissions based on actual usage.`;
+    } else {
+      output = `Error: Service ${serviceName} not found.`;
+    }
+  }
+  else if (lowerCmd.startsWith("aws iam rotate-service-credentials ")) {
+    const serviceName = lowerCmd.replace("aws iam rotate-service-credentials ", "").trim();
+    const account = resources.find(r => r.type === 'service_account' && r.name === serviceName && r.isVulnerable);
+    if (account) {
+      await storage.updateResource(account.id, { isVulnerable: false, status: 'credentials-rotated' });
+      output = `[SUCCESS] Credentials rotated for ${serviceName}\n\nActions Taken:\n  - Created new access key: AKIA${serviceName.toUpperCase().replace(/-/g, '')}NEW1\n  - Deactivated old access key\n  - Key age reset to 0 days\n\n[!] IMPORTANT: Update application configurations with new credentials before deleting old key.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== account.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Service account credentials secured!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else if (resources.find(r => r.type === 'service_account' && r.name === serviceName)) {
+      output = `Credentials for ${serviceName} are already current (within 90-day rotation policy).`;
+    } else {
+      output = `Error: Service account ${serviceName} not found.`;
+    }
+  }
+  // Role Chain Analysis Commands
+  else if (lowerCmd.startsWith("aws iam analyze-path ")) {
+    const parts = lowerCmd.replace("aws iam analyze-path ", "").trim().split(" ");
+    const fromRole = parts[0];
+    const toRole = parts[1];
+    output = `=== Role Chain Analysis: ${fromRole} -> ${toRole} ===\n\nEscalation Path Detected:\n\n  Step 1: ${fromRole}\n    |-- sts:AssumeRole -> deploy-role\n    |   Condition: None (UNRESTRICTED)\n    |\n  Step 2: deploy-role\n    |-- sts:AssumeRole -> ${toRole}\n    |   Condition: None (UNRESTRICTED)\n    |\n  Step 3: ${toRole}\n    |-- Permissions: AdministratorAccess\n\n[CRITICAL] Low-privilege role can reach admin through 2 hops!\n\nRecommendation: Add conditions to deploy-role trust policy to prevent app-role from assuming it without MFA or from specific principals only.`;
+  }
+  else if (lowerCmd.startsWith("aws iam break-role-chain ")) {
+    const roleName = lowerCmd.replace("aws iam break-role-chain ", "").trim();
+    const role = resources.find(r => r.type === 'iam_role' && r.name === roleName && r.isVulnerable);
+    if (role) {
+      await storage.updateResource(role.id, { isVulnerable: false, status: 'chain-broken' });
+      const adminRole = resources.find(r => r.type === 'iam_role' && r.name === 'admin-role' && r.isVulnerable);
+      if (adminRole) {
+        await storage.updateResource(adminRole.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `[SUCCESS] Role chain broken at ${roleName}\n\nChanges Applied:\n  - Added condition: aws:PrincipalTag/role-chain-authorized = true\n  - Restricted assumable principals to explicit list\n  - Added MFA requirement for cross-role assumption\n\n[i] app-role can no longer chain through deploy-role to admin-role.`;
+      success = true;
+      const remaining = resources.filter(r => r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Role escalation paths eliminated!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else if (resources.find(r => r.type === 'iam_role' && r.name === roleName)) {
+      output = `Role chain for ${roleName} has already been secured.`;
+    } else {
+      output = `Error: Role ${roleName} not found.`;
+    }
+  }
   // IAM Identity Investigation Commands
   else if (lowerCmd === "aws iam list-identity-providers") {
     const providers = resources.filter(r => r.type === 'identity_provider');
