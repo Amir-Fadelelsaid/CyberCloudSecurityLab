@@ -99,6 +99,21 @@ Full-featured Security Operations Center dashboard with 6 operational tabs:
 - Asset criticality ratings
 - IP reputation scoring
 
+### Lab-Specific Contextual Visualization
+
+All visualization components dynamically display contextually relevant data based on the specific lab topic:
+
+| Component | Categories | Contextual Data |
+|-----------|------------|-----------------|
+| **SOC Dashboard** | SOC Operations, SOC Engineer, Cloud Security Analyst | Lab-specific devices with relevant attack indicators (e.g., "Phishing Email Investigation" shows workstations with PHISHING-CLICK tags) |
+| **Infrastructure Status** | Storage Security, Network Security, Cloud Security Engineer | Contextual alert banners explaining the specific security issue (e.g., "ALERT: corp-payroll-data bucket detected on dark web forum listing") |
+| **Identity Ecosystem** | IAM Security | Severity-coded context alerts (critical/high/medium) matching the lab objective (e.g., "CRITICAL: Admin user lacks multi-factor authentication") |
+
+**15+ Lab-Specific Device Configurations:**
+- Realistic hostnames, IP addresses, and attack tags per lab topic
+- Attack indicator tags match the specific threat being investigated
+- Dynamic data generation based on exact lab title with fallback to category-based data
+
 ### Certificate System
 
 Earn certificates upon completing all labs in a category:

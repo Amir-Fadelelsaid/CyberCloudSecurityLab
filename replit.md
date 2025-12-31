@@ -23,6 +23,13 @@ CloudShieldLab is a gamified cloud security training platform where users practi
 - **Intel Boxes**: Beginner labs include contextual guidance explaining MITRE ATT&CK techniques
 - **Step Completion Feedback**: All labs provide feedback explaining what was accomplished and why it matters
 - **Progress Tracking**: Scores, completion status, and reset functionality
+- **Lab-Specific Contextual Data**: Each visualization component (SOC Dashboard, Infrastructure Status, Identity Ecosystem) displays data tailored to the specific lab's objective
+
+### Lab-Specific Visualization System
+All visualization components dynamically display contextually relevant data based on the specific lab topic:
+- **SOC Dashboard** (SOC Operations, SOC Engineer, Cloud Security Analyst labs): Shows lab-specific devices with relevant attack indicators (e.g., "Phishing Email Investigation" displays workstations with PHISHING-CLICK tags, mail servers with SUSPICIOUS-SENDER tags)
+- **Infrastructure Status** (Storage Security, Network Security, Cloud Security Engineer labs): Displays contextual alert banners explaining the specific security issue (e.g., "ALERT: corp-payroll-data bucket detected on dark web forum listing")
+- **Identity Ecosystem** (IAM Security labs): Shows severity-coded context alerts matching the lab objective (e.g., "CRITICAL: Admin user lacks multi-factor authentication")
 
 ### Gamification
 - **Leveling System**: 6 levels from Recruit to Elite Defender based on completed labs
@@ -67,6 +74,13 @@ CloudShieldLab is a gamified cloud security training platform where users practi
 - Real-time updates with automatic refresh
 - Threaded replies with collapsible reply forms
 - Post deletion for post owners
+
+### Lab-Specific Contextual Visualization (December 2024)
+- SOC Dashboard now generates device data specific to each lab's topic (not just category)
+- 15+ lab-specific device configurations with realistic hostnames, IPs, and attack tags
+- ResourceGraph displays contextual alert banners based on lab title
+- IdentityGraph shows severity-coded (critical/high/medium) context alerts for IAM labs
+- All three visualization components receive labTitle prop for dynamic data generation
 
 ## User Preferences
 
