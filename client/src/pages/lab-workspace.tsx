@@ -616,6 +616,8 @@ export default function LabWorkspace() {
         elapsedTime={formatTime(elapsedTime)}
         commandStreak={commandStreak}
         isNewCompletion={isNewCompletion}
+        stepsCompleted={completedSteps.size}
+        totalSteps={Array.isArray(lab.steps) ? lab.steps.length : 0}
       />
     </div>
   );
