@@ -7,58 +7,71 @@
 :root {
   /* HSL Format: Hue Saturation Lightness */
   
-  /* Cyber Dark Theme Base - Softer palette */
-  --background: 220 20% 8%; /* Deep dark blue background */
-  --foreground: 210 20% 90%; /* Soft light gray text - easy on eyes */
+  /* Enterprise SOC Dark Theme - SentinelOne/Splunk inspired */
+  --background: 240 10% 4%; /* Near-black with slight blue tint */
+  --foreground: 220 15% 85%; /* Soft gray text for readability */
 
-  --card: 220 18% 12%;
-  --card-foreground: 210 20% 90%;
+  --card: 240 10% 8%;
+  --card-foreground: 220 15% 85%;
 
-  --popover: 220 18% 10%;
-  --popover-foreground: 210 20% 90%;
+  --popover: 240 10% 6%;
+  --popover-foreground: 220 15% 85%;
 
-  /* Primary Action Color - Soft Teal/Emerald */
-  --primary: 160 60% 45%; 
-  --primary-foreground: 220 20% 8%;
+  /* Primary Action Color - Purple/Magenta accent */
+  --primary: 280 70% 55%; 
+  --primary-foreground: 0 0% 100%;
 
-  /* Secondary/Muted - Darker Slate */
-  --secondary: 217 19% 22%;
-  --secondary-foreground: 210 20% 85%;
+  /* Secondary/Muted - Dark slate */
+  --secondary: 240 10% 15%;
+  --secondary-foreground: 220 15% 75%;
 
-  --muted: 217 19% 22%;
-  --muted-foreground: 215 15% 55%;
+  --muted: 240 10% 12%;
+  --muted-foreground: 220 10% 50%;
 
-  /* Accent - Soft Purple/Blue */
-  --accent: 250 50% 55%;
-  --accent-foreground: 210 40% 98%;
+  /* Accent - Cyan/Teal for data visualization */
+  --accent: 180 60% 50%;
+  --accent-foreground: 0 0% 100%;
 
-  /* Destructive/Vulnerable - Softer Red */
-  --destructive: 0 70% 55%;
-  --destructive-foreground: 210 40% 98%;
+  /* Destructive/Critical - Red for alerts */
+  --destructive: 0 75% 55%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 217 19% 25%;
-  --input: 217 19% 20%;
-  --ring: 160 60% 45%;
+  /* Success/Secured - Green */
+  --success: 145 65% 45%;
+  --success-foreground: 0 0% 100%;
 
-  --radius: 0.5rem;
+  /* Warning - Orange */
+  --warning: 35 90% 55%;
+  --warning-foreground: 0 0% 10%;
+
+  --border: 240 10% 18%;
+  --input: 240 10% 12%;
+  --ring: 280 70% 55%;
+
+  --radius: 0.375rem;
 
   /* Custom Fonts */
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'Fira Code', monospace;
   --font-display: 'Orbitron', sans-serif;
+
+  /* SOC Status Colors */
+  --status-critical: 0 75% 55%;
+  --status-high: 25 90% 55%;
+  --status-medium: 45 90% 55%;
+  --status-low: 180 60% 50%;
+  --status-secured: 145 65% 45%;
 }
 
 @layer base {
   body {
     @apply bg-background text-foreground antialiased font-sans selection:bg-primary selection:text-primary-foreground;
-    /* Subtle scanline effect overlay */
-    background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-    background-size: 100% 2px, 3px 100%;
+    /* Clean enterprise background - no scanlines */
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    @apply tracking-wide uppercase text-foreground;
+    font-family: var(--font-sans);
+    @apply tracking-normal text-foreground font-semibold;
   }
 
   code, pre, kbd {
@@ -106,13 +119,13 @@
     50% { opacity: 0; }
   }
 
-  /* Subtle glow effects */
+  /* Subtle glow effects - Purple accent */
   .neon-glow {
-    box-shadow: 0 0 8px rgba(45, 180, 140, 0.2), inset 0 0 8px rgba(45, 180, 140, 0.05);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.2), inset 0 0 8px rgba(168, 85, 247, 0.05);
   }
 
   .neon-glow:hover {
-    box-shadow: 0 0 15px rgba(45, 180, 140, 0.35), inset 0 0 8px rgba(45, 180, 140, 0.1);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.35), inset 0 0 8px rgba(168, 85, 247, 0.1);
   }
 
   /* Floating animation */
@@ -132,7 +145,7 @@
   }
 
   .gradient-text-animated {
-    background: linear-gradient(90deg, rgba(45, 180, 140, 1), rgba(80, 200, 180, 0.9), rgba(45, 180, 140, 1));
+    background: linear-gradient(90deg, rgba(168, 85, 247, 1), rgba(200, 120, 255, 0.9), rgba(168, 85, 247, 1));
     background-size: 200% 200%;
     animation: gradientShift 3s ease infinite;
     -webkit-background-clip: text;
@@ -142,11 +155,18 @@
 
   /* Pulse glow animation - subtle */
   @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 4px rgba(45, 180, 140, 0.15); }
-    50% { box-shadow: 0 0 12px rgba(45, 180, 140, 0.3); }
+    0%, 100% { box-shadow: 0 0 4px rgba(168, 85, 247, 0.15); }
+    50% { box-shadow: 0 0 12px rgba(168, 85, 247, 0.3); }
   }
 
   .pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite;
   }
+
+  /* SOC Status Badge Colors */
+  .status-critical { @apply bg-red-500/20 text-red-400 border-red-500/30; }
+  .status-high { @apply bg-orange-500/20 text-orange-400 border-orange-500/30; }
+  .status-medium { @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/30; }
+  .status-low { @apply bg-cyan-500/20 text-cyan-400 border-cyan-500/30; }
+  .status-secured { @apply bg-green-500/20 text-green-400 border-green-500/30; }
 }
