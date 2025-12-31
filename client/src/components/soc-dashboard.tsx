@@ -1143,8 +1143,8 @@ export function SOCDashboard({
       </div>
 
       {/* Data Table */}
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
+      <div className="flex-1 overflow-auto">
+        <div className="min-w-[1200px]">
           <table className="w-full text-left">
             <thead className="sticky top-0 bg-slate-900/95 backdrop-blur z-10">
               <tr className="border-b border-slate-700/50">
@@ -1224,7 +1224,7 @@ export function SOCDashboard({
               ))}
             </tbody>
           </table>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );
