@@ -32,8 +32,14 @@ import {
   RefreshCw,
   Settings,
   FileText,
-  Layers
+  Layers,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { clsx } from "clsx";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -1057,6 +1063,7 @@ export function SOCDashboard({
     network: true,
     manufacturer: true
   });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const handleAction = (action: string) => {
     const count = selectedDevices.size;
@@ -1132,6 +1139,7 @@ export function SOCDashboard({
   };
 
   return (
+    <>
     <div className={clsx("h-full flex flex-col bg-[#0a0a0f] rounded-xl border border-slate-700/50 overflow-hidden", className)}>
       {/* Summary Cards Row */}
       <div className="flex-shrink-0 p-4 border-b border-slate-800/50 overflow-x-auto">
@@ -1414,6 +1422,16 @@ export function SOCDashboard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-cyan-400"
+            onClick={() => setIsFullscreen(true)}
+            data-testid="button-expand-dashboard"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -1504,6 +1522,77 @@ export function SOCDashboard({
         </div>
       </div>
     </div>
+    
+    {/* Fullscreen Dialog */}
+    <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+      <DialogContent className="max-w-[95vw] max-h-[90vh] w-full h-full p-0 bg-[#0a0a0f] border-slate-700/50 overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Fullscreen Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/50 bg-slate-900/80">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-cyan-400" />
+              <span className="text-sm font-semibold text-white">SOC Command Center - Expanded View</span>
+              <span className="text-xs text-slate-400">({devices.length} devices)</span>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-slate-400 hover:text-white"
+              onClick={() => setIsFullscreen(false)}
+              data-testid="button-collapse-dashboard"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          {/* Fullscreen Table */}
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-left">
+              <thead className="sticky top-0 bg-slate-900/95 backdrop-blur z-10">
+                <tr className="border-b border-slate-700/50">
+                  <th className="px-3 py-2 w-10"></th>
+                  <th className="px-3 py-2 w-10">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedDevices.size === devices.length && devices.length > 0}
+                      onChange={selectAllDevices}
+                      className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
+                    />
+                  </th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">Type</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">IP Address</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">OS</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">Device Function</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">OS Version</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">Host Names</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">Secured State</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">MAC Address</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">Network Name</th>
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">Manufacturer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {devices.map((device) => (
+                  <DeviceRow
+                    key={device.id}
+                    device={device}
+                    isExpanded={expandedDeviceId === device.id}
+                    onToggle={() => setExpandedDeviceId(
+                      expandedDeviceId === device.id ? null : device.id
+                    )}
+                    isSelected={selectedDevices.has(device.id)}
+                    onSelect={() => toggleDeviceSelection(device.id)}
+                    onAction={handleAction}
+                    visibleColumns={{ type: true, ip: true, os: true, function: true, version: true, host: true, state: true, mac: true, network: true, manufacturer: true }}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
