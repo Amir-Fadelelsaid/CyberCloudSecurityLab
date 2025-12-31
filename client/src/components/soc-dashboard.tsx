@@ -621,7 +621,7 @@ function SecuredStateBadge({ state }: { state: Device["securedState"] }) {
 }
 
 // Expanded Device Details Panel
-function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () => void }) {
+function DeviceDetailsPanel({ device, onClose, onAction }: { device: Device; onClose: () => void; onAction: (action: string) => void }) {
   const [showMoreInfo, setShowMoreInfo] = useState(false);
   
   return (
@@ -649,7 +649,7 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
             size="sm" 
             variant="outline" 
             className="mb-4 text-cyan-400 border-cyan-500/50"
-            onClick={(e) => { e.stopPropagation(); alert('Deploy Agent clicked'); }}
+            onClick={(e) => { e.stopPropagation(); onAction('Deploy Agent'); }}
             data-testid="button-deploy-agent"
           >
             Deploy Agent
@@ -679,13 +679,13 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
           </div>
           
           <div className="flex gap-2 mt-4 flex-wrap">
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => { e.stopPropagation(); onAction('Search Device'); }}>
               <Search className="w-3 h-3 mr-1" /> Search
             </Button>
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => { e.stopPropagation(); onAction('View Raw Data'); }}>
               <FileText className="w-3 h-3 mr-1" /> Raw Data
             </Button>
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => { e.stopPropagation(); onAction('Isolate Device'); }}>
               <Network className="w-3 h-3 mr-1" /> Isolate
             </Button>
           </div>
@@ -696,7 +696,7 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
           <div className="flex items-center gap-2 mb-4">
             <Shield className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-white">Device Review</span>
-            <Button size="sm" variant="outline" className="ml-auto text-xs text-cyan-400 border-cyan-500/50" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" variant="outline" className="ml-auto text-xs text-cyan-400 border-cyan-500/50" onClick={(e) => { e.stopPropagation(); onAction('Review Device'); }}>
               Review Device
             </Button>
           </div>
@@ -878,13 +878,17 @@ function DeviceRow({
   isExpanded, 
   onToggle,
   isSelected,
-  onSelect
+  onSelect,
+  onAction,
+  visibleColumns
 }: { 
   device: Device; 
   isExpanded: boolean;
   onToggle: () => void;
   isSelected: boolean;
   onSelect: () => void;
+  onAction: (action: string) => void;
+  visibleColumns: Record<string, boolean>;
 }) {
   return (
     <>
@@ -918,32 +922,52 @@ function DeviceRow({
             className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
           />
         </td>
-        <td className="px-3 py-2">
-          <DeviceTypeIcon type={device.type} />
-        </td>
-        <td className="px-3 py-2 text-xs text-slate-300 font-mono">{device.ipAddress}</td>
-        <td className="px-3 py-2">
-          <div className="flex items-center gap-1.5">
-            <OSIcon os={device.osIcon} />
-            <AlertTriangle className="w-3 h-3 text-yellow-500" />
-          </div>
-        </td>
-        <td className="px-3 py-2 text-xs text-slate-300">{device.deviceFunction}</td>
-        <td className="px-3 py-2 text-xs text-slate-400">{device.osVersion}</td>
-        <td className="px-3 py-2 text-xs text-slate-400">{device.hostName}</td>
-        <td className="px-3 py-2">
-          <SecuredStateBadge state={device.securedState} />
-        </td>
-        <td className="px-3 py-2 text-[10px] text-slate-400 font-mono">{device.macAddress}</td>
-        <td className="px-3 py-2 text-xs text-slate-400">{device.networkName}</td>
-        <td className="px-3 py-2 text-xs text-slate-400 truncate max-w-[150px]">{device.manufacturer}</td>
+        {visibleColumns.type && (
+          <td className="px-3 py-2">
+            <DeviceTypeIcon type={device.type} />
+          </td>
+        )}
+        {visibleColumns.ip && (
+          <td className="px-3 py-2 text-xs text-slate-300 font-mono">{device.ipAddress}</td>
+        )}
+        {visibleColumns.os && (
+          <td className="px-3 py-2">
+            <div className="flex items-center gap-1.5">
+              <OSIcon os={device.osIcon} />
+              <AlertTriangle className="w-3 h-3 text-yellow-500" />
+            </div>
+          </td>
+        )}
+        {visibleColumns.function && (
+          <td className="px-3 py-2 text-xs text-slate-300">{device.deviceFunction}</td>
+        )}
+        {visibleColumns.version && (
+          <td className="px-3 py-2 text-xs text-slate-400">{device.osVersion}</td>
+        )}
+        {visibleColumns.host && (
+          <td className="px-3 py-2 text-xs text-slate-400">{device.hostName}</td>
+        )}
+        {visibleColumns.state && (
+          <td className="px-3 py-2">
+            <SecuredStateBadge state={device.securedState} />
+          </td>
+        )}
+        {visibleColumns.mac && (
+          <td className="px-3 py-2 text-[10px] text-slate-400 font-mono">{device.macAddress}</td>
+        )}
+        {visibleColumns.network && (
+          <td className="px-3 py-2 text-xs text-slate-400">{device.networkName}</td>
+        )}
+        {visibleColumns.manufacturer && (
+          <td className="px-3 py-2 text-xs text-slate-400 truncate max-w-[150px]">{device.manufacturer}</td>
+        )}
       </motion.tr>
       
       <AnimatePresence>
         {isExpanded && (
           <tr>
             <td colSpan={12} className="p-0">
-              <DeviceDetailsPanel device={device} onClose={onToggle} />
+              <DeviceDetailsPanel device={device} onClose={onToggle} onAction={onAction} />
             </td>
           </tr>
         )}
@@ -987,6 +1011,16 @@ export function SOCDashboard({
   
   const handleAction = (action: string) => {
     const count = selectedDevices.size;
+    const targetDevice = expandedDeviceId ? devices.find(d => d.id === expandedDeviceId) : null;
+    
+    if (count === 0 && targetDevice) {
+      toast({
+        title: `${action} initiated`,
+        description: `Processing device: ${targetDevice.hostName}...`
+      });
+      return;
+    }
+    
     if (count === 0) {
       toast({
         title: "No devices selected",
@@ -1349,60 +1383,60 @@ export function SOCDashboard({
                     className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
                   />
                 </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    Type <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    IP Address <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    OS <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    Device Function <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    OS Version <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    Host Names <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    Secured State <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    MAC Address <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    Network Name <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
-                <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    Manufacturer <ChevronUp className="w-3 h-3" />
-                  </div>
-                </th>
+                {visibleColumns.type && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">Type <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.ip && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">IP Address <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.os && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">OS <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.function && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">Device Function <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.version && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">OS Version <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.host && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">Host Names <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.state && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">Secured State <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.mac && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">MAC Address <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.network && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">Network Name <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
+                {visibleColumns.manufacturer && (
+                  <th className="px-3 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">Manufacturer <ChevronUp className="w-3 h-3" /></div>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
-              {devices.map((device) => (
+              {devices.slice(0, resultsPerPage).map((device) => (
                 <DeviceRow
                   key={device.id}
                   device={device}
@@ -1412,6 +1446,8 @@ export function SOCDashboard({
                   )}
                   isSelected={selectedDevices.has(device.id)}
                   onSelect={() => toggleDeviceSelection(device.id)}
+                  onAction={handleAction}
+                  visibleColumns={visibleColumns}
                 />
               ))}
             </tbody>
