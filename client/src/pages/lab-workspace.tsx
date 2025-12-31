@@ -522,7 +522,8 @@ export default function LabWorkspace() {
           {SOC_CATEGORIES.includes(lab.category) ? (
             <SOCDashboard 
               labId={labId} 
-              labCategory={lab.category} 
+              labCategory={lab.category}
+              labTitle={lab.title}
               className="flex-[4] min-h-[280px]"
               selectedAlertId={selectedAlertId || undefined}
               onAlertSelect={(alertId) => setSelectedAlertId(alertId === selectedAlertId ? null : alertId)}
