@@ -5,7 +5,7 @@ import { ResourceGraph } from "@/components/resource-graph";
 import { IdentityGraph } from "@/components/identity-graph";
 import { SOCDashboard } from "@/components/soc-dashboard";
 import { MissionCompleteModal } from "@/components/mission-complete-modal";
-import { SecurityNotifications } from "@/components/security-notifications";
+import { SecurityNotifications, AlertInvestigation } from "@/components/security-notifications";
 import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft, Clock, Shield, Target, Zap, AlertTriangle, Trophy } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -41,6 +41,7 @@ export default function LabWorkspace() {
   const [commandStreak, setCommandStreak] = useState(0);
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [activeInvestigation, setActiveInvestigation] = useState<AlertInvestigation | null>(null);
 
   // Calculate threat level from resources
   const vulnerableCount = resources?.filter((r: any) => r.isVulnerable).length || 0;
@@ -623,7 +624,77 @@ export default function LabWorkspace() {
         labTitle={lab.title}
         labCategory={lab.category}
         isActive={!showCompleteModal}
+        onInvestigate={(alert) => setActiveInvestigation(alert)}
       />
+
+      {/* Investigation Panel */}
+      <AnimatePresence>
+        {activeInvestigation && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[600px] max-w-[90vw] bg-slate-900/95 border border-slate-700/50 rounded-xl backdrop-blur-sm shadow-2xl z-50 overflow-hidden"
+            data-testid="investigation-panel"
+          >
+            <div className={clsx(
+              "flex items-center justify-between px-4 py-3 border-b border-slate-700/50",
+              activeInvestigation.type === "critical" && "bg-red-950/30",
+              activeInvestigation.type === "warning" && "bg-amber-950/30",
+              activeInvestigation.type === "info" && "bg-blue-950/30"
+            )}>
+              <div className="flex items-center gap-3">
+                <div className={clsx(
+                  "w-3 h-3 rounded-full animate-pulse",
+                  activeInvestigation.type === "critical" && "bg-red-500",
+                  activeInvestigation.type === "warning" && "bg-amber-500",
+                  activeInvestigation.type === "info" && "bg-blue-500"
+                )} />
+                <div>
+                  <h3 className="text-sm font-bold text-white">{activeInvestigation.title}</h3>
+                  <p className="text-xs text-slate-400">{activeInvestigation.message}</p>
+                </div>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setActiveInvestigation(null)}
+                className="text-slate-400 hover:text-white"
+                data-testid="button-close-investigation"
+              >
+                <AlertCircle className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="p-4">
+              <div className="text-xs font-mono text-primary uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Target className="w-3 h-3" />
+                Investigation Commands
+              </div>
+              <div className="space-y-2">
+                {activeInvestigation.commands.map((cmd, idx) => (
+                  <div 
+                    key={idx}
+                    className="bg-black/50 rounded-lg p-3 border border-slate-700/30 font-mono text-xs text-slate-300 break-all hover:border-primary/30 transition-colors cursor-pointer group"
+                    onClick={() => navigator.clipboard.writeText(cmd)}
+                    title="Click to copy"
+                    data-testid={`investigation-command-${idx}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-primary/60">{idx + 1}.</span>
+                      <span className="flex-1">{cmd}</span>
+                      <span className="text-[10px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">COPY</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-slate-500 mt-3 text-center">
+                Click commands to copy, then paste in terminal to investigate
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

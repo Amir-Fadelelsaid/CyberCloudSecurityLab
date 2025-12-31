@@ -36,10 +36,19 @@ interface SecurityNotification extends NotificationTemplate {
   acknowledged: boolean;
 }
 
+export interface AlertInvestigation {
+  id: string;
+  title: string;
+  message: string;
+  type: "critical" | "warning" | "info" | "success";
+  commands: string[];
+}
+
 interface SecurityNotificationsProps {
   labTitle: string;
   labCategory: string;
   isActive: boolean;
+  onInvestigate?: (alert: AlertInvestigation) => void;
 }
 
 const CATEGORY_NOTIFICATIONS: Record<string, NotificationTemplate[]> = {
@@ -100,7 +109,79 @@ const DEFAULT_NOTIFICATIONS: NotificationTemplate[] = [
   { id: "3", type: "critical", title: "Alert Triggered", message: "High-priority security event requires attention", icon: AlertCircle, source: "Detection Engine" },
 ];
 
-export function SecurityNotifications({ labTitle, labCategory, isActive }: SecurityNotificationsProps) {
+const ALERT_COMMANDS: Record<string, string[]> = {
+  "Data Exfiltration Detected": [
+    "aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=GetObject",
+    "aws s3api get-bucket-logging --bucket corp-data-bucket",
+    "aws s3api put-public-access-block --bucket corp-data-bucket --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true"
+  ],
+  "Public Access Warning": [
+    "aws s3api get-bucket-policy --bucket vulnerable-bucket",
+    "aws s3api get-public-access-block --bucket vulnerable-bucket",
+    "aws s3api put-bucket-policy --bucket vulnerable-bucket --policy file://secure-policy.json"
+  ],
+  "Encryption Disabled": [
+    "aws s3api get-bucket-encryption --bucket data-bucket",
+    "aws s3api put-bucket-encryption --bucket data-bucket --server-side-encryption-configuration '{\"Rules\":[{\"ApplyServerSideEncryptionByDefault\":{\"SSEAlgorithm\":\"AES256\"}}]}'"
+  ],
+  "Port Scan Detected": [
+    "aws ec2 describe-flow-logs --filter Name=resource-id,Values=vpc-12345",
+    "aws ec2 describe-security-groups --group-ids sg-vulnerable",
+    "aws ec2 revoke-security-group-ingress --group-id sg-vulnerable --protocol tcp --port 22 --cidr 0.0.0.0/0"
+  ],
+  "Security Group Modified": [
+    "aws ec2 describe-security-groups --group-ids sg-modified",
+    "aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=AuthorizeSecurityGroupIngress",
+    "aws ec2 revoke-security-group-ingress --group-id sg-modified --protocol tcp --port 22 --cidr 0.0.0.0/0"
+  ],
+  "DDoS Attack Pattern": [
+    "aws shield describe-attack --attack-id attack-123",
+    "aws wafv2 get-web-acl --name production-waf --scope REGIONAL",
+    "aws shield create-protection --name WebApp --resource-arn arn:aws:elasticloadbalancing:..."
+  ],
+  "Malware Signature Match": [
+    "aws guardduty get-findings --detector-id detector-123 --finding-ids finding-456",
+    "aws ec2 describe-instances --instance-ids i-infected",
+    "aws ec2 stop-instances --instance-ids i-infected"
+  ],
+  "Credential Dumping": [
+    "aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=GetSecretValue",
+    "aws iam list-access-keys --user-name compromised-user",
+    "aws iam update-access-key --user-name compromised-user --access-key-id AKIA... --status Inactive"
+  ],
+  "Privilege Escalation": [
+    "aws iam get-user --user-name suspicious-user",
+    "aws iam list-attached-user-policies --user-name suspicious-user",
+    "aws iam detach-user-policy --user-name suspicious-user --policy-arn arn:aws:iam::aws:policy/AdministratorAccess"
+  ],
+  "Root Account Login": [
+    "aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=root",
+    "aws iam create-virtual-mfa-device --virtual-mfa-device-name root-mfa",
+    "aws iam enable-mfa-device --user-name root --serial-number arn:aws:iam::account:mfa/root-mfa"
+  ],
+  "MFA Not Enabled": [
+    "aws iam list-users",
+    "aws iam list-mfa-devices --user-name admin-user",
+    "aws iam create-virtual-mfa-device --virtual-mfa-device-name admin-mfa"
+  ],
+  "Infrastructure Drift": [
+    "terraform plan -detailed-exitcode",
+    "terraform refresh",
+    "terraform apply -auto-approve"
+  ],
+  "Secret in Code": [
+    "aws secretsmanager list-secrets",
+    "aws lambda get-function --function-name vulnerable-function",
+    "aws lambda update-function-configuration --function-name vulnerable-function --environment Variables={}"
+  ],
+  "default": [
+    "aws cloudtrail lookup-events --max-results 10",
+    "aws guardduty list-findings --detector-id detector-123",
+    "aws iam get-account-summary"
+  ]
+};
+
+export function SecurityNotifications({ labTitle, labCategory, isActive, onInvestigate }: SecurityNotificationsProps) {
   const [notifications, setNotifications] = useState<SecurityNotification[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -137,10 +218,24 @@ export function SecurityNotifications({ labTitle, labCategory, isActive }: Secur
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const acknowledgeNotification = (id: string) => {
+  const investigateNotification = (notification: SecurityNotification) => {
     setNotifications(prev => prev.map(n => 
-      n.id === id ? { ...n, acknowledged: true } : n
+      n.id === notification.id ? { ...n, acknowledged: true } : n
     ));
+    
+    const commands = ALERT_COMMANDS[notification.title] || ALERT_COMMANDS["default"];
+    
+    if (onInvestigate) {
+      onInvestigate({
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        commands
+      });
+    }
+    
+    setIsMinimized(true);
   };
 
   const clearAll = () => {
@@ -326,17 +421,17 @@ export function SecurityNotifications({ labTitle, labCategory, isActive }: Secur
                               {notification.acknowledged ? (
                                 <span className="text-[10px] text-green-400 flex items-center gap-1">
                                   <CheckCircle2 className="w-3 h-3" />
-                                  Acknowledged
+                                  Investigating
                                 </span>
                               ) : (
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   className="h-5 px-2 text-[10px] text-cyan-400 hover:text-cyan-300"
-                                  onClick={(e) => { e.stopPropagation(); acknowledgeNotification(notification.id); }}
-                                  data-testid={`button-ack-${notification.id}`}
+                                  onClick={(e) => { e.stopPropagation(); investigateNotification(notification); }}
+                                  data-testid={`button-investigate-${notification.id}`}
                                 >
-                                  Acknowledge
+                                  Investigate
                                 </Button>
                               )}
                               <Button
@@ -344,9 +439,9 @@ export function SecurityNotifications({ labTitle, labCategory, isActive }: Secur
                                 variant="ghost"
                                 className="h-5 px-2 text-[10px] text-slate-400 hover:text-white"
                                 onClick={(e) => { e.stopPropagation(); dismissNotification(notification.id); }}
-                                data-testid={`button-resolve-${notification.id}`}
+                                data-testid={`button-dismiss-${notification.id}`}
                               >
-                                Resolve
+                                Dismiss
                               </Button>
                             </div>
                           </div>
