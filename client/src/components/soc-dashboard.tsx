@@ -622,6 +622,8 @@ function SecuredStateBadge({ state }: { state: Device["securedState"] }) {
 
 // Expanded Device Details Panel
 function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () => void }) {
+  const [showMoreInfo, setShowMoreInfo] = useState(false);
+  
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -713,9 +715,54 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
             Tue, Nov 23, 2021, 8:54:06 PM
           </div>
           
-          <Button size="sm" variant="ghost" className="text-xs text-cyan-400 p-0 h-auto" onClick={(e) => e.stopPropagation()}>
-            More Info
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="text-xs text-cyan-400 p-0 h-auto" 
+            onClick={(e) => { e.stopPropagation(); setShowMoreInfo(!showMoreInfo); }}
+          >
+            {showMoreInfo ? 'Less Info' : 'More Info'}
           </Button>
+          
+          <AnimatePresence>
+            {showMoreInfo && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-3 space-y-2 text-xs overflow-hidden"
+              >
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Review Reason</span>
+                  <span className="text-slate-200">Baseline Review</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Policy Applied</span>
+                  <span className="text-cyan-400">Endpoint Protection v2.1</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Agent Version</span>
+                  <span className="text-slate-200">21.1.4.10010</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Last Scan</span>
+                  <span className="text-green-400">Clean (2 days ago)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Threat History</span>
+                  <span className="text-slate-200">0 detected (90 days)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Group Policy</span>
+                  <span className="text-slate-200">Corp Workstations</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Exclusions</span>
+                  <span className="text-amber-400">3 active</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-2">
             <div className="flex items-center gap-2 text-xs">
