@@ -489,7 +489,13 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
             <SecuredStateBadge state={device.securedState} />
           </div>
           
-          <Button size="sm" variant="outline" className="mb-4 text-cyan-400 border-cyan-500/50">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="mb-4 text-cyan-400 border-cyan-500/50"
+            onClick={(e) => { e.stopPropagation(); alert('Deploy Agent clicked'); }}
+            data-testid="button-deploy-agent"
+          >
             Deploy Agent
           </Button>
           
@@ -516,15 +522,15 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
             </div>
           </div>
           
-          <div className="flex gap-2 mt-4">
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400">
-              <Search className="w-3 h-3 mr-1" /> Search in Deep Visibility
+          <div className="flex gap-2 mt-4 flex-wrap">
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
+              <Search className="w-3 h-3 mr-1" /> Search
             </Button>
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400">
-              <FileText className="w-3 h-3 mr-1" /> Show Raw Data
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
+              <FileText className="w-3 h-3 mr-1" /> Raw Data
             </Button>
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400">
-              <Network className="w-3 h-3 mr-1" /> Isolate IP
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
+              <Network className="w-3 h-3 mr-1" /> Isolate
             </Button>
           </div>
         </div>
@@ -534,7 +540,7 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
           <div className="flex items-center gap-2 mb-4">
             <Shield className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-white">Device Review</span>
-            <Button size="sm" variant="outline" className="ml-auto text-xs text-cyan-400 border-cyan-500/50">
+            <Button size="sm" variant="outline" className="ml-auto text-xs text-cyan-400 border-cyan-500/50" onClick={(e) => e.stopPropagation()}>
               Review Device
             </Button>
           </div>
@@ -553,7 +559,7 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
             Tue, Nov 23, 2021, 8:54:06 PM
           </div>
           
-          <Button size="sm" variant="ghost" className="text-xs text-cyan-400 p-0 h-auto">
+          <Button size="sm" variant="ghost" className="text-xs text-cyan-400 p-0 h-auto" onClick={(e) => e.stopPropagation()}>
             More Info
           </Button>
           
@@ -594,10 +600,10 @@ function DeviceDetailsPanel({ device, onClose }: { device: Device; onClose: () =
           )}
           
           <div className="flex gap-2 mt-4">
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400">
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
               Undo
             </Button>
-            <Button size="sm" className="text-xs bg-cyan-600 text-white">
+            <Button size="sm" className="text-xs bg-cyan-600 text-white" onClick={(e) => e.stopPropagation()}>
               Save
             </Button>
           </div>
@@ -804,10 +810,10 @@ export function SOCDashboard({
   };
 
   return (
-    <div className={clsx("h-full flex flex-col bg-[#0a0a0f]", className)}>
+    <div className={clsx("h-full flex flex-col bg-[#0a0a0f] rounded-xl border border-slate-700/50 overflow-hidden", className)}>
       {/* Summary Cards Row */}
-      <div className="flex-shrink-0 p-4 border-b border-slate-800/50">
-        <div className="grid grid-cols-4 gap-4">
+      <div className="flex-shrink-0 p-3 border-b border-slate-800/50 overflow-x-auto">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 min-w-[600px]">
           {/* Secured State */}
           <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30">
             <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
