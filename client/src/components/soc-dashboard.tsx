@@ -1206,56 +1206,56 @@ export function SOCDashboard({
             <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
               Devices (TOTAL: 57)
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div className="flex items-center gap-1.5">
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center gap-1 min-w-0">
                 <Server className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                <span className="text-slate-300">Server</span>
-                <span className="ml-auto text-slate-400">45</span>
+                <span className="text-slate-300 truncate">Server</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">45</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <Monitor className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                <span className="text-slate-300">Workstation</span>
-                <span className="ml-auto text-slate-400">11</span>
+                <span className="text-slate-300 truncate">Workstation</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">11</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <HardDrive className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-slate-300">Unknown</span>
-                <span className="ml-auto text-slate-400">1</span>
+                <span className="text-slate-300 truncate">Unknown</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">1</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <Globe className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <span className="text-slate-300">Infra</span>
-                <span className="ml-auto text-slate-400">0</span>
+                <span className="text-slate-300 truncate">Infra</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <Smartphone className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                <span className="text-slate-300">Mobile</span>
-                <span className="ml-auto text-slate-400">0</span>
+                <span className="text-slate-300 truncate">Mobile</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <Monitor className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <span className="text-slate-300">Printer</span>
-                <span className="ml-auto text-slate-400">0</span>
+                <span className="text-slate-300 truncate">Printer</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <Eye className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <span className="text-slate-300">Video</span>
-                <span className="ml-auto text-slate-400">0</span>
+                <span className="text-slate-300 truncate">Video</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <Smartphone className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                <span className="text-slate-300">Phone</span>
-                <span className="ml-auto text-slate-400">0</span>
+                <span className="text-slate-300 truncate">Phone</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <Network className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-                <span className="text-slate-300">Network</span>
-                <span className="ml-auto text-slate-400">0</span>
+                <span className="text-slate-300 truncate">Network</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 min-w-0">
                 <HardDrive className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                <span className="text-slate-300">Storage</span>
-                <span className="ml-auto text-slate-400">0</span>
+                <span className="text-slate-300 truncate">Storage</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
             </div>
           </div>
