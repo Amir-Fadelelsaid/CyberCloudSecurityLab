@@ -1,11 +1,13 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { ArrowRight, ShieldAlert, CheckCircle, Clock, Award } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, ShieldAlert, CheckCircle, Clock, Award, AlertTriangle, Bell, Shield, Database, Network, Key, AlertCircle as AlertCircleIcon, Eye, CheckCircle2 } from "lucide-react";
 import { useLabs } from "@/hooks/use-labs";
 import { useProgress } from "@/hooks/use-progress";
 import { useQuery } from "@tanstack/react-query";
 import { clsx } from "clsx";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Button } from "@/components/ui/button";
 
 type LevelInfo = {
   level: number;
@@ -15,10 +17,34 @@ type LevelInfo = {
   completedLabs: number;
 };
 
+interface SecurityAlert {
+  id: string;
+  type: "critical" | "warning" | "info";
+  title: string;
+  message: string;
+  source: string;
+  timestamp: Date;
+  acknowledged: boolean;
+}
+
+const SECURITY_ALERTS = [
+  { id: "1", type: "critical" as const, title: "Privilege Escalation Detected", message: "IAM user assumed admin role unexpectedly", source: "GuardDuty" },
+  { id: "2", type: "warning" as const, title: "Public S3 Bucket", message: "Bucket 'backup-data' allows public read access", source: "AWS Config" },
+  { id: "3", type: "critical" as const, title: "Root Account Login", message: "AWS root user console login detected", source: "CloudTrail" },
+  { id: "4", type: "warning" as const, title: "Security Group Modified", message: "Inbound rule added allowing 0.0.0.0/0 on port 22", source: "CloudTrail" },
+  { id: "5", type: "info" as const, title: "New Detection Rule", message: "MITRE ATT&CK T1566 detection rule deployed", source: "SIEM" },
+  { id: "6", type: "critical" as const, title: "Malware Signature Match", message: "Known ransomware behavior detected on endpoint", source: "EDR" },
+  { id: "7", type: "warning" as const, title: "MFA Not Enabled", message: "Privileged user account lacks MFA protection", source: "IAM" },
+  { id: "8", type: "info" as const, title: "Compliance Scan Complete", message: "AWS Config rules evaluation finished", source: "AWS Config" },
+];
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: labs, isLoading: labsLoading } = useLabs();
   const { data: progress } = useProgress();
+  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
+  const seenAlertIds = useRef<Set<string>>(new Set());
+  const hasInitialized = useRef(false);
   
   const { data: levelInfo } = useQuery<LevelInfo>({
     queryKey: ["/api/user/level", user?.id],
@@ -36,6 +62,47 @@ export default function Dashboard() {
   const completedCount = progress?.filter(p => p.completed).length || 0;
   const totalScore = progress?.reduce((acc, p) => acc + (p.score || 0), 0) || 0;
   const badgeCount = userBadges?.length || 0;
+
+  // Add alerts periodically
+  const addAlert = useCallback(() => {
+    const availableAlerts = SECURITY_ALERTS.filter(a => !seenAlertIds.current.has(a.id));
+    if (availableAlerts.length === 0) {
+      seenAlertIds.current.clear();
+      return;
+    }
+    const template = availableAlerts[Math.floor(Math.random() * availableAlerts.length)];
+    seenAlertIds.current.add(template.id);
+    
+    const newAlert: SecurityAlert = {
+      ...template,
+      id: `${template.id}-${Date.now()}`,
+      timestamp: new Date(),
+      acknowledged: false,
+    };
+    setAlerts(prev => [newAlert, ...prev].slice(0, 8));
+  }, []);
+
+  useEffect(() => {
+    if (!hasInitialized.current) {
+      setTimeout(() => {
+        addAlert();
+        addAlert();
+        hasInitialized.current = true;
+      }, 1000);
+    }
+    const interval = setInterval(() => {
+      if (Math.random() > 0.5) addAlert();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [addAlert]);
+
+  const acknowledgeAlert = (id: string) => {
+    setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: true } : a));
+  };
+
+  const dismissAlert = (id: string) => {
+    setAlerts(prev => prev.filter(a => a.id !== id));
+  };
 
   return (
     <div className="space-y-8">
@@ -193,6 +260,134 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </div>
+
+      {/* Security Alerts Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-display font-semibold flex items-center gap-2">
+            <Bell className="text-red-500 w-5 h-5" />
+            Security Alerts
+            {alerts.filter(a => !a.acknowledged).length > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-red-500/20 text-red-400 text-xs font-mono rounded-full border border-red-500/30">
+                {alerts.filter(a => !a.acknowledged).length} NEW
+              </span>
+            )}
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+              <motion.span 
+                className="w-2 h-2 rounded-full bg-green-500"
+                animate={{ opacity: [1, 0.4, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              LIVE FEED
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-slate-900/80 border border-slate-700/50 rounded-xl overflow-hidden">
+          <div className="max-h-[400px] overflow-y-auto">
+            <AnimatePresence>
+              {alerts.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Eye className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                  <p className="text-sm text-slate-500">Monitoring for security events...</p>
+                  <p className="text-xs text-slate-600 mt-1">Alerts will appear here when detected</p>
+                </div>
+              ) : (
+                alerts.map((alert, idx) => (
+                  <motion.div
+                    key={alert.id}
+                    initial={{ opacity: 0, x: -20, height: 0 }}
+                    animate={{ opacity: 1, x: 0, height: "auto" }}
+                    exit={{ opacity: 0, x: 20, height: 0 }}
+                    transition={{ delay: idx * 0.02 }}
+                    className={clsx(
+                      "p-4 border-b border-slate-700/30 relative group",
+                      alert.type === "critical" && "bg-red-950/30",
+                      alert.type === "warning" && "bg-amber-950/20",
+                      alert.type === "info" && "bg-cyan-950/20"
+                    )}
+                    data-testid={`alert-${alert.id}`}
+                  >
+                    <div className={clsx(
+                      "absolute left-0 top-0 bottom-0 w-1",
+                      alert.type === "critical" && "bg-red-500",
+                      alert.type === "warning" && "bg-amber-500",
+                      alert.type === "info" && "bg-cyan-500"
+                    )} />
+                    
+                    <div className="flex items-start gap-3 pl-3">
+                      <div className={clsx(
+                        "mt-0.5 flex-shrink-0",
+                        alert.type === "critical" && "text-red-400",
+                        alert.type === "warning" && "text-amber-400",
+                        alert.type === "info" && "text-cyan-400"
+                      )}>
+                        {alert.type === "critical" && <AlertTriangle className="w-5 h-5" />}
+                        {alert.type === "warning" && <ShieldAlert className="w-5 h-5" />}
+                        {alert.type === "info" && <Shield className="w-5 h-5" />}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-sm font-bold text-white">{alert.title}</h4>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 mt-1">{alert.message}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[10px] text-slate-500 font-mono">{alert.source}</span>
+                          <div className="flex items-center gap-2">
+                            {alert.acknowledged ? (
+                              <span className="text-[10px] text-green-400 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Acknowledged
+                              </span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-[10px] text-cyan-400 hover:text-cyan-300"
+                                onClick={() => acknowledgeAlert(alert.id)}
+                                data-testid={`button-ack-${alert.id}`}
+                              >
+                                Acknowledge
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-[10px] text-slate-400 hover:text-white"
+                              onClick={() => dismissAlert(alert.id)}
+                              data-testid={`button-dismiss-${alert.id}`}
+                            >
+                              Dismiss
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </div>
+          
+          <div className="px-4 py-2 bg-slate-800/50 border-t border-slate-700/30">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-slate-500">Threat Feed: Active</span>
+              <span className="text-primary font-mono">{alerts.length} events</span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { ResourceGraph } from "@/components/resource-graph";
 import { IdentityGraph } from "@/components/identity-graph";
 import { SOCDashboard } from "@/components/soc-dashboard";
 import { MissionCompleteModal } from "@/components/mission-complete-modal";
-import { SecurityNotifications, AlertInvestigation } from "@/components/security-notifications";
 import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft, Clock, Shield, Target, Zap, AlertTriangle, Trophy } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -41,7 +40,6 @@ export default function LabWorkspace() {
   const [commandStreak, setCommandStreak] = useState(0);
   const [showSuccessFlash, setShowSuccessFlash] = useState(false);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
-  const [activeInvestigation, setActiveInvestigation] = useState<AlertInvestigation | null>(null);
 
   // Calculate threat level from resources
   const vulnerableCount = resources?.filter((r: any) => r.isVulnerable).length || 0;
