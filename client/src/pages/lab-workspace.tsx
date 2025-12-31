@@ -23,7 +23,7 @@ export default function LabWorkspace() {
   const { data: resources, refetch: refetchResources } = useLabResources(labId);
   const { mutate: resetLabMutation, isPending: isResetting } = useResetLab();
   const terminalResetKey = useRef(0);
-  const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('steps');
+  const [activeTab, setActiveTab] = useState<'brief' | 'steps'>('brief');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [isNewCompletion, setIsNewCompletion] = useState(false);
   const [showStepsPanel, setShowStepsPanel] = useState(() => {
