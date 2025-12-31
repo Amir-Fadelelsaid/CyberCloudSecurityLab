@@ -622,7 +622,38 @@ function SecuredStateBadge({ state }: { state: Device["securedState"] }) {
 
 // Expanded Device Details Panel
 function DeviceDetailsPanel({ device, onClose, onAction }: { device: Device; onClose: () => void; onAction: (action: string) => void }) {
+  const { toast } = useToast();
   const [showMoreInfo, setShowMoreInfo] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [editableTags, setEditableTags] = useState<string[]>(device.tags || []);
+  const originalTags = device.tags || [];
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !editableTags.includes(tagInput.trim().toUpperCase())) {
+      setEditableTags([...editableTags, tagInput.trim().toUpperCase()]);
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setEditableTags(editableTags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleUndo = () => {
+    setEditableTags([...originalTags]);
+    setTagInput("");
+    toast({
+      title: "Tags Reset",
+      description: "Device tags have been restored to original values"
+    });
+  };
+
+  const handleSaveTags = () => {
+    toast({
+      title: "Tags Saved",
+      description: `Updated ${editableTags.length} tag${editableTags.length !== 1 ? 's' : ''} for ${device.hostName}`
+    });
+  };
   
   return (
     <motion.div
@@ -786,25 +817,43 @@ function DeviceDetailsPanel({ device, onClose, onAction }: { device: Device; onC
             <input 
               type="text" 
               placeholder="Type tag name" 
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+              onClick={(e) => e.stopPropagation()}
               className="flex-1 bg-slate-700/50 border border-slate-600 rounded px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
+              data-testid="input-device-tag"
             />
+            <Button size="sm" variant="ghost" className="text-xs text-cyan-400" onClick={(e) => { e.stopPropagation(); handleAddTag(); }} data-testid="button-add-tag">
+              Add
+            </Button>
           </div>
           
-          {device.tags && device.tags.length > 0 && (
+          {editableTags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {device.tags.map((tag, i) => (
-                <span key={i} className="px-2 py-1 bg-cyan-500/20 text-cyan-300 text-xs rounded border border-cyan-500/30">
+              {editableTags.map((tag, i) => (
+                <span 
+                  key={i} 
+                  className="px-2 py-1 bg-cyan-500/20 text-cyan-300 text-xs rounded border border-cyan-500/30 flex items-center gap-1 group"
+                >
                   {tag}
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag); }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-cyan-400 hover:text-red-400"
+                    data-testid={`button-remove-tag-${i}`}
+                  >
+                    <XCircle className="w-3 h-3" />
+                  </button>
                 </span>
               ))}
             </div>
           )}
           
           <div className="flex gap-2 mt-4">
-            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" variant="ghost" className="text-xs text-slate-400" onClick={(e) => { e.stopPropagation(); handleUndo(); }} data-testid="button-undo-tags">
               Undo
             </Button>
-            <Button size="sm" className="text-xs bg-cyan-600 text-white" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" className="text-xs bg-cyan-600 text-white" onClick={(e) => { e.stopPropagation(); handleSaveTags(); }} data-testid="button-save-tags">
               Save
             </Button>
           </div>
