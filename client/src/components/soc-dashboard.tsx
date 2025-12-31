@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 import { 
   PieChart, 
   Pie, 
@@ -771,6 +772,7 @@ export function SOCDashboard({
   selectedAlertId,
   className 
 }: SOCDashboardProps) {
+  const { toast } = useToast();
   const [devices] = useState<Device[]>(generateDevices());
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
   const [selectedDevices, setSelectedDevices] = useState<Set<string>>(new Set());
@@ -790,6 +792,29 @@ export function SOCDashboard({
     network: true,
     manufacturer: true
   });
+  
+  const handleAction = (action: string) => {
+    const count = selectedDevices.size;
+    if (count === 0) {
+      toast({
+        title: "No devices selected",
+        description: "Please select one or more devices first",
+        variant: "destructive"
+      });
+      return;
+    }
+    toast({
+      title: `${action} initiated`,
+      description: `Processing ${count} device${count > 1 ? 's' : ''}...`
+    });
+  };
+  
+  const handleExport = (format: string) => {
+    toast({
+      title: `Exporting as ${format}`,
+      description: `Generating ${format.toUpperCase()} file with ${devices.length} devices...`
+    });
+  };
 
   // Simulate network scanning
   useEffect(() => {
@@ -902,66 +927,66 @@ export function SOCDashboard({
           </div>
 
           {/* Devices Total */}
-          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30">
+          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30 overflow-hidden">
             <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
               Devices (TOTAL: 57)
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-2">
-                <Server className="w-4 h-4 text-cyan-400" />
-                <span className="text-slate-300">Server</span>
-                <span className="ml-auto text-slate-400">45</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Server className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Server</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">45</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Monitor className="w-4 h-4 text-purple-400" />
-                <span className="text-slate-300">Workstation</span>
-                <span className="ml-auto text-slate-400">11</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Monitor className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Workstation</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">11</span>
               </div>
-              <div className="flex items-center gap-2">
-                <HardDrive className="w-4 h-4 text-slate-400" />
-                <span className="text-slate-300">Unknown</span>
-                <span className="ml-auto text-slate-400">1</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <HardDrive className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Unknown</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">1</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-green-400" />
-                <span className="text-slate-300">Server Infrastructure</span>
-                <span className="ml-auto text-slate-400">0</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Globe className="w-4 h-4 text-green-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Infra</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-orange-400" />
-                <span className="text-slate-300">Mobile</span>
-                <span className="ml-auto text-slate-400">0</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Smartphone className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Mobile</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Monitor className="w-4 h-4 text-blue-400" />
-                <span className="text-slate-300">Printer</span>
-                <span className="ml-auto text-slate-400">0</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Monitor className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Printer</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-red-400" />
-                <span className="text-slate-300">Video</span>
-                <span className="ml-auto text-slate-400">0</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Eye className="w-4 h-4 text-red-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Video</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-pink-400" />
-                <span className="text-slate-300">IP Phone</span>
-                <span className="ml-auto text-slate-400">0</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Smartphone className="w-4 h-4 text-pink-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Phone</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Network className="w-4 h-4 text-yellow-400" />
-                <span className="text-slate-300">Network</span>
-                <span className="ml-auto text-slate-400">0</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <Network className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Network</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
-              <div className="flex items-center gap-2">
-                <HardDrive className="w-4 h-4 text-indigo-400" />
-                <span className="text-slate-300">Storage</span>
-                <span className="ml-auto text-slate-400">0</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <HardDrive className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                <span className="text-slate-300 truncate">Storage</span>
+                <span className="ml-auto text-slate-400 flex-shrink-0">0</span>
               </div>
             </div>
           </div>
 
           {/* OS Type */}
-          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30">
+          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30 overflow-hidden">
             <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
               OS Type
             </div>
@@ -1029,17 +1054,17 @@ export function SOCDashboard({
           <DropdownMenuContent className="bg-slate-900 border-slate-700">
             <DropdownMenuLabel className="text-slate-400">Device Actions</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-slate-700" />
-            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Deploy Agent to selected devices')}>
+            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onSelect={() => handleAction('Deploy Agent')}>
               <Shield className="w-4 h-4 mr-2" /> Deploy Agent
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Isolate selected devices')}>
+            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onSelect={() => handleAction('Isolate Device')}>
               <Network className="w-4 h-4 mr-2" /> Isolate Device
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Scan selected devices')}>
+            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onSelect={() => handleAction('Scan')}>
               <RefreshCw className="w-4 h-4 mr-2" /> Scan Now
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-slate-700" />
-            <DropdownMenuItem className="text-red-400 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Remove selected devices')}>
+            <DropdownMenuItem className="text-red-400 focus:bg-slate-800 cursor-pointer" onSelect={() => handleAction('Remove Device')}>
               <XCircle className="w-4 h-4 mr-2" /> Remove Device
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -1103,13 +1128,13 @@ export function SOCDashboard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-slate-900 border-slate-700">
-              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Exporting as CSV...')}>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onSelect={() => handleExport('CSV')}>
                 <FileText className="w-4 h-4 mr-2" /> Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Exporting as JSON...')}>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onSelect={() => handleExport('JSON')}>
                 <FileText className="w-4 h-4 mr-2" /> Export as JSON
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Generating PDF report...')}>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onSelect={() => handleExport('PDF')}>
                 <FileText className="w-4 h-4 mr-2" /> Generate PDF Report
               </DropdownMenuItem>
             </DropdownMenuContent>
