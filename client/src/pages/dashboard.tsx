@@ -1,13 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ShieldAlert, CheckCircle, Clock, Award, AlertTriangle, Bell, Shield, Database, Network, Key, AlertCircle as AlertCircleIcon, Eye, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, ShieldAlert, CheckCircle, Clock, Award } from "lucide-react";
 import { useLabs } from "@/hooks/use-labs";
 import { useProgress } from "@/hooks/use-progress";
 import { useQuery } from "@tanstack/react-query";
 import { clsx } from "clsx";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Button } from "@/components/ui/button";
 
 type LevelInfo = {
   level: number;
@@ -17,34 +15,10 @@ type LevelInfo = {
   completedLabs: number;
 };
 
-interface SecurityAlert {
-  id: string;
-  type: "critical" | "warning" | "info";
-  title: string;
-  message: string;
-  source: string;
-  timestamp: Date;
-  acknowledged: boolean;
-}
-
-const SECURITY_ALERTS = [
-  { id: "1", type: "critical" as const, title: "Privilege Escalation Detected", message: "IAM user assumed admin role unexpectedly", source: "GuardDuty" },
-  { id: "2", type: "warning" as const, title: "Public S3 Bucket", message: "Bucket 'backup-data' allows public read access", source: "AWS Config" },
-  { id: "3", type: "critical" as const, title: "Root Account Login", message: "AWS root user console login detected", source: "CloudTrail" },
-  { id: "4", type: "warning" as const, title: "Security Group Modified", message: "Inbound rule added allowing 0.0.0.0/0 on port 22", source: "CloudTrail" },
-  { id: "5", type: "info" as const, title: "New Detection Rule", message: "MITRE ATT&CK T1566 detection rule deployed", source: "SIEM" },
-  { id: "6", type: "critical" as const, title: "Malware Signature Match", message: "Known ransomware behavior detected on endpoint", source: "EDR" },
-  { id: "7", type: "warning" as const, title: "MFA Not Enabled", message: "Privileged user account lacks MFA protection", source: "IAM" },
-  { id: "8", type: "info" as const, title: "Compliance Scan Complete", message: "AWS Config rules evaluation finished", source: "AWS Config" },
-];
-
 export default function Dashboard() {
   const { user } = useAuth();
   const { data: labs, isLoading: labsLoading } = useLabs();
   const { data: progress } = useProgress();
-  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
-  const seenAlertIds = useRef<Set<string>>(new Set());
-  const hasInitialized = useRef(false);
   
   const { data: levelInfo } = useQuery<LevelInfo>({
     queryKey: ["/api/user/level", user?.id],
@@ -62,47 +36,6 @@ export default function Dashboard() {
   const completedCount = progress?.filter(p => p.completed).length || 0;
   const totalScore = progress?.reduce((acc, p) => acc + (p.score || 0), 0) || 0;
   const badgeCount = userBadges?.length || 0;
-
-  // Add alerts periodically
-  const addAlert = useCallback(() => {
-    const availableAlerts = SECURITY_ALERTS.filter(a => !seenAlertIds.current.has(a.id));
-    if (availableAlerts.length === 0) {
-      seenAlertIds.current.clear();
-      return;
-    }
-    const template = availableAlerts[Math.floor(Math.random() * availableAlerts.length)];
-    seenAlertIds.current.add(template.id);
-    
-    const newAlert: SecurityAlert = {
-      ...template,
-      id: `${template.id}-${Date.now()}`,
-      timestamp: new Date(),
-      acknowledged: false,
-    };
-    setAlerts(prev => [newAlert, ...prev].slice(0, 8));
-  }, []);
-
-  useEffect(() => {
-    if (!hasInitialized.current) {
-      setTimeout(() => {
-        addAlert();
-        addAlert();
-        hasInitialized.current = true;
-      }, 1000);
-    }
-    const interval = setInterval(() => {
-      if (Math.random() > 0.5) addAlert();
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [addAlert]);
-
-  const acknowledgeAlert = (id: string) => {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: true } : a));
-  };
-
-  const dismissAlert = (id: string) => {
-    setAlerts(prev => prev.filter(a => a.id !== id));
-  };
 
   return (
     <div className="space-y-8">
