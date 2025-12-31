@@ -5,6 +5,7 @@ import { ResourceGraph } from "@/components/resource-graph";
 import { IdentityGraph } from "@/components/identity-graph";
 import { SOCDashboard } from "@/components/soc-dashboard";
 import { MissionCompleteModal } from "@/components/mission-complete-modal";
+import { SecurityNotifications } from "@/components/security-notifications";
 import { Loader2, ArrowLeft, RefreshCw, AlertCircle, PlayCircle, BookOpen, CheckCircle2, PanelLeftClose, PanelLeft, Clock, Shield, Target, Zap, AlertTriangle, Trophy } from "lucide-react";
 import { useResetLab } from "@/hooks/use-labs";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -616,6 +617,12 @@ export default function LabWorkspace() {
         elapsedTime={formatTime(elapsedTime)}
         commandStreak={commandStreak}
         isNewCompletion={isNewCompletion}
+      />
+
+      <SecurityNotifications
+        labTitle={lab.title}
+        labCategory={lab.category}
+        isActive={!showCompleteModal}
       />
     </div>
   );
