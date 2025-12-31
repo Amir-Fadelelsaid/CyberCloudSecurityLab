@@ -368,18 +368,18 @@ export default function LabWorkspace() {
                               <p className="text-[11px] text-muted-foreground mb-2">{step.description}</p>
                               
                               {/* Hint - collapsible */}
-                              <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20">
-                                <span className="text-primary font-bold">CMD:</span> {step.hint?.match(/'([^']+)'/)?.[1] || step.hint}
+                              <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20 break-words">
+                                <span className="text-primary font-bold">CMD:</span> <span className="break-all">{step.hint?.match(/'([^']+)'/)?.[1] || step.hint}</span>
                               </div>
                               
                               {step.intel && !isCompleted && (
                                 <motion.div 
-                                  className="mt-2 text-[10px] font-mono bg-cyan-950/30 p-2 rounded border border-cyan-500/20 space-y-1"
+                                  className="mt-2 text-[10px] font-mono bg-cyan-950/30 p-2 rounded border border-cyan-500/20 space-y-1 break-words"
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: "auto", opacity: 1 }}
                                 >
                                   <span className="text-cyan-400 font-bold">INTEL:</span>{" "}
-                                  <span className="text-cyan-400/70">
+                                  <span className="text-cyan-400/70 break-all">
                                     {step.intel.split(/(T\d{4}(?:\.\d{3})?)/g).map((part: string, i: number) => 
                                       /^T\d{4}(?:\.\d{3})?$/.test(part) ? (
                                         <span key={i} className="inline-flex items-center gap-1 bg-cyan-600/30 text-cyan-300 px-1.5 py-0.5 rounded mx-0.5 border border-cyan-500/40 hover:bg-cyan-600/50 cursor-help" title={`MITRE ATT&CK Technique ${part}`}>
