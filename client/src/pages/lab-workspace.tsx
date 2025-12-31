@@ -285,18 +285,6 @@ export default function LabWorkspace() {
           {/* Tabs */}
           <div className="flex border-b border-primary/20">
             <button 
-              onClick={() => setActiveTab('steps')}
-              className={clsx(
-                "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
-                activeTab === 'steps' 
-                  ? "border-primary text-primary bg-primary/5" 
-                  : "border-transparent text-muted-foreground hover:text-white"
-              )}
-              data-testid="tab-steps"
-            >
-              <Target className="w-3.5 h-3.5" /> Objectives
-            </button>
-            <button 
               onClick={() => setActiveTab('brief')}
               className={clsx(
                 "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
@@ -307,6 +295,18 @@ export default function LabWorkspace() {
               data-testid="tab-brief"
             >
               <BookOpen className="w-3.5 h-3.5" /> Intel
+            </button>
+            <button 
+              onClick={() => setActiveTab('steps')}
+              className={clsx(
+                "flex-1 py-2.5 text-xs font-bold uppercase tracking-wider font-mono border-b-2 transition-all flex items-center justify-center gap-2",
+                activeTab === 'steps' 
+                  ? "border-primary text-primary bg-primary/5" 
+                  : "border-transparent text-muted-foreground hover:text-white"
+              )}
+              data-testid="tab-steps"
+            >
+              <Target className="w-3.5 h-3.5" /> Objectives
             </button>
           </div>
           
