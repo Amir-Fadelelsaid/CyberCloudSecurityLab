@@ -37,6 +37,15 @@ import {
 import { clsx } from "clsx";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { 
   PieChart, 
   Pie, 
@@ -768,6 +777,19 @@ export function SOCDashboard({
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [activeView, setActiveView] = useState<"devices" | "dashboard">("devices");
+  const [resultsPerPage, setResultsPerPage] = useState(20);
+  const [visibleColumns, setVisibleColumns] = useState({
+    type: true,
+    ip: true,
+    os: true,
+    function: true,
+    version: true,
+    host: true,
+    state: true,
+    mac: true,
+    network: true,
+    manufacturer: true
+  });
 
   // Simulate network scanning
   useEffect(() => {
@@ -812,8 +834,8 @@ export function SOCDashboard({
   return (
     <div className={clsx("h-full flex flex-col bg-[#0a0a0f] rounded-xl border border-slate-700/50 overflow-hidden", className)}>
       {/* Summary Cards Row */}
-      <div className="flex-shrink-0 p-3 border-b border-slate-800/50 overflow-x-auto">
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 min-w-[600px]">
+      <div className="flex-shrink-0 p-4 border-b border-slate-800/50 overflow-x-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 min-w-0">
           {/* Secured State */}
           <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30">
             <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
@@ -993,14 +1015,35 @@ export function SOCDashboard({
 
       {/* Action Bar */}
       <div className="flex-shrink-0 px-4 py-2 border-b border-slate-800/50 flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="text-xs border-slate-600 text-slate-300"
-          data-testid="button-actions"
-        >
-          Actions <ChevronDown className="w-3 h-3 ml-1" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs border-slate-600 text-slate-300"
+              data-testid="button-actions"
+            >
+              Actions <ChevronDown className="w-3 h-3 ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-slate-900 border-slate-700">
+            <DropdownMenuLabel className="text-slate-400">Device Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-slate-700" />
+            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Deploy Agent to selected devices')}>
+              <Shield className="w-4 h-4 mr-2" /> Deploy Agent
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Isolate selected devices')}>
+              <Network className="w-4 h-4 mr-2" /> Isolate Device
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Scan selected devices')}>
+              <RefreshCw className="w-4 h-4 mr-2" /> Scan Now
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-slate-700" />
+            <DropdownMenuItem className="text-red-400 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Remove selected devices')}>
+              <XCircle className="w-4 h-4 mr-2" /> Remove Device
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         <div className="flex items-center gap-2 text-xs text-slate-400">
           {isScanning ? (
@@ -1012,22 +1055,65 @@ export function SOCDashboard({
           ) : (
             <>
               <CheckCircle2 className="w-4 h-4 text-green-400" />
-              <span>Latest scan finished at {new Date().toLocaleString()}</span>
+              <span className="hidden sm:inline">Latest scan finished at {new Date().toLocaleString()}</span>
+              <span className="sm:hidden">Scan complete</span>
             </>
           )}
         </div>
         
-        <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs text-slate-400">57 Items</span>
-          <Button variant="ghost" size="sm" className="text-xs text-cyan-400">
-            20 Results <ChevronDown className="w-3 h-3 ml-1" />
-          </Button>
-          <Button variant="ghost" size="sm" className="text-xs text-cyan-400">
-            Columns <ChevronDown className="w-3 h-3 ml-1" />
-          </Button>
-          <Button variant="ghost" size="sm" className="text-xs text-cyan-400">
-            <Download className="w-4 h-4 mr-1" /> Export
-          </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-slate-400 hidden sm:inline">{devices.length} Items</span>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs text-cyan-400">
+                {resultsPerPage} Results <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-slate-900 border-slate-700">
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => setResultsPerPage(10)}>10 per page</DropdownMenuItem>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => setResultsPerPage(20)}>20 per page</DropdownMenuItem>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => setResultsPerPage(50)}>50 per page</DropdownMenuItem>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => setResultsPerPage(100)}>100 per page</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs text-cyan-400">
+                Columns <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-slate-900 border-slate-700">
+              <DropdownMenuLabel className="text-slate-400">Toggle Columns</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-slate-700" />
+              <DropdownMenuCheckboxItem checked={visibleColumns.type} onCheckedChange={(c) => setVisibleColumns(v => ({...v, type: c}))} className="text-slate-300">Type</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={visibleColumns.ip} onCheckedChange={(c) => setVisibleColumns(v => ({...v, ip: c}))} className="text-slate-300">IP Address</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={visibleColumns.os} onCheckedChange={(c) => setVisibleColumns(v => ({...v, os: c}))} className="text-slate-300">OS</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={visibleColumns.function} onCheckedChange={(c) => setVisibleColumns(v => ({...v, function: c}))} className="text-slate-300">Device Function</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={visibleColumns.state} onCheckedChange={(c) => setVisibleColumns(v => ({...v, state: c}))} className="text-slate-300">Secured State</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={visibleColumns.mac} onCheckedChange={(c) => setVisibleColumns(v => ({...v, mac: c}))} className="text-slate-300">MAC Address</DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs text-cyan-400">
+                <Download className="w-4 h-4 mr-1" /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-slate-900 border-slate-700">
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Exporting as CSV...')}>
+                <FileText className="w-4 h-4 mr-2" /> Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Exporting as JSON...')}>
+                <FileText className="w-4 h-4 mr-2" /> Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 cursor-pointer" onClick={() => alert('Generating PDF report...')}>
+                <FileText className="w-4 h-4 mr-2" /> Generate PDF Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
