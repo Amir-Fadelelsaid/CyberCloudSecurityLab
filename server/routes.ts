@@ -6691,6 +6691,9 @@ export async function registerRoutes(
       const lowerCmd = command.toLowerCase().trim();
       const steps = lab.steps as any[];
       
+      // Find the best matching step (most specific match wins)
+      let bestMatch: { step: number; score: number } | null = null;
+      
       for (const step of steps) {
         if (step.hint) {
           // Extract command from hint like "Type 'scan' to..." or "Type 'aws s3 ls'..."
@@ -6699,29 +6702,40 @@ export async function registerRoutes(
             let expectedCmd = hintMatch[1].toLowerCase().trim();
             // Remove placeholder parts like <bucket>, <instance>, etc.
             expectedCmd = expectedCmd.replace(/<[^>]+>/g, '').trim();
-            // Remove specific resource names from expected cmd for flexible matching
             const expectedParts = expectedCmd.split(' ').filter((p: string) => p.length > 0);
             const cmdParts = lowerCmd.split(' ').filter((p: string) => p.length > 0);
             
-            // Check if command starts with the base command pattern
             if (expectedParts.length > 0) {
-              const baseMatch = expectedParts.slice(0, -1).every((part: string, i: number) => cmdParts[i] === part) ||
-                               expectedParts.every((part: string, i: number) => cmdParts[i] === part) ||
-                               lowerCmd.startsWith(expectedCmd) ||
-                               lowerCmd === expectedCmd;
-              if (baseMatch) {
-                completedStep = step.number;
-                break;
+              // Check for exact match first
+              if (lowerCmd === expectedCmd) {
+                bestMatch = { step: step.number, score: 1000 };
+                break; // Exact match, stop searching
+              }
+              
+              // Check if command starts with expected command
+              if (lowerCmd.startsWith(expectedCmd + ' ') || lowerCmd === expectedCmd) {
+                const score = expectedParts.length * 10;
+                if (!bestMatch || score > bestMatch.score) {
+                  bestMatch = { step: step.number, score };
+                }
+                continue;
+              }
+              
+              // Check if all expected parts match the beginning of the command
+              const allPartsMatch = expectedParts.every((part: string, i: number) => cmdParts[i] === part);
+              if (allPartsMatch && cmdParts.length >= expectedParts.length) {
+                const score = expectedParts.length;
+                if (!bestMatch || score > bestMatch.score) {
+                  bestMatch = { step: step.number, score };
+                }
               }
             }
           }
         }
       }
       
-      // If no specific step matched but command was successful, auto-advance to next logical step
-      if (!completedStep && (result.success || result.output.includes("==="))) {
-        // Find first incomplete step (we'll let frontend track this)
-        completedStep = steps.length > 0 ? steps[0].number : undefined;
+      if (bestMatch) {
+        completedStep = bestMatch.step;
       }
     }
     
