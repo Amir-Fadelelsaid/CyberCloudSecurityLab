@@ -8,7 +8,28 @@ import { Badge } from "@/components/ui/badge";
 
 interface IdentityGraphProps {
   labId: number;
+  labTitle?: string;
 }
+
+// Lab-specific context messages based on lab title
+const getIAMLabContext = (labTitle: string): { message: string; severity: 'critical' | 'high' | 'medium' } | null => {
+  const contextMap: Record<string, { message: string; severity: 'critical' | 'high' | 'medium' }> = {
+    "IAM User Without MFA": { message: "CRITICAL: Admin user lacks multi-factor authentication", severity: 'critical' },
+    "Overprivileged IAM Role": { message: "HIGH RISK: EC2 role has AdministratorAccess policy", severity: 'critical' },
+    "Stale Access Keys": { message: "COMPLIANCE: Access keys unused for 180+ days detected", severity: 'high' },
+    "Wildcard IAM Policy": { message: "CRITICAL: Policy grants Action: *, Resource: * permissions", severity: 'critical' },
+    "Cross-Account Role Trust": { message: "SUSPICIOUS: Role trusts unknown external AWS account", severity: 'high' },
+    "IAM Group Membership Audit": { message: "AUDIT: Reviewing group permissions and membership", severity: 'medium' },
+    "Service Account Key Rotation": { message: "COMPLIANCE: Service account keys exceed rotation policy", severity: 'high' },
+    "Permission Boundary Bypass": { message: "VULNERABILITY: User can escalate beyond permission boundary", severity: 'critical' },
+    "Identity Provider Configuration": { message: "REVIEW: SAML/OIDC identity provider settings", severity: 'medium' },
+    "Root Account Usage Detection": { message: "ALERT: Root account API activity detected", severity: 'critical' },
+    "IAM Policy Simulator": { message: "ANALYSIS: Evaluating effective permissions", severity: 'medium' },
+    "Privilege Escalation Path": { message: "THREAT: Potential privilege escalation chain identified", severity: 'critical' },
+    "Identity Graph Analysis Challenge": { message: "CHALLENGE: Map the complete identity attack surface", severity: 'high' },
+  };
+  return contextMap[labTitle] || null;
+};
 
 interface IdentityNode {
   id: number;
@@ -20,10 +41,11 @@ interface IdentityNode {
   category: 'user' | 'service' | 'role' | 'group' | 'provider' | 'policy';
 }
 
-export function IdentityGraph({ labId }: IdentityGraphProps) {
+export function IdentityGraph({ labId, labTitle = "" }: IdentityGraphProps) {
   const { data: resources, isLoading } = useLabResources(labId);
   const [selectedNode, setSelectedNode] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'relationships'>('relationships');
+  const labContext = getIAMLabContext(labTitle);
 
   if (isLoading) {
     return (
@@ -78,8 +100,28 @@ export function IdentityGraph({ labId }: IdentityGraphProps) {
   const providerNodes = nodes.filter(n => n.category === 'provider');
   const policyNodes = nodes.filter(n => n.category === 'policy');
 
+  const getSeverityStyles = (severity: 'critical' | 'high' | 'medium') => {
+    switch (severity) {
+      case 'critical': return 'bg-destructive/10 border-destructive/30 text-destructive';
+      case 'high': return 'bg-amber-500/10 border-amber-500/30 text-amber-500';
+      case 'medium': return 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400';
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Lab Context Alert */}
+      {labContext && (
+        <motion.div 
+          className={clsx("flex items-center gap-3 border rounded-lg px-4 py-2", getSeverityStyles(labContext.severity))}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span className="text-xs font-mono">{labContext.message}</span>
+        </motion.div>
+      )}
+      
       <div className="flex items-center justify-between bg-black/30 rounded-lg px-4 py-2 border border-white/5">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">

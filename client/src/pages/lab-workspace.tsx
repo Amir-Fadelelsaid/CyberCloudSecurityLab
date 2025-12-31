@@ -545,7 +545,7 @@ export default function LabWorkspace() {
               />
 
               <div className="h-full pt-6 overflow-y-auto pr-2">
-                 <IdentityGraph labId={labId} />
+                 <IdentityGraph labId={labId} labTitle={lab.title} />
               </div>
             </div>
           ) : (
@@ -565,7 +565,7 @@ export default function LabWorkspace() {
               />
 
               <div className="h-full pt-6 overflow-y-auto pr-2">
-                 <ResourceGraph labId={labId} />
+                 <ResourceGraph labId={labId} labTitle={lab.title} />
               </div>
             </div>
           )}

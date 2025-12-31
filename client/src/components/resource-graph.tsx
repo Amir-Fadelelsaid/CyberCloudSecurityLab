@@ -7,11 +7,39 @@ import { useState } from "react";
 
 interface ResourceGraphProps {
   labId: number;
+  labTitle?: string;
 }
 
-export function ResourceGraph({ labId }: ResourceGraphProps) {
+// Lab-specific context messages based on lab title
+const getLabContextMessage = (labTitle: string): string | null => {
+  const contextMap: Record<string, string> = {
+    "Public S3 Bucket Exposure": "ALERT: corp-payroll-data bucket detected on dark web forum listing",
+    "Unencrypted S3 Bucket": "COMPLIANCE: PCI-DSS violation - customer data stored in plaintext",
+    "S3 Bucket Logging Disabled": "BLIND SPOT: No audit trail for financial-reports bucket access",
+    "S3 Versioning and Backup Compliance": "RISK: Disaster recovery bucket lacks versioning protection",
+    "Overly Permissive Bucket Policy": "CRITICAL: Wildcard permissions grant everyone full access",
+    "Cross-Account Bucket Access Investigation": "SUSPICIOUS: Unknown AWS account accessing partner data",
+    "S3 Object Lock for Compliance": "REGULATORY: WORM protection required for audit logs",
+    "Multi-Bucket Security Hardening": "AUDIT: Multiple buckets flagged with security issues",
+    "Data Breach Investigation - S3 Exposure": "INCIDENT: Potential data exfiltration detected",
+    "Supply Chain Attack - Compromised Bucket": "THREAT INTEL: CI/CD artifacts may be compromised",
+    "SSH Open to World": "CRITICAL: Port 22 exposed to 0.0.0.0/0 - brute force risk",
+    "RDP Exposed to Internet": "CRITICAL: Port 3389 accessible from public internet",
+    "VPC Flow Logs Disabled": "BLIND SPOT: Network traffic not being logged",
+    "Default Security Group In Use": "MISCONFIGURATION: Default SG allows all traffic",
+    "Network ACL Misconfiguration": "RISK: NACL rules too permissive for subnet",
+    "EC2 IMDSv1 Vulnerability": "VULNERABILITY: Instance metadata service v1 enabled",
+    "RDS Public Access": "CRITICAL: Database accessible from public internet",
+    "Lambda Function Secrets Exposure": "RISK: Secrets stored in environment variables",
+    "EKS Cluster Security Review": "AUDIT: Kubernetes cluster security posture check",
+  };
+  return contextMap[labTitle] || null;
+};
+
+export function ResourceGraph({ labId, labTitle = "" }: ResourceGraphProps) {
   const { data: resources, isLoading } = useLabResources(labId);
   const [selectedResource, setSelectedResource] = useState<number | null>(null);
+  const contextMessage = getLabContextMessage(labTitle);
 
   if (isLoading) {
     return (
@@ -40,6 +68,18 @@ export function ResourceGraph({ labId }: ResourceGraphProps) {
 
   return (
     <div className="space-y-4">
+      {/* Lab Context Alert */}
+      {contextMessage && (
+        <motion.div 
+          className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <AlertOctagon className="w-4 h-4 text-destructive flex-shrink-0" />
+          <span className="text-xs font-mono text-destructive">{contextMessage}</span>
+        </motion.div>
+      )}
+      
       {/* Stats Bar */}
       <div className="flex items-center justify-between bg-black/30 rounded-lg px-4 py-2 border border-white/5">
         <div className="flex items-center gap-4">
