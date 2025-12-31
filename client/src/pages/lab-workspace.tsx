@@ -367,16 +367,10 @@ export default function LabWorkspace() {
                               </h4>
                               <p className="text-[11px] text-muted-foreground mb-2">{step.description}</p>
                               
-                              {/* Hint - only show CMD if there's a command in quotes */}
-                              {step.hint?.match(/'([^']+)'/) ? (
-                                <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20 break-words">
-                                  <span className="text-primary font-bold">CMD:</span> <span className="break-all">{step.hint.match(/'([^']+)'/)?.[1]}</span>
-                                </div>
-                              ) : step.hint && (
-                                <div className="text-[10px] text-amber-500/70 font-mono bg-black/40 p-2 rounded border border-amber-500/20 break-words">
-                                  <span className="text-amber-400 font-bold">TIP:</span> <span className="break-all">{step.hint}</span>
-                                </div>
-                              )}
+                              {/* Hint - collapsible */}
+                              <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20 break-words">
+                                <span className="text-primary font-bold">CMD:</span> <span className="break-all">{step.hint?.match(/'([^']+)'/)?.[1] || step.hint}</span>
+                              </div>
                               
                               {step.intel && !isCompleted && (
                                 <motion.div 
