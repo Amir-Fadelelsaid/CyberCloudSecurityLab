@@ -51,7 +51,7 @@ export default function Landing() {
             
             <h1 className="text-5xl md:text-7xl font-display font-black leading-tight text-white mb-6">
               MASTER CLOUD <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">SECURITY DEFENSE</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500">SECURITY DEFENSE</span>
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -68,7 +68,7 @@ export default function Landing() {
           >
             <a href="/api/login">
               <motion.button 
-                className="px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white font-bold font-mono flex items-center gap-2 transition-all shadow-lg"
+                className="px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold font-mono flex items-center gap-2 transition-all shadow-lg"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 data-testid="button-start-training"
