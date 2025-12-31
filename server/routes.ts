@@ -4500,10 +4500,44 @@ Summary:
 Exported to security reports.`;
     success = true;
   }
-  else if (lowerCmd.startsWith("aws iam restrict-user ") || lowerCmd === "aws iam reduce-session-duration" || lowerCmd === "aws iam enable-identity-monitoring" || lowerCmd === "aws iam implement-permission-boundaries") {
-    output = `=== IAM Security Enhanced ===
+  else if (lowerCmd.startsWith("aws iam restrict-user ")) {
+    const userName = lowerCmd.replace("aws iam restrict-user ", "").trim();
+    const iamUser = resources.find(r => r.type === "iam_user" && r.name === userName);
+    
+    if (iamUser) {
+      await storage.updateResource(iamUser.id, { isVulnerable: false, status: 'least-privilege' });
+      output = `=== IAM User Restricted ===
+
+[OK] User '${userName}' analyzed
+[OK] AdministratorAccess policy removed
+[OK] Least privilege policy applied
+[OK] Permissions now scoped to Lambda deployment only
+[OK] Changes logged to CloudTrail
+
+User now follows least privilege principle.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== iamUser.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All vulnerabilities remediated!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `=== IAM Security Enhanced ===
 
 [OK] User restrictions applied
+[OK] Session durations reduced  
+[OK] Identity monitoring enabled
+[OK] Permission boundaries enforced
+
+IAM security posture improved.`;
+      success = true;
+    }
+  }
+  else if (lowerCmd === "aws iam reduce-session-duration" || lowerCmd === "aws iam enable-identity-monitoring" || lowerCmd === "aws iam implement-permission-boundaries") {
+    output = `=== IAM Security Enhanced ===
+
 [OK] Session durations reduced
 [OK] Identity monitoring enabled
 [OK] Permission boundaries enforced
