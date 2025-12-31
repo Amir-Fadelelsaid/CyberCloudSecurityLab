@@ -862,7 +862,7 @@ export function SOCDashboard({
       <div className="flex-shrink-0 p-4 border-b border-slate-800/50 overflow-x-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 min-w-0">
           {/* Secured State */}
-          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30">
+          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30 overflow-hidden">
             <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
               Secured State
             </div>
@@ -874,14 +874,14 @@ export function SOCDashboard({
                 size={100}
               />
             </div>
-            <div className="flex justify-center gap-4 mt-3">
-              <div className="flex items-center gap-1.5 text-xs">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
+            <div className="flex flex-wrap justify-center gap-2 mt-3">
+              <div className="flex items-center gap-1 text-[10px]">
+                <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
                 <span className="text-slate-400">0%</span>
                 <span className="text-slate-500">Secured</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
+              <div className="flex items-center gap-1 text-[10px]">
+                <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
                 <span className="text-slate-400">100%</span>
                 <span className="text-slate-500">Unsecured</span>
               </div>
@@ -889,7 +889,7 @@ export function SOCDashboard({
           </div>
 
           {/* Device Review */}
-          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30">
+          <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-700/30 overflow-hidden">
             <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">
               Device Review
             </div>
