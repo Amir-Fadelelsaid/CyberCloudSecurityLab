@@ -184,13 +184,6 @@ const ALERT_COMMANDS: Record<string, string[]> = {
 export function SecurityNotifications({ labTitle, labCategory, isActive, onInvestigate }: SecurityNotificationsProps) {
   const [notifications, setNotifications] = useState<SecurityNotification[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  
-  // Make notifications visible after mount
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 500);
-    return () => clearTimeout(timer);
-  }, []);
   const [unreadCount, setUnreadCount] = useState(0);
   const seenTemplateIds = useRef<Set<string>>(new Set());
   const hasInitialized = useRef(false);
@@ -307,8 +300,6 @@ export function SecurityNotifications({ labTitle, labCategory, isActive, onInves
       pulse: "",
     },
   };
-
-  if (!isVisible) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50" data-testid="security-notifications">
