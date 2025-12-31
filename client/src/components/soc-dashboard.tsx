@@ -102,8 +102,72 @@ interface SOCDashboardProps {
 }
 
 // ============================================
-// MOCK DATA GENERATORS
+// LAB-SPECIFIC DATA GENERATORS
 // ============================================
+
+const generateDevicesForCategory = (category: string): Device[] => {
+  switch (category) {
+    case "Storage Security":
+      return [
+        { id: "s3-001", type: "storage", ipAddress: "s3.amazonaws.com", os: "AWS S3", osIcon: "linux", deviceFunction: "Object Storage", osVersion: "N/A", hostName: "corp-payroll-data", securedState: "unsecured", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 95, reviewStatus: "not-reviewed", tags: ["PUBLIC", "PII"] },
+        { id: "s3-002", type: "storage", ipAddress: "s3.amazonaws.com", os: "AWS S3", osIcon: "linux", deviceFunction: "Object Storage", osVersion: "N/A", hostName: "customer-data-raw", securedState: "unsecured", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 88, reviewStatus: "not-reviewed", tags: ["UNENCRYPTED"] },
+        { id: "s3-003", type: "storage", ipAddress: "s3.amazonaws.com", os: "AWS S3", osIcon: "linux", deviceFunction: "Object Storage", osVersion: "N/A", hostName: "financial-reports", securedState: "at-risk", macAddress: "N/A", networkName: "us-west-2", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 72, reviewStatus: "under-analysis", tags: ["NO-LOGGING"] },
+        { id: "s3-004", type: "storage", ipAddress: "s3.amazonaws.com", os: "AWS S3", osIcon: "linux", deviceFunction: "Object Storage", osVersion: "N/A", hostName: "disaster-recovery-backup", securedState: "at-risk", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 65, reviewStatus: "under-analysis", tags: ["NO-VERSIONING"] },
+        { id: "s3-005", type: "storage", ipAddress: "s3.amazonaws.com", os: "AWS S3", osIcon: "linux", deviceFunction: "Object Storage", osVersion: "N/A", hostName: "public-assets", securedState: "secured", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 10, reviewStatus: "allowed" },
+      ];
+    case "Network Security":
+      return [
+        { id: "sg-001", type: "network", ipAddress: "0.0.0.0/0", os: "AWS Security Group", osIcon: "linux", deviceFunction: "Firewall", osVersion: "N/A", hostName: "web-app-sg", securedState: "unsecured", macAddress: "N/A", networkName: "vpc-prod", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 92, reviewStatus: "not-reviewed", tags: ["PORT-22-OPEN"] },
+        { id: "sg-002", type: "network", ipAddress: "10.0.0.0/16", os: "AWS Security Group", osIcon: "linux", deviceFunction: "Firewall", osVersion: "N/A", hostName: "database-sg", securedState: "unsecured", macAddress: "N/A", networkName: "vpc-prod", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 85, reviewStatus: "not-reviewed", tags: ["RDP-EXPOSED"] },
+        { id: "vpc-001", type: "network", ipAddress: "10.0.0.0/16", os: "AWS VPC", osIcon: "linux", deviceFunction: "Virtual Network", osVersion: "N/A", hostName: "vpc-production", securedState: "at-risk", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 68, reviewStatus: "under-analysis", tags: ["FLOW-LOGS-DISABLED"] },
+        { id: "nacl-001", type: "network", ipAddress: "0.0.0.0/0", os: "AWS NACL", osIcon: "linux", deviceFunction: "Network ACL", osVersion: "N/A", hostName: "public-subnet-acl", securedState: "at-risk", macAddress: "N/A", networkName: "vpc-prod", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 55, reviewStatus: "under-analysis" },
+        { id: "elb-001", type: "network", ipAddress: "52.23.145.22", os: "AWS ALB", osIcon: "linux", deviceFunction: "Load Balancer", osVersion: "N/A", hostName: "app-lb-prod", securedState: "secured", macAddress: "N/A", networkName: "vpc-prod", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 15, reviewStatus: "allowed" },
+      ];
+    case "SOC Operations":
+      return [
+        { id: "alert-001", type: "server", ipAddress: "192.168.1.45", os: "Windows Server 2019", osIcon: "windows", deviceFunction: "Domain Controller", osVersion: "10.0.17763", hostName: "DC-PROD-01", securedState: "unsecured", macAddress: "00:1A:2B:3C:4D:5E", networkName: "Corp-Internal", manufacturer: "Dell Inc.", lastSeen: "2 min ago", riskScore: 95, reviewStatus: "not-reviewed", tags: ["BRUTE-FORCE"] },
+        { id: "alert-002", type: "workstation", ipAddress: "192.168.1.102", os: "Windows 11", osIcon: "windows", deviceFunction: "Workstation", osVersion: "22H2", hostName: "WS-FINANCE-04", securedState: "unsecured", macAddress: "00:1B:2C:3D:4E:5F", networkName: "Corp-Internal", manufacturer: "HP Inc.", lastSeen: "5 min ago", riskScore: 88, reviewStatus: "not-reviewed", tags: ["MALWARE-DETECTED"] },
+        { id: "alert-003", type: "server", ipAddress: "10.0.50.15", os: "Ubuntu 22.04", osIcon: "linux", deviceFunction: "Web Server", osVersion: "22.04 LTS", hostName: "web-prod-03", securedState: "at-risk", macAddress: "02:42:AC:11:00:02", networkName: "DMZ", manufacturer: "VMware", lastSeen: "1 min ago", riskScore: 75, reviewStatus: "under-analysis", tags: ["SQL-INJECTION"] },
+        { id: "alert-004", type: "workstation", ipAddress: "192.168.1.89", os: "macOS Ventura", osIcon: "macos", deviceFunction: "Workstation", osVersion: "13.4", hostName: "MBP-EXEC-CEO", securedState: "at-risk", macAddress: "A4:83:E7:2B:1C:9D", networkName: "Corp-Exec", manufacturer: "Apple Inc.", lastSeen: "30 sec ago", riskScore: 68, reviewStatus: "under-analysis", tags: ["PHISHING-CLICK"] },
+        { id: "alert-005", type: "server", ipAddress: "10.0.100.5", os: "Red Hat Enterprise 8", osIcon: "linux", deviceFunction: "Database Server", osVersion: "8.7", hostName: "db-mysql-prod", securedState: "secured", macAddress: "00:50:56:A1:B2:C3", networkName: "Data-Tier", manufacturer: "VMware", lastSeen: "Active", riskScore: 12, reviewStatus: "allowed" },
+      ];
+    case "SOC Engineer":
+      return [
+        { id: "siem-001", type: "server", ipAddress: "10.0.10.50", os: "SIEM Platform", osIcon: "linux", deviceFunction: "Log Collector", osVersion: "v8.12", hostName: "siem-collector-01", securedState: "at-risk", macAddress: "00:16:3E:AA:BB:CC", networkName: "Security-Mgmt", manufacturer: "Splunk", lastSeen: "Active", riskScore: 45, reviewStatus: "under-analysis", tags: ["MISSING-LOGS"] },
+        { id: "fw-001", type: "network", ipAddress: "10.0.0.1", os: "Firewall", osIcon: "linux", deviceFunction: "Perimeter Firewall", osVersion: "9.1.12", hostName: "fw-perimeter-01", securedState: "unsecured", macAddress: "00:0C:29:11:22:33", networkName: "Edge", manufacturer: "Palo Alto", lastSeen: "Active", riskScore: 78, reviewStatus: "not-reviewed", tags: ["LOGS-NOT-INTEGRATED"] },
+        { id: "ids-001", type: "server", ipAddress: "10.0.10.55", os: "IDS/IPS", osIcon: "linux", deviceFunction: "Intrusion Detection", osVersion: "3.0.5", hostName: "ids-network-01", securedState: "at-risk", macAddress: "00:50:56:DD:EE:FF", networkName: "Security-Mgmt", manufacturer: "Suricata", lastSeen: "Active", riskScore: 55, reviewStatus: "under-analysis", tags: ["RULES-OUTDATED"] },
+        { id: "edr-001", type: "server", ipAddress: "10.0.10.60", os: "EDR Platform", osIcon: "windows", deviceFunction: "Endpoint Detection", osVersion: "v22.1", hostName: "edr-console-01", securedState: "secured", macAddress: "00:1A:2B:CC:DD:EE", networkName: "Security-Mgmt", manufacturer: "CrowdStrike", lastSeen: "Active", riskScore: 15, reviewStatus: "allowed" },
+      ];
+    case "Cloud Security Analyst":
+      return [
+        { id: "ct-001", type: "server", ipAddress: "cloudtrail.amazonaws.com", os: "AWS CloudTrail", osIcon: "linux", deviceFunction: "Audit Logging", osVersion: "N/A", hostName: "trail-prod", securedState: "unsecured", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 85, reviewStatus: "not-reviewed", tags: ["DISABLED"] },
+        { id: "gd-001", type: "server", ipAddress: "guardduty.amazonaws.com", os: "AWS GuardDuty", osIcon: "linux", deviceFunction: "Threat Detection", osVersion: "N/A", hostName: "guardduty-prod", securedState: "at-risk", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 72, reviewStatus: "under-analysis", tags: ["HIGH-FINDINGS"] },
+        { id: "sh-001", type: "server", ipAddress: "securityhub.amazonaws.com", os: "AWS Security Hub", osIcon: "linux", deviceFunction: "Security Posture", osVersion: "N/A", hostName: "securityhub-prod", securedState: "at-risk", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 65, reviewStatus: "under-analysis", tags: ["CRITICAL-FINDINGS"] },
+        { id: "cfg-001", type: "server", ipAddress: "config.amazonaws.com", os: "AWS Config", osIcon: "linux", deviceFunction: "Compliance", osVersion: "N/A", hostName: "config-recorder", securedState: "secured", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 20, reviewStatus: "allowed" },
+      ];
+    case "IAM Security":
+      return [
+        { id: "iam-001", type: "unknown", ipAddress: "iam.amazonaws.com", os: "AWS IAM", osIcon: "linux", deviceFunction: "IAM User", osVersion: "N/A", hostName: "admin-user", securedState: "unsecured", macAddress: "N/A", networkName: "Global", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 95, reviewStatus: "not-reviewed", tags: ["NO-MFA", "ADMIN"] },
+        { id: "iam-002", type: "unknown", ipAddress: "iam.amazonaws.com", os: "AWS IAM", osIcon: "linux", deviceFunction: "IAM Role", osVersion: "N/A", hostName: "ec2-role-overprivileged", securedState: "unsecured", macAddress: "N/A", networkName: "Global", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 88, reviewStatus: "not-reviewed", tags: ["ADMIN-ACCESS"] },
+        { id: "iam-003", type: "unknown", ipAddress: "iam.amazonaws.com", os: "AWS IAM", osIcon: "linux", deviceFunction: "Access Key", osVersion: "N/A", hostName: "AKIA...STALE", securedState: "at-risk", macAddress: "N/A", networkName: "Global", manufacturer: "Amazon Web Services", lastSeen: "180+ days", riskScore: 75, reviewStatus: "under-analysis", tags: ["STALE-KEY"] },
+        { id: "iam-004", type: "unknown", ipAddress: "iam.amazonaws.com", os: "AWS IAM", osIcon: "linux", deviceFunction: "IAM Policy", osVersion: "N/A", hostName: "DeveloperFullAccess", securedState: "at-risk", macAddress: "N/A", networkName: "Global", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 68, reviewStatus: "under-analysis", tags: ["STAR-STAR"] },
+        { id: "iam-005", type: "unknown", ipAddress: "iam.amazonaws.com", os: "AWS IAM", osIcon: "linux", deviceFunction: "IAM Group", osVersion: "N/A", hostName: "Developers", securedState: "secured", macAddress: "N/A", networkName: "Global", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 15, reviewStatus: "allowed" },
+      ];
+    case "Cloud Security Engineer":
+      return [
+        { id: "ec2-001", type: "server", ipAddress: "54.23.145.89", os: "Amazon Linux 2", osIcon: "linux", deviceFunction: "Web Server", osVersion: "2.0", hostName: "web-prod-01", securedState: "unsecured", macAddress: "02:42:54:17:91:5B", networkName: "vpc-prod", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 85, reviewStatus: "not-reviewed", tags: ["PUBLIC-IP", "NO-IMDSV2"] },
+        { id: "rds-001", type: "storage", ipAddress: "db.cluster.us-east-1.rds.amazonaws.com", os: "AWS RDS MySQL", osIcon: "linux", deviceFunction: "Database", osVersion: "8.0.32", hostName: "prod-mysql-cluster", securedState: "unsecured", macAddress: "N/A", networkName: "vpc-prod", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 78, reviewStatus: "not-reviewed", tags: ["PUBLIC-ACCESS"] },
+        { id: "lambda-001", type: "server", ipAddress: "lambda.amazonaws.com", os: "AWS Lambda", osIcon: "linux", deviceFunction: "Serverless Function", osVersion: "Python 3.9", hostName: "data-processor", securedState: "at-risk", macAddress: "N/A", networkName: "us-east-1", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 65, reviewStatus: "under-analysis", tags: ["SECRETS-IN-ENV"] },
+        { id: "eks-001", type: "server", ipAddress: "eks.us-east-1.amazonaws.com", os: "AWS EKS", osIcon: "linux", deviceFunction: "Kubernetes Cluster", osVersion: "1.27", hostName: "prod-cluster", securedState: "secured", macAddress: "N/A", networkName: "vpc-prod", manufacturer: "Amazon Web Services", lastSeen: "Active", riskScore: 25, reviewStatus: "allowed" },
+      ];
+    default:
+      return [
+        { id: "dev-001", type: "server", ipAddress: "192.168.1.133", os: "Debian", osIcon: "linux", deviceFunction: "Server", osVersion: "N/A", hostName: "N/A", securedState: "unsecured", macAddress: "e0:63:da:ca:84:04", networkName: "N/A", manufacturer: "Ubiquiti Networks Inc.", lastSeen: "2 min ago", riskScore: 85, reviewStatus: "not-reviewed" },
+        { id: "dev-002", type: "server", ipAddress: "192.168.1.130", os: "Debian", osIcon: "linux", deviceFunction: "Server", osVersion: "N/A", hostName: "N/A", securedState: "unsecured", macAddress: "e0:63:da:e6:64:28", networkName: "N/A", manufacturer: "Ubiquiti Networks Inc.", lastSeen: "5 min ago", riskScore: 72, reviewStatus: "not-reviewed" },
+        { id: "dev-003", type: "server", ipAddress: "192.168.1.1", os: "Debian", osIcon: "linux", deviceFunction: "Server", osVersion: "N/A", hostName: "N/A", securedState: "unsecured", macAddress: "74:ac:b9:55:3b:66", networkName: "N/A", manufacturer: "Ubiquiti Networks Inc.", lastSeen: "1 min ago", riskScore: 90, reviewStatus: "not-reviewed" },
+      ];
+  }
+};
 
 const generateDevices = (): Device[] => {
   return [
@@ -773,7 +837,7 @@ export function SOCDashboard({
   className 
 }: SOCDashboardProps) {
   const { toast } = useToast();
-  const [devices] = useState<Device[]>(generateDevices());
+  const [devices] = useState<Device[]>(generateDevicesForCategory(labCategory));
   const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
   const [selectedDevices, setSelectedDevices] = useState<Set<string>>(new Set());
   const [isScanning, setIsScanning] = useState(false);
