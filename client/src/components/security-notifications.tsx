@@ -16,7 +16,8 @@ import {
   FileWarning,
   ShieldAlert,
   ShieldCheck,
-  Zap
+  Zap,
+  CheckCircle2
 } from "lucide-react";
 import { clsx } from "clsx";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ interface NotificationTemplate {
 
 interface SecurityNotification extends NotificationTemplate {
   timestamp: Date;
+  acknowledged: boolean;
 }
 
 interface SecurityNotificationsProps {
@@ -124,6 +126,7 @@ export function SecurityNotifications({ labTitle, labCategory, isActive }: Secur
       ...template,
       id: `${template.id}-${Date.now()}`,
       timestamp: new Date(),
+      acknowledged: false,
     };
     
     setNotifications(prev => [newNotification, ...prev].slice(0, 5));
@@ -132,6 +135,12 @@ export function SecurityNotifications({ labTitle, labCategory, isActive }: Secur
 
   const dismissNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const acknowledgeNotification = (id: string) => {
+    setNotifications(prev => prev.map(n => 
+      n.id === id ? { ...n, acknowledged: true } : n
+    ));
   };
 
   const clearAll = () => {
@@ -149,14 +158,14 @@ export function SecurityNotifications({ labTitle, labCategory, isActive }: Secur
       initialTimeout = setTimeout(() => {
         addNotification();
         hasInitialized.current = true;
-      }, 5000);
+      }, 2000);
     }
 
     const interval = setInterval(() => {
-      if (Math.random() > 0.3) {
+      if (Math.random() > 0.4) {
         addNotification();
       }
-    }, 15000);
+    }, 12000);
 
     return () => {
       if (initialTimeout) clearTimeout(initialTimeout);
@@ -305,13 +314,40 @@ export function SecurityNotifications({ labTitle, labCategory, isActive }: Secur
                               </button>
                             </div>
                             <p className="text-[11px] text-slate-300 mt-0.5 line-clamp-2">{notification.message}</p>
-                            <div className="flex items-center justify-between mt-1">
+                            <div className="flex items-center justify-between mt-1.5">
                               {notification.source && (
                                 <span className="text-[10px] text-slate-500">{notification.source}</span>
                               )}
                               <span className="text-[10px] text-slate-500">
                                 {notification.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
+                            </div>
+                            <div className="flex items-center gap-1 mt-2">
+                              {notification.acknowledged ? (
+                                <span className="text-[10px] text-green-400 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Acknowledged
+                                </span>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-5 px-2 text-[10px] text-cyan-400 hover:text-cyan-300"
+                                  onClick={(e) => { e.stopPropagation(); acknowledgeNotification(notification.id); }}
+                                  data-testid={`button-ack-${notification.id}`}
+                                >
+                                  Acknowledge
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-5 px-2 text-[10px] text-slate-400 hover:text-white"
+                                onClick={(e) => { e.stopPropagation(); dismissNotification(notification.id); }}
+                                data-testid={`button-resolve-${notification.id}`}
+                              >
+                                Resolve
+                              </Button>
                             </div>
                           </div>
                         </div>
