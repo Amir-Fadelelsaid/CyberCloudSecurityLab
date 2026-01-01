@@ -165,7 +165,6 @@ All security controls have been verified and validated.
 Your progress has been recorded.
 `;
     await storage.updateProgress(userId, labId, true);
-        broadcastLeaderboardUpdate();
     broadcastLeaderboardUpdate();
   }
   
@@ -276,6 +275,16 @@ const processCommand = async (command: string, labId: number, userId: string) =>
       ).join('\n');
     } else {
       output = "Scan complete. No vulnerabilities found. System secure.";
+      success = true;
+      // Check if lab should be marked complete (all resources fixed)
+      const progress = await storage.getUserProgress(userId);
+      const labProgress = progress.find(p => p.labId === labId);
+      if (!labProgress || !labProgress.completed) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
     }
   }
   else if (lowerCmd === "scan verify" || lowerCmd === "verify") {
@@ -297,6 +306,15 @@ All Resources: COMPLIANT
 
 Security controls validated successfully.`;
       success = true;
+      // Check if lab should be marked complete
+      const progress = await storage.getUserProgress(userId);
+      const labProgress = progress.find(p => p.labId === labId);
+      if (!labProgress || !labProgress.completed) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
     }
   }
   // S3 Commands
@@ -7516,6 +7534,22 @@ Use appropriate remediation commands to fix issues.`;
   // Unknown command
   else {
     output = `Command not found: ${command}. Type 'help' for available commands.`;
+  }
+
+  // Final fallback: If command succeeded and all resources are now secure, mark lab complete
+  if (success && !labCompleted) {
+    const updatedResources = await storage.getResources(labId, userId);
+    const stillVulnerable = updatedResources.filter(r => r.isVulnerable);
+    if (stillVulnerable.length === 0) {
+      const progress = await storage.getUserProgress(userId);
+      const labProgress = progress.find(p => p.labId === labId);
+      if (!labProgress || !labProgress.completed) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] All objectives achieved!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    }
   }
 
   return { output, success, labCompleted };
