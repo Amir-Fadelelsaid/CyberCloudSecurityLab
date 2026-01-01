@@ -873,6 +873,7 @@ Your progress has been recorded.`;
         labCompleted = true;
         output += "\n\n[MISSION COMPLETE] Incident contained! All compromised credentials revoked.";
         await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
       }
     } else if (iamUser) {
       output = `Info: Access keys for ${userName} have already been revoked.`;
@@ -898,7 +899,7 @@ Your progress has been recorded.`;
     }
   }
   else if (lowerCmd === "aws iam secure-root") {
-    const root = resources.find(r => r.type === 'iam_root');
+    const root = resources.find(r => r.type === 'iam_root' || r.type === 'root' || r.name?.includes('root'));
     if (root && root.isVulnerable) {
       await storage.updateResource(root.id, { isVulnerable: false, status: 'secured' });
       output = `[SUCCESS] Root account secured\n  - MFA enabled\n  - Access keys deleted\n  - Strong password policy enforced`;
@@ -908,9 +909,32 @@ Your progress has been recorded.`;
         labCompleted = true;
         output += "\n\n[MISSION COMPLETE] All vulnerabilities remediated!";
         await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
       }
     } else {
-      output = "Root account is already secured.";
+      // Fallback - mark all vulnerable resources as fixed
+      const vulnRes = resources.find(r => r.isVulnerable);
+      if (vulnRes) {
+        for (const res of resources.filter(r => r.isVulnerable)) {
+          await storage.updateResource(res.id, { isVulnerable: false, status: 'secured' });
+        }
+        output = `=== Root Account Secured ===
+
+[OK] Hardware MFA enabled
+[OK] Access keys deleted
+[OK] Password rotated
+[OK] Contact info verified
+[OK] Root account now protected
+
+Root account hardened against compromise.`;
+        success = true;
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Root account secured!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      } else {
+        output = "Root account is already secured.";
+      }
     }
   }
   else if (lowerCmd.startsWith("aws iam revoke-trust ")) {
@@ -925,6 +949,7 @@ Your progress has been recorded.`;
         labCompleted = true;
         output += "\n\n[MISSION COMPLETE] All vulnerabilities remediated!";
         await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
       }
     } else {
       output = `Error: Role ${roleName} not found or already secure.`;
@@ -3488,7 +3513,28 @@ Guardrails now in place.`;
     success = true;
   }
   else if (lowerCmd.startsWith("aws iam apply-permission-boundaries") || lowerCmd.startsWith("aws iam enforce-boundary ")) {
-    output = `=== Permission Boundaries Applied ===
+    const iamRes = resources.find(r => (r.type === 'iam' || r.type === 'policies' || r.name?.includes('role') || r.name?.includes('developer')) && r.isVulnerable);
+    if (iamRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `=== Permission Boundaries Enforced ===
+
+[OK] DeveloperBoundary created and attached
+[OK] Maximum permissions capped for all dev roles
+[OK] iam:CreatePolicy blocked for developers
+[OK] iam:AttachUserPolicy restricted
+[OK] Privilege escalation paths eliminated
+[OK] Audit logging enabled
+
+Developers can now create roles safely within guardrails.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Permission boundaries enforced!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Permission Boundaries Applied ===
 
 [OK] Boundary attached to 15 roles
 [OK] Developer permissions capped
@@ -3496,7 +3542,8 @@ Guardrails now in place.`;
 [OK] Audit logging enabled
 
 All roles now operate within boundaries.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd === "aws iam enforce-mfa-policy") {
     output = `=== MFA Policy Enforced ===
@@ -4452,8 +4499,28 @@ Backdoor access eliminated.`;
 User account locked.`;
     success = true;
   }
-  else if (lowerCmd === "aws iam enable-root-mfa" || lowerCmd === "aws iam secure-root") {
-    output = `=== Root Account Secured ===
+  else if (lowerCmd === "aws iam enable-root-mfa") {
+    const rootRes = resources.find(r => (r.type === 'root' || r.type === 'iam_root' || r.name?.includes('root')) && r.isVulnerable);
+    if (rootRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `=== Root Account MFA Enabled ===
+
+[OK] Hardware MFA device registered
+[OK] Virtual MFA as backup
+[OK] Access keys deleted
+[OK] Password rotated to 32+ characters
+[OK] Contact info verified
+
+Root account now protected with MFA.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Root account secured!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Root Account Secured ===
 
 [OK] MFA enabled (virtual device)
 [OK] Access keys deleted
@@ -4461,7 +4528,8 @@ User account locked.`;
 [OK] Contact info verified
 
 Root account now protected.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("aws iam fix-role-trust ") || lowerCmd === "aws iam fix-trust-policies") {
     output = `=== Trust Policies Fixed ===
@@ -4502,8 +4570,29 @@ Blast radius significantly reduced.`;
       success = true;
     }
   }
-  else if (lowerCmd === "aws iam remove-persistence" || lowerCmd.startsWith("aws iam revoke-keys ") || lowerCmd.startsWith("aws iam revoke-trust ")) {
-    output = `=== Persistence Removed ===
+  else if (lowerCmd === "aws iam remove-persistence") {
+    const iamRes = resources.find(r => (r.type === 'iam' || r.type === 'iam_user' || r.type === 'iam_role' || r.name?.includes('backdoor') || r.name?.includes('persistence')) && r.isVulnerable);
+    if (iamRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `=== Persistence Mechanisms Removed ===
+
+[OK] Backdoor access keys revoked
+[OK] Unauthorized trust policies removed
+[OK] Shadow admin accounts disabled
+[OK] Malicious role assumptions blocked
+[OK] All sessions terminated
+[OK] Forensic evidence preserved
+
+All attacker persistence indicators eliminated.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Persistence removed!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Persistence Removed ===
 
 [OK] Backdoor keys revoked
 [OK] Unauthorized trust removed
@@ -4511,7 +4600,8 @@ Blast radius significantly reduced.`;
 [OK] Access audit complete
 
 All persistence indicators cleared.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("aws iam rotate-access-key ") || lowerCmd.startsWith("aws iam rotate-service-credentials ") || lowerCmd.startsWith("aws iam rotate-saml-certificate ")) {
     output = `=== Credentials Rotated ===
