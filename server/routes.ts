@@ -3813,7 +3813,7 @@ CRITICAL ISSUES:
 Immediate action required!`;
     success = true;
   }
-  else if (lowerCmd.startsWith("aws iam find-unused") || lowerCmd.startsWith("aws iam cleanup")) {
+  else if (lowerCmd.startsWith("aws iam find-unused")) {
     output = `=== Unused IAM Resources ===
 
 Unused Credentials (90+ days):
@@ -4941,7 +4941,6 @@ Identity hygiene restored. Attack surface reduced.`;
       labCompleted = true;
       output += "\n\n[MISSION COMPLETE] IAM cleanup complete!";
       await storage.updateProgress(userId, labId, true);
-        broadcastLeaderboardUpdate();
       broadcastLeaderboardUpdate();
     } else {
       output = `=== IAM Cleanup Complete ===
