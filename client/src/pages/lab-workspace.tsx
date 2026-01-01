@@ -368,8 +368,10 @@ export default function LabWorkspace() {
                               <p className="text-[11px] text-muted-foreground mb-2">{step.description}</p>
                               
                               {/* Hint - collapsible */}
-                              <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20 break-words">
-                                <span className="text-primary font-bold">CMD:</span> <span className="break-all">{step.hint?.match(/'([^']+)'/)?.[1] || step.hint}</span>
+                              <div className="text-[10px] text-primary/70 font-mono bg-black/40 p-2 rounded border border-primary/20 overflow-x-auto">
+                                <div className="whitespace-nowrap">
+                                  <span className="text-primary font-bold">CMD:</span> <span>{step.hint?.match(/'([^']+)'/)?.[1] || step.hint}</span>
+                                </div>
                               </div>
                               
                               {step.intel && !isCompleted && (
