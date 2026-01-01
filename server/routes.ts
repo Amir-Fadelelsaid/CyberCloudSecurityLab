@@ -3051,17 +3051,34 @@ Source: All regions`;
     success = true;
   }
   else if (lowerCmd === "aws cloudtrail enable-comprehensive-logging" || lowerCmd === "aws cloudtrail enable-enhanced-logging") {
-    output = `=== Enhanced CloudTrail Logging Enabled ===
+    const ctRes = resources.find(r => (r.type === 'cloudtrail' || r.name?.includes('trail') || r.name?.includes('log')) && r.isVulnerable);
+    if (ctRes) {
+      // Mark all vulnerable resources as fixed
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `=== Comprehensive CloudTrail Logging Enabled ===
 
-[OK] Management events: All regions
-[OK] Data events: S3, Lambda, DynamoDB
-[OK] Insights: Enabled
-[OK] Log file validation: Enabled
-[OK] Multi-region: Enabled
-[OK] Organization trail: Configured
+[OK] Multi-region logging: Enabled for all 25 regions
+[OK] Management events: ReadWriteType = All
+[OK] S3 data events: All buckets included
+[OK] Lambda data events: All functions included  
+[OK] Log file validation: SHA-256 hash enabled
+[OK] Log encryption: KMS key configured
+[OK] CloudTrail Insights: Anomaly detection enabled
+[OK] Log bucket: Versioning and MFA delete enabled
 
-All API activity now logged with full detail.`;
-    success = true;
+Complete visibility into all API activity.
+Ready for forensic investigation and compliance.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Comprehensive logging enabled!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `[SUCCESS] CloudTrail comprehensive logging already enabled.`;
+      success = true;
+    }
   }
   else if (lowerCmd === "aws cloudtrail enable-organization-trail") {
     output = `=== Organization Trail Enabled ===
@@ -3318,15 +3335,41 @@ Peering security improved.`;
     success = true;
   }
   else if (lowerCmd.startsWith("aws ec2 implement-network-segmentation ") || lowerCmd === "aws ec2 assess-network-security") {
-    output = `=== Network Segmentation Implemented ===
+    const anyVulnerable = resources.find(r => r.isVulnerable);
+    if (anyVulnerable) {
+      // Mark all vulnerable resources as fixed for this lab
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `=== Network Segmentation Implemented ===
 
-[OK] Micro-segmentation applied
-[OK] Zero-trust network model
-[OK] East-west traffic controlled
-[OK] North-south traffic filtered
+[OK] Created public subnet (10.0.1.0/24) for web tier
+[OK] Created private subnet (10.0.2.0/24) for app tier  
+[OK] Created data subnet (10.0.3.0/24) for database tier
+[OK] Configured NAT gateway for private subnet egress
+[OK] Updated route tables with proper isolation
+[OK] Moved web-01 to public subnet
+[OK] Moved app-01 to private subnet
+[OK] Moved db-01 to isolated data subnet
+[OK] Disabled public accessibility for RDS
 
 Defense-in-depth architecture complete.`;
-    success = true;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Network segmentation implemented!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Network Segmentation Status ===
+
+Network is already properly segmented.
+  - Public subnet: Web tier
+  - Private subnet: App tier
+  - Data subnet: Database tier
+
+All tiers properly isolated.`;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("aws ec2 create-traffic-mirror ")) {
     output = `=== Traffic Mirroring Configured ===
@@ -4432,15 +4475,32 @@ Trust relationships hardened.`;
     success = true;
   }
   else if (lowerCmd === "aws iam implement-least-privilege" || lowerCmd.startsWith("aws iam implement-least-privilege ")) {
-    output = `=== Least Privilege Implemented ===
+    const iamRes = resources.find(r => (r.type === 'iam_role' || r.type === 'iam' || r.name?.includes('role') || r.name?.includes('service')) && r.isVulnerable);
+    if (iamRes) {
+      // Mark all vulnerable IAM resources as fixed
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'secured' });
+      }
+      output = `=== Least Privilege Implemented ===
 
-[OK] Permissions analyzed
-[OK] Unused permissions removed
-[OK] Service-specific policies created
-[OK] Access boundaries set
+[OK] Analyzed actual API usage from CloudTrail
+[OK] Removed AdministratorAccess from app-service-role
+[OK] Created scoped policy: S3GetObject, DynamoDBPutItem only
+[OK] Applied resource-level restrictions
+[OK] Added conditions for VPC and source IP
+[OK] Lambda execution role scoped to required services
 
-All roles now follow least privilege.`;
-    success = true;
+All roles now follow least privilege principle.
+Blast radius significantly reduced.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Least privilege implemented!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `[SUCCESS] All roles already follow least privilege.`;
+      success = true;
+    }
   }
   else if (lowerCmd === "aws iam remove-persistence" || lowerCmd.startsWith("aws iam revoke-keys ") || lowerCmd.startsWith("aws iam revoke-trust ")) {
     output = `=== Persistence Removed ===
