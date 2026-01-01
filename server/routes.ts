@@ -1334,19 +1334,39 @@ Severity matrix aligned with incident response playbook.`;
     }
   }
   else if (lowerCmd === "siem configure-alert-routing" || lowerCmd.startsWith("siem configure-alert-routing ")) {
-    output = `=== Alert Routing Configuration ===
+    const siemRes = resources.find(r => (r.type === 'siem' || r.type === 'siem_config' || r.type === 'alerts' || r.type === 'logs' || r.name?.includes('siem') || r.name?.includes('log')) && r.isVulnerable);
+    if (siemRes) {
+      await storage.updateResource(siemRes.id, { isVulnerable: false, status: 'configured' });
+      output = `=== Alert Routing Configuration ===
+
+[OK] Critical -> Tier 2 + On-call (PagerDuty)
+[OK] High -> Tier 1 Queue (15 min SLA)
+[OK] Medium -> Tier 1 Queue (batched, 1 hour)
+[OK] Low -> Daily Review Queue
+[OK] Per-tenant routing configured
+[OK] SLA tracking enabled
+[OK] Escalation paths defined
+
+Alert routing configuration complete.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== siemRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] SIEM integration complete!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `=== Alert Routing Configuration ===
 
 [OK] Critical -> Tier 2 + On-call
 [OK] High -> Tier 1 Queue
 [OK] Medium -> Tier 1 Queue (batched)
 [OK] Low -> Daily Review Queue
 
-Per-tenant routing (if applicable):
-[OK] Tenant alerts route to dedicated queues
-[OK] SLA tracking per tenant enabled
-
 Alert routing configuration complete.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd === "siem create-detection-rules") {
     output = `=== Detection Rules Created ===
@@ -1378,7 +1398,10 @@ All rules are now active and monitoring.`;
     success = true;
   }
   else if (lowerCmd === "siem create-investigation-dashboards") {
-    output = `=== Investigation Dashboards Created ===
+    const siemRes = resources.find(r => (r.type === 'siem' || r.type === 'siem_config' || r.type === 'logs' || r.name?.includes('siem') || r.name?.includes('log')) && r.isVulnerable);
+    if (siemRes) {
+      await storage.updateResource(siemRes.id, { isVulnerable: false, status: 'configured' });
+      output = `=== Investigation Dashboards Created ===
 
 [OK] SOC Overview Dashboard
      - Alert volume trends
@@ -1401,30 +1424,66 @@ All rules are now active and monitoring.`;
      - False positive trends
 
 Dashboards available in SIEM console.`;
-    success = true;
+      success = true;
+      const remaining = resources.filter(r => r.id !== siemRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] SIEM integration complete!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `=== Investigation Dashboards Created ===
+
+[OK] SOC Overview Dashboard
+[OK] Threat Hunting Dashboard
+[OK] Incident Timeline Dashboard
+[OK] Compliance Dashboard
+
+Dashboards available in SIEM console.`;
+      success = true;
+    }
   }
   else if (lowerCmd === "siem tune-detection-rules") {
-    output = `=== Detection Rule Tuning ===
+    const siemRes = resources.find(r => (r.type === 'siem' || r.type === 'siem_config' || r.type === 'logs' || r.name?.includes('siem') || r.name?.includes('log')) && r.isVulnerable);
+    if (siemRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'tuned' });
+      }
+      output = `=== Detection Rule Tuning Complete ===
 
 Analyzing alert patterns from past 30 days...
 
+Tuning Applied:
+  [OK] R002 - Threshold adjusted (5 -> 10 failed logins)
+  [OK] R004 - Exclusion added for admin IPs
+  [OK] R007 - Time window optimized (1h -> 15m)
+  [OK] R011 - Baseline updated for traffic patterns
+  [OK] R015 - False positive patterns excluded
+
+Results:
+  Rules tuned: 8
+  False positive reduction: 35%
+  Detection coverage: Maintained
+  Alert quality: Significantly improved`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] SIEM tuning complete!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Detection Rule Tuning ===
+
 Tuning Recommendations Applied:
-  [OK] R002 - Increased threshold from 5 to 10 failed logins
-       Reason: High false positives from automated testing
-       Expected FP reduction: 45%
-       
-  [OK] R004 - Added exclusion for known admin IPs
-       Reason: Legitimate security team testing
-       Expected FP reduction: 30%
-       
-  [OK] R007 - Reduced time window from 1h to 15m
-       Reason: Improve detection latency
+  [OK] R002 - Increased threshold
+  [OK] R004 - Added exclusions
+  [OK] R007 - Reduced time window
        
 Results:
   Rules tuned: 8
-  Expected FP reduction: 35%
-  Detection coverage: Maintained`;
-    success = true;
+  Expected FP reduction: 35%`;
+      success = true;
+    }
   }
   else if (lowerCmd === "siem analyze-attack-coverage" || lowerCmd === "siem attack-coverage") {
     output = `=== MITRE ATT&CK Coverage Analysis ===
@@ -1652,7 +1711,29 @@ Noisy neighbor protection active.`;
   }
   else if (lowerCmd.startsWith("siem onboard-tenant ")) {
     const tenant = lowerCmd.replace("siem onboard-tenant ", "").trim();
-    output = `=== Tenant Onboarded: ${tenant} ===
+    const siemRes = resources.find(r => (r.type === 'siem' || r.type === 'siem_config' || r.type === 'siemCluster' || r.name?.includes('siem') || r.name?.includes('tenant')) && r.isVulnerable);
+    if (siemRes) {
+      await storage.updateResource(siemRes.id, { isVulnerable: false, status: 'onboarded' });
+      output = `=== Tenant Onboarded: ${tenant} ===
+
+[OK] Tenant ID created: ${tenant}
+[OK] Dedicated indexes provisioned
+[OK] RBAC roles configured
+[OK] Tenant dashboards deployed
+[OK] Alert routing configured
+[OK] Welcome email sent
+
+Tenant ${tenant} is ready for log ingestion.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== siemRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Tenant onboarding complete!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `=== Tenant Onboarded: ${tenant} ===
 
 [OK] Tenant ID created: ${tenant}
 [OK] Indexes provisioned
@@ -1661,11 +1742,36 @@ Noisy neighbor protection active.`;
 [OK] Welcome email sent
 
 Tenant ${tenant} is ready for log ingestion.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("siem test-isolation ")) {
     const tenant = lowerCmd.replace("siem test-isolation ", "").trim();
-    output = `=== Isolation Test: ${tenant} ===
+    const siemRes = resources.find(r => (r.type === 'siem' || r.type === 'siem_config' || r.type === 'siemCluster' || r.name?.includes('siem') || r.name?.includes('cluster')) && r.isVulnerable);
+    if (siemRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'verified' });
+      }
+      output = `=== Isolation Test: ${tenant} ===
+
+Running cross-tenant access tests...
+
+[PASS] Direct query blocked: tenant-b indexes
+[PASS] API access denied: other tenant data
+[PASS] Dashboard isolation verified
+[PASS] Search results filtered correctly
+[PASS] Alert routing isolated
+[PASS] No data leakage detected
+
+All isolation tests passed for ${tenant}.
+Multi-tenant architecture validated.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Multi-tenant SIEM architecture complete!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Isolation Test: ${tenant} ===
 
 Running cross-tenant access tests...
 
@@ -1675,7 +1781,8 @@ Running cross-tenant access tests...
 [PASS] Search results filtered correctly
 
 All isolation tests passed for ${tenant}.`;
-    success = true;
+      success = true;
+    }
   }
   // Alert tuning commands
   else if (lowerCmd.startsWith("siem sample-alerts ")) {
@@ -1914,6 +2021,7 @@ Alert archived for compliance retention.`;
         labCompleted = true;
         output += "\n\n[MISSION COMPLETE] All alerts resolved!";
         await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
       }
     } else {
       output = `Alert ${alertId} closed successfully.`;
@@ -3169,7 +3277,31 @@ ${tier} tier now properly segmented.`;
     success = true;
   }
   else if (lowerCmd === "aws ec2 verify-network-segmentation") {
-    output = `=== Network Segmentation Verified ===
+    const vpcRes = resources.find(r => (r.type === 'vpc' || r.type === 'security_group' || r.type === 'securityGroups' || r.name?.includes('vpc') || r.name?.includes('sg')) && r.isVulnerable);
+    if (vpcRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'verified' });
+      }
+      output = `=== Network Segmentation Verified ===
+
+Test Results:
+  [PASS] Web → App: Allowed on 8080
+  [PASS] App → DB: Allowed on 3306
+  [PASS] Web → DB: BLOCKED (as expected)
+  [PASS] DB → Internet: BLOCKED (as expected)
+  [PASS] Admin → All: Via bastion only
+  [PASS] Egress filtering: Active
+  [PASS] Lateral movement: Blocked
+
+All segmentation rules working correctly.
+Defense-in-depth architecture validated.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Network segmentation verified!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Network Segmentation Verified ===
 
 Test Results:
   [PASS] Web → App: Allowed on 8080
@@ -3179,7 +3311,8 @@ Test Results:
   [PASS] Admin → All: Via bastion only
 
 All segmentation rules working correctly.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("aws ec2 analyze-flow-logs ") || lowerCmd.startsWith("aws ec2 analyze-flows ")) {
     output = `=== VPC Flow Log Analysis ===
@@ -4465,7 +4598,27 @@ Privilege escalation paths eliminated.`;
     success = true;
   }
   else if (lowerCmd.startsWith("aws iam cleanup-inactive-users") || lowerCmd.startsWith("aws iam cleanup-service-roles")) {
-    output = `=== IAM Cleanup Complete ===
+    const iamRes = resources.find(r => (r.type === 'iam_user' || r.type === 'iam' || r.type === 'users' || r.name?.includes('inactive') || r.name?.includes('employee') || r.name?.includes('service')) && r.isVulnerable);
+    if (iamRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'cleaned' });
+      }
+      output = `=== IAM Cleanup Complete ===
+
+[OK] Inactive users disabled: former-employee, old-service-acct
+[OK] Stale access keys deleted: 3 keys older than 90 days
+[OK] Unused roles removed: LegacyAppRole, TestDeployRole
+[OK] Orphaned policies deleted: 8 unattached policies
+[OK] Service accounts audited and cleaned
+
+Identity hygiene restored. Attack surface reduced.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] IAM cleanup complete!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== IAM Cleanup Complete ===
 
 [OK] Inactive users disabled: 5
 [OK] Stale roles removed: 3
@@ -4473,7 +4626,8 @@ Privilege escalation paths eliminated.`;
 [OK] Access keys rotated: 12
 
 Identity hygiene improved.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("aws iam delete-role ") || lowerCmd.startsWith("aws iam delete-access-key ")) {
     const target = lowerCmd.split(" ").pop();
@@ -4489,7 +4643,29 @@ Backdoor access eliminated.`;
   }
   else if (lowerCmd.startsWith("aws iam disable-user ")) {
     const user = lowerCmd.replace("aws iam disable-user ", "").trim();
-    output = `=== User Disabled: ${user} ===
+    const iamRes = resources.find(r => (r.type === 'iam_user' || r.type === 'iam' || r.name === user || r.name?.includes(user)) && r.isVulnerable);
+    if (iamRes) {
+      await storage.updateResource(iamRes.id, { isVulnerable: false, status: 'disabled' });
+      output = `=== User Disabled: ${user} ===
+
+[OK] Console access revoked
+[OK] API access revoked
+[OK] All access keys deactivated
+[OK] MFA deregistered
+[OK] All active sessions terminated
+[OK] User marked for deletion review
+
+User account locked and secured.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== iamRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] User disabled and secured!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `=== User Disabled: ${user} ===
 
 [OK] Console access revoked
 [OK] API access revoked
@@ -4497,7 +4673,8 @@ Backdoor access eliminated.`;
 [OK] Sessions terminated
 
 User account locked.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd === "aws iam enable-root-mfa") {
     const rootRes = resources.find(r => (r.type === 'root' || r.type === 'iam_root' || r.name?.includes('root')) && r.isVulnerable);
@@ -5635,7 +5812,28 @@ Escalation attempts will be detected in real-time.`;
     success = true;
   }
   else if (lowerCmd === "aws organizations create-escalation-scp" || lowerCmd.startsWith("aws organizations create-escalation")) {
-    output = `=== Escalation Prevention SCPs Created ===
+    const orgRes = resources.find(r => (r.type === 'iam' || r.type === 'policies' || r.type === 'escalation-paths' || r.type === 'scp') && r.isVulnerable);
+    if (orgRes) {
+      await storage.updateResource(orgRes.id, { isVulnerable: false, status: 'protected' });
+      output = `=== Escalation Prevention SCPs Created ===
+
+[OK] SCP: DenyPermissionBoundaryRemoval
+[OK] SCP: DenyCreateAdminPolicies
+[OK] SCP: RequireMFAForIAMChanges
+[OK] SCP: DenyRootAccountUsage
+
+SCPs attached to all OUs.
+Organization-level guardrails active.`;
+      success = true;
+      const remaining = resources.filter(r => r.id !== orgRes.id && r.isVulnerable);
+      if (remaining.length === 0) {
+        labCompleted = true;
+        output += "\n\n[MISSION COMPLETE] Escalation prevention implemented!";
+        await storage.updateProgress(userId, labId, true);
+        broadcastLeaderboardUpdate();
+      }
+    } else {
+      output = `=== Escalation Prevention SCPs Created ===
 
 [OK] SCP: DenyPermissionBoundaryRemoval
 [OK] SCP: DenyCreateAdminPolicies
@@ -5643,7 +5841,8 @@ Escalation attempts will be detected in real-time.`;
 
 SCPs attached to all OUs.
 Organization-level guardrails active.`;
-    success = true;
+      success = true;
+    }
   }
   else if (lowerCmd.startsWith("aws iam simulate-escalation") || lowerCmd === "aws iam simulate-escalation-attack") {
     output = `=== Escalation Attack Simulation ===
@@ -5661,7 +5860,12 @@ All escalation paths confirmed blocked!`;
     success = true;
   }
   else if (lowerCmd.startsWith("aws iam generate-escalation-runbook") || lowerCmd === "aws iam generate-escalation-runbook") {
-    output = `=== Escalation Response Runbook Generated ===
+    const iamRes = resources.find(r => (r.type === 'iam' || r.type === 'policies' || r.type === 'escalation-paths' || r.name?.includes('role') || r.name?.includes('escalation')) && r.isVulnerable);
+    if (iamRes) {
+      for (const res of resources.filter(r => r.isVulnerable)) {
+        await storage.updateResource(res.id, { isVulnerable: false, status: 'documented' });
+      }
+      output = `=== Escalation Response Runbook Generated ===
 
 Runbook: privilege-escalation-response.md
 
@@ -5673,8 +5877,21 @@ Sections:
   5. Remediation Actions
   6. Post-Incident Review
 
+Runbook saved and linked to detection rules.
+SOC team trained on response procedures.`;
+      success = true;
+      labCompleted = true;
+      output += "\n\n[MISSION COMPLETE] Escalation controls documented!";
+      await storage.updateProgress(userId, labId, true);
+      broadcastLeaderboardUpdate();
+    } else {
+      output = `=== Escalation Response Runbook Generated ===
+
+Runbook: privilege-escalation-response.md
+
 Runbook saved and linked to detection rules.`;
-    success = true;
+      success = true;
+    }
   }
   // ============= AWS IR COMMANDS =============
   else if (lowerCmd === "aws ir execute-containment" || lowerCmd.startsWith("aws ir execute-contain")) {
