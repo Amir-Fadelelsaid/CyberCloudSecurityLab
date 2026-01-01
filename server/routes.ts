@@ -4789,7 +4789,7 @@ Widget is now live and updating in real-time.`;
       success = true;
     }
   }
-  else if (lowerCmd.startsWith("dashboard open ") || lowerCmd.startsWith("dashboard list-widget") || lowerCmd === "dashboard list-widgets" || lowerCmd === "dashboard list-widget") {
+  else if (lowerCmd.startsWith("dashboard open ") || lowerCmd.startsWith("dashboard list-widgets")) {
     output = `=== SOC Dashboard ===
 
 Active Widgets:
@@ -6725,126 +6725,29 @@ export async function registerRoutes(
       const lowerCmd = command.toLowerCase().trim();
       const steps = lab.steps as any[];
       
-      // Normalize command - handle singular/plural variations using word boundaries
-      const normalizeCmd = (cmd: string) => {
-        // Use word boundary matching to avoid partial replacements
-        const pluralMappings: [RegExp, string][] = [
-          [/\bwidgets\b/g, 'widget'],
-          [/\bbuckets\b/g, 'bucket'],
-          [/\binstances\b/g, 'instance'],
-          [/\bgroups\b/g, 'group'],
-          [/\bpolicies\b/g, 'policy'],
-          [/\brules\b/g, 'rule'],
-          [/\busers\b/g, 'user'],
-          [/\broles\b/g, 'role'],
-          [/\bkeys\b/g, 'key'],
-          [/\balerts\b/g, 'alert'],
-          [/\blogs\b/g, 'log'],
-          [/\bevents\b/g, 'event'],
-          [/\bfindings\b/g, 'finding'],
-          [/\bsessions\b/g, 'session'],
-          [/\bpermissions\b/g, 'permission'],
-          [/\bsnapshots\b/g, 'snapshot'],
-          [/\btokens\b/g, 'token'],
-          [/\bidentities\b/g, 'identity'],
-          [/\bpipelines\b/g, 'pipeline'],
-          [/\bclusters\b/g, 'cluster'],
-          [/\bconnections\b/g, 'connection'],
-          [/\bsubscriptions\b/g, 'subscription'],
-          [/\bregions\b/g, 'region'],
-          [/\bbackups\b/g, 'backup'],
-          [/\bincidents\b/g, 'incident'],
-          [/\bvolumes\b/g, 'volume'],
-          [/\bnetworks\b/g, 'network'],
-          [/\bsubnets\b/g, 'subnet'],
-          [/\binterfaces\b/g, 'interface'],
-          [/\bstreams\b/g, 'stream'],
-          [/\bqueues\b/g, 'queue'],
-          [/\btopics\b/g, 'topic'],
-          [/\bfunctions\b/g, 'function'],
-          [/\blambdas\b/g, 'lambda'],
-          [/\bcontainers\b/g, 'container'],
-          [/\bimages\b/g, 'image'],
-          [/\bsecrets\b/g, 'secret'],
-          [/\bcertificates\b/g, 'certificate'],
-          [/\bdomains\b/g, 'domain'],
-          [/\bzones\b/g, 'zone'],
-          [/\brecords\b/g, 'record'],
-          [/\btables\b/g, 'table'],
-          [/\bdatabases\b/g, 'database'],
-          [/\bschemas\b/g, 'schema'],
-          [/\bqueries\b/g, 'query'],
-          [/\breports\b/g, 'report'],
-          [/\bdashboards\b/g, 'dashboard'],
-          [/\bmetrics\b/g, 'metric'],
-          [/\bthresholds\b/g, 'threshold'],
-          [/\bnotifications\b/g, 'notification'],
-          [/\bsubscribers\b/g, 'subscriber'],
-          [/\bendpoints\b/g, 'endpoint'],
-          [/\bapis\b/g, 'api'],
-          [/\bservices\b/g, 'service'],
-          [/\bresources\b/g, 'resource'],
-          [/\btags\b/g, 'tag'],
-          [/\blabels\b/g, 'label'],
-          [/\bannotations\b/g, 'annotation'],
-          [/\bflows\b/g, 'flow'],
-          [/\btrails\b/g, 'trail'],
-          [/\bvpcs\b/g, 'vpc'],
-          [/\bacls\b/g, 'acl'],
-          [/\bconfigs\b/g, 'config'],
-          [/\bconfigurations\b/g, 'configuration'],
-          [/\bsettings\b/g, 'setting'],
-          [/\bprofiles\b/g, 'profile'],
-          [/\bcredentials\b/g, 'credential'],
-          [/\baccounts\b/g, 'account'],
-          [/\borganizations\b/g, 'organization'],
-          [/\bprojects\b/g, 'project'],
-          [/\benvironments\b/g, 'environment'],
-          [/\bstages\b/g, 'stage'],
-          [/\bversions\b/g, 'version'],
-          [/\breleases\b/g, 'release'],
-          [/\bdeployments\b/g, 'deployment'],
-          [/\bstacks\b/g, 'stack'],
-          [/\btemplates\b/g, 'template'],
-          [/\bblueprints\b/g, 'blueprint'],
-          [/\bpatterns\b/g, 'pattern'],
-          [/\bplaybooks\b/g, 'playbook'],
-          [/\brunbooks\b/g, 'runbook'],
-        ];
-        
-        let normalized = cmd;
-        for (const [pattern, replacement] of pluralMappings) {
-          normalized = normalized.replace(pattern, replacement);
-        }
-        return normalized.trim();
-      };
-      
-      const normalizedCmd = normalizeCmd(lowerCmd);
-      
       // Find the best matching step (most specific match wins)
       let bestMatch: { step: number; score: number } | null = null;
       
       for (const step of steps) {
         if (step.hint) {
-          // Extract command from hint - look for text in single quotes
-          const hintMatch = step.hint.match(/'([^']+)'/);
+          // Extract command from hint like "Type 'scan' to..." or "Type 'aws s3 ls'..."
+          const hintMatch = step.hint.match(/[Tt]ype\s+['"]([^'"]+)['"]/);
           if (hintMatch) {
             let expectedCmd = hintMatch[1].toLowerCase().trim();
             // Remove placeholder parts like <bucket>, <instance>, etc.
             expectedCmd = expectedCmd.replace(/<[^>]+>/g, '').trim();
-            const normalizedExpected = normalizeCmd(expectedCmd);
-            const expectedParts = normalizedExpected.split(' ').filter((p: string) => p.length > 0);
-            const cmdParts = normalizedCmd.split(' ').filter((p: string) => p.length > 0);
+            const expectedParts = expectedCmd.split(' ').filter((p: string) => p.length > 0);
+            const cmdParts = lowerCmd.split(' ').filter((p: string) => p.length > 0);
             
             if (expectedParts.length > 0) {
-              // Check for exact match (after normalization)
-              if (normalizedCmd === normalizedExpected) {
+              // Check for exact match first
+              if (lowerCmd === expectedCmd) {
                 bestMatch = { step: step.number, score: 1000 };
                 break; // Exact match, stop searching
               }
               
-              // Check if command starts with expected command (normalized)
-              if (normalizedCmd.startsWith(normalizedExpected + ' ') || normalizedCmd.startsWith(normalizedExpected)) {
+              // Check if command starts with expected command
+              if (lowerCmd.startsWith(expectedCmd + ' ') || lowerCmd === expectedCmd) {
                 const score = expectedParts.length * 10;
                 if (!bestMatch || score > bestMatch.score) {
                   bestMatch = { step: step.number, score };
@@ -6852,15 +6755,9 @@ export async function registerRoutes(
                 continue;
               }
               
-              // Check if first N parts match (where N is expected parts count)
-              const allPartsMatch = expectedParts.every((part: string, i: number) => {
-                if (i >= cmdParts.length) return false;
-                // Allow fuzzy match for close matches
-                return cmdParts[i] === part || 
-                       cmdParts[i].startsWith(part) || 
-                       part.startsWith(cmdParts[i]);
-              });
-              if (allPartsMatch && cmdParts.length >= expectedParts.length - 1) {
+              // Check if all expected parts match the beginning of the command
+              const allPartsMatch = expectedParts.every((part: string, i: number) => cmdParts[i] === part);
+              if (allPartsMatch && cmdParts.length >= expectedParts.length) {
                 const score = expectedParts.length;
                 if (!bestMatch || score > bestMatch.score) {
                   bestMatch = { step: step.number, score };
